@@ -334,4 +334,10 @@ CheeseTama/
 
 ## 상태
 
-현재 단계: **프리프로덕션 / 기획 정리 단계**
+현재 단계: **프리프로덕션 / Unity 프로젝트 초기 구조 생성 완료**
+
+다음 확인 단계:
+
+- Unity Hub에서 프로젝트 열기
+- `CheeseTama > Build Starter Scenes` 실행
+- `Assets/_Project/Scenes/Milkroom.unity`에서 기본 밀크룸 화면 확인
