@@ -86,8 +86,9 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 570));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 600));
             var panelTransform = panel.transform;
+            RemoveChildIfExists(panelTransform, "Milk Growth Text");
 
             var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
             var levelText = GetOrCreateText(panelTransform, "Level Text", "Lv. 1 (0%)", 18, TextAnchor.UpperLeft, new Vector2(16, -48), new Vector2(260, 26));
@@ -101,10 +102,11 @@ namespace CheeseTama.Core
             var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
             var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
             var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -336), new Vector2(260, 24));
-            var milkGrowthText = GetOrCreateText(panelTransform, "Milk Growth Text", "Milk Growth: Basic Milk Lv. 0", 16, TextAnchor.UpperLeft, new Vector2(16, -364), new Vector2(280, 24));
-            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -392), new Vector2(280, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -422), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -458), new Vector2(280, 72));
+            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "Basic Milk: Lv. 0 (0 pts)", 16, TextAnchor.UpperLeft, new Vector2(16, -364), new Vector2(280, 24));
+            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "Star Milk: locked", 16, TextAnchor.UpperLeft, new Vector2(16, -392), new Vector2(280, 24));
+            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -420), new Vector2(280, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -450), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -486), new Vector2(280, 72));
 
             controller.Configure(
                 nameText,
@@ -119,10 +121,12 @@ namespace CheeseTama.Core
                 affectionText,
                 maturationText,
                 hatchProgressText,
-                milkGrowthText,
+                basicMilkGrowthText,
+                starMilkGrowthText,
                 unlockText,
                 lastSavedText,
                 messageText);
+            manager.RefreshDerivedCollectionRecords();
             controller.Bind(manager.CurrentSave);
             controller.ShowMessage("Ready for care.");
             visualController.Bind(manager.CurrentTama);
@@ -161,6 +165,7 @@ namespace CheeseTama.Core
         public static void BuildCollectionScene()
         {
             var manager = EnsureCoreSystems();
+            manager.RefreshDerivedCollectionRecords();
             EnsureCamera("Collection Camera");
             EnsureEventSystem();
             var canvas = EnsureCanvas("Collection Canvas");
@@ -173,13 +178,13 @@ namespace CheeseTama.Core
 
             EnsureTitle("Collection Canvas", "Collection", "Only discovered records appear here");
 
-            var panel = GetOrCreatePanel(canvas.transform, "Collection Records Panel", new Vector2(24, -180), new Vector2(560, 430));
+            var panel = GetOrCreatePanel(canvas.transform, "Collection Records Panel", new Vector2(24, -180), new Vector2(640, 620));
             var panelTransform = panel.transform;
-            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "Milk Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(520, 82));
-            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "Evolution Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -108), new Vector2(520, 82));
-            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "Event Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -200), new Vector2(520, 82));
-            var hiddenText = GetOrCreateText(panelTransform, "Hidden Records Text", "Hidden Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -292), new Vector2(520, 32));
-            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "Feed milk and hatch CheeseTama to add records here.", 14, TextAnchor.UpperLeft, new Vector2(16, -342), new Vector2(520, 64));
+            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "Milk Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(600, 72));
+            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "Evolution Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -96), new Vector2(600, 72));
+            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "Event Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -176), new Vector2(600, 260));
+            var hiddenText = GetOrCreateText(panelTransform, "Hidden Records Text", "Hidden Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -446), new Vector2(600, 32));
+            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "Feed milk and hatch CheeseTama to add records here.", 14, TextAnchor.UpperLeft, new Vector2(16, -492), new Vector2(600, 64));
 
             controller.Configure(milkText, evolutionText, eventText, hiddenText, messageText);
             controller.Bind(manager.CurrentSave);
@@ -342,6 +347,24 @@ namespace CheeseTama.Core
             rect.pivot = new Vector2(0, 1);
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = size;
+        }
+
+        private static void RemoveChildIfExists(Transform parent, string name)
+        {
+            var child = parent.Find(name);
+            if (child == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Object.Destroy(child.gameObject);
+            }
+            else
+            {
+                Object.DestroyImmediate(child.gameObject);
+            }
         }
 
         private static Text CreateText(

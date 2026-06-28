@@ -183,13 +183,12 @@ namespace CheeseTama.UI
             manager.RegisterMilkDiscovery(milkId);
 
             var growth = manager.RegisterMilkGrowth(milkId, growthPoints);
+            manager.RefreshDerivedCollectionRecords();
             if (growth == null || growth.growthLevel <= previousLevel)
             {
                 return string.Empty;
             }
 
-            var eventId = $"{milkId}_growth_lv_{growth.growthLevel}";
-            manager.RegisterEventDiscovery(eventId);
             return $"{FormatMilkName(milkId)} reached Lv. {growth.growthLevel}.";
         }
 

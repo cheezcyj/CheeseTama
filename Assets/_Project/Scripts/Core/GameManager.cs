@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CheeseTama.Collections;
 using CheeseTama.Data;
 using CheeseTama.Gameplay;
@@ -127,16 +128,21 @@ namespace CheeseTama.Core
             SaveGame();
         }
 
-        public void RegisterEventDiscovery(string eventId)
+        public bool RegisterEventDiscovery(string eventId)
         {
             if (CurrentSave == null)
             {
-                return;
+                return false;
             }
 
             CurrentSave.EnsureRuntimeDefaults();
-            collectionSystem.RegisterEvent(CurrentSave.collections, eventId);
-            SaveGame();
+            var added = AddUniqueRecord(CurrentSave.collections.events, eventId);
+            if (added)
+            {
+                SaveGame();
+            }
+
+            return added;
         }
 
         public bool IsMilkUnlocked(string milkId)
@@ -201,6 +207,67 @@ namespace CheeseTama.Core
 
             CurrentSave.EnsureRuntimeDefaults();
             return milkGrowthSystem.FindEntry(CurrentSave.milkGrowth, milkId);
+        }
+
+        public void RefreshDerivedCollectionRecords()
+        {
+            if (CurrentSave == null)
+            {
+                return;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var changed = false;
+            foreach (var entry in CurrentSave.milkGrowth)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.milkId))
+                {
+                    continue;
+                }
+
+                changed |= AddUniqueRecord(CurrentSave.collections.milk, entry.milkId);
+                var normalizedLevel = milkGrowthSystem.FindEntry(CurrentSave.milkGrowth, entry.milkId)?.growthLevel ?? entry.growthLevel;
+                if (entry.growthLevel != normalizedLevel)
+                {
+                    entry.growthLevel = normalizedLevel;
+                    changed = true;
+                }
+
+                changed |= AddMilkGrowthMilestoneRecords(entry.milkId, entry.growthLevel);
+            }
+
+            if (CurrentSave.unlocks.starMilkUnlocked)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.milk, StarMilkId);
+                changed |= AddUniqueRecord(CurrentSave.collections.events, "star_milk_unlocked");
+            }
+
+            if (changed)
+            {
+                SaveGame();
+            }
+        }
+
+        private bool AddMilkGrowthMilestoneRecords(string milkId, int growthLevel)
+        {
+            var changed = false;
+            for (var level = 1; level <= growthLevel; level++)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.events, $"{milkId}_growth_lv_{level}");
+            }
+
+            return changed;
+        }
+
+        private static bool AddUniqueRecord(ICollection<string> records, string id)
+        {
+            if (records == null || string.IsNullOrWhiteSpace(id) || records.Contains(id))
+            {
+                return false;
+            }
+
+            records.Add(id);
+            return true;
         }
     }
 }

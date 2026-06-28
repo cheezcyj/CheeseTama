@@ -20,7 +20,8 @@ namespace CheeseTama.UI
         [SerializeField] private Text affectionText;
         [SerializeField] private Text maturationText;
         [SerializeField] private Text hatchProgressText;
-        [SerializeField] private Text milkGrowthText;
+        [SerializeField] private Text basicMilkGrowthText;
+        [SerializeField] private Text starMilkGrowthText;
         [SerializeField] private Text unlockText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
@@ -41,7 +42,8 @@ namespace CheeseTama.UI
             Text affectionLabel,
             Text maturationLabel,
             Text hatchProgressLabel,
-            Text milkGrowthLabel,
+            Text basicMilkGrowthLabel,
+            Text starMilkGrowthLabel,
             Text unlockLabel,
             Text lastSavedLabel,
             Text messageLabel)
@@ -58,7 +60,8 @@ namespace CheeseTama.UI
             affectionText = affectionLabel;
             maturationText = maturationLabel;
             hatchProgressText = hatchProgressLabel;
-            milkGrowthText = milkGrowthLabel;
+            basicMilkGrowthText = basicMilkGrowthLabel;
+            starMilkGrowthText = starMilkGrowthLabel;
             unlockText = unlockLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
@@ -98,7 +101,8 @@ namespace CheeseTama.UI
             SetText(affectionText, $"Affection: {current.stats.affection}");
             SetText(maturationText, $"Maturation: {current.stats.maturation}");
             SetText(hatchProgressText, FormatHatchProgress(current));
-            SetText(milkGrowthText, FormatMilkGrowth(currentSave, current));
+            SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "Basic Milk"));
+            SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
             SetText(unlockText, FormatUnlocks(currentSave));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
@@ -136,21 +140,25 @@ namespace CheeseTama.UI
             return $"Hatch: {HatchingSystem.GetHatchProgressPercent(tama)}%";
         }
 
-        private static string FormatMilkGrowth(CheeseTamaSaveData saveData, CheeseTamaModel tama)
+        private static string FormatMilkGrowthLine(CheeseTamaSaveData saveData, string milkId, string displayName)
         {
-            var milkId = tama?.growthHistory?.lastFedMilkId;
-            if (string.IsNullOrWhiteSpace(milkId))
-            {
-                milkId = "basic_milk";
-            }
-
             var entry = FindMilkGrowthEntry(saveData, milkId);
             if (entry == null)
             {
-                return "Milk Growth: Basic Milk Lv. 0";
+                return $"{displayName}: Lv. 0 (0 pts)";
             }
 
-            return $"Milk Growth: {FormatMilkName(entry.milkId)} Lv. {entry.growthLevel} ({entry.growthPoints} pts)";
+            return $"{displayName}: Lv. {entry.growthLevel} ({entry.growthPoints} pts)";
+        }
+
+        private static string FormatStarMilkGrowthLine(CheeseTamaSaveData saveData)
+        {
+            if (saveData == null || saveData.unlocks == null || !saveData.unlocks.starMilkUnlocked)
+            {
+                return "Star Milk: locked";
+            }
+
+            return FormatMilkGrowthLine(saveData, "star_milk", "Star Milk");
         }
 
         private static MilkGrowthSaveEntry FindMilkGrowthEntry(CheeseTamaSaveData saveData, string milkId)
@@ -169,21 +177,6 @@ namespace CheeseTama.UI
             }
 
             return null;
-        }
-
-        private static string FormatMilkName(string milkId)
-        {
-            if (milkId == "basic_milk")
-            {
-                return "Basic Milk";
-            }
-
-            if (milkId == "star_milk")
-            {
-                return "Star Milk";
-            }
-
-            return string.IsNullOrWhiteSpace(milkId) ? "Milk" : milkId;
         }
 
         private static string FormatUnlocks(CheeseTamaSaveData saveData)
