@@ -19,6 +19,12 @@ namespace CheeseTama.Gameplay
         public string lastSavedAtIso;
         public StatBlock stats = StatBlock.CreateDefault();
         public GrowthHistory growthHistory = new GrowthHistory();
+
+        public void EnsureRuntimeDefaults()
+        {
+            stats ??= StatBlock.CreateDefault();
+            growthHistory ??= new GrowthHistory();
+        }
     }
 
     [Serializable]
@@ -30,4 +36,3 @@ namespace CheeseTama.Gameplay
         public string lastFedMilkId = string.Empty;
     }
 }
-

@@ -2,6 +2,7 @@ using System;
 using CheeseTama.Collections;
 using CheeseTama.Data;
 using CheeseTama.Gameplay;
+using CheeseTama.Gameplay.Growth;
 using CheeseTama.Gameplay.Stats;
 using CheeseTama.Save;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace CheeseTama.Core
 
         private readonly TimeProgressionSystem timeProgressionSystem = new TimeProgressionSystem();
         private readonly CollectionSystem collectionSystem = new CollectionSystem();
+        private readonly MilkGrowthSystem milkGrowthSystem = new MilkGrowthSystem();
 
         public static GameManager Instance { get; private set; }
         public DataRegistry DataRegistry => dataRegistry;
@@ -120,6 +122,36 @@ namespace CheeseTama.Core
                 : CurrentTama.evolutionId;
             collectionSystem.RegisterEvolution(CurrentSave.collections, evolutionId);
             SaveGame();
+        }
+
+        public MilkGrowthSaveEntry RegisterMilkGrowth(string milkId, int points)
+        {
+            if (CurrentSave == null || CurrentTama == null)
+            {
+                return null;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var entry = milkGrowthSystem.AddGrowthPoints(CurrentSave.milkGrowth, milkId, points);
+            if (entry != null)
+            {
+                CurrentTama.growthHistory.lastFedMilkId = milkId;
+                CurrentTama.growthHistory.mostUsedMilkId = milkId;
+                SaveGame();
+            }
+
+            return entry;
+        }
+
+        public MilkGrowthSaveEntry FindMilkGrowth(string milkId)
+        {
+            if (CurrentSave == null)
+            {
+                return null;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            return milkGrowthSystem.FindEntry(CurrentSave.milkGrowth, milkId);
         }
     }
 }

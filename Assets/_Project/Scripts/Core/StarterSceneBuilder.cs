@@ -86,7 +86,7 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 490));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 540));
             var panelTransform = panel.transform;
 
             var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
@@ -101,8 +101,9 @@ namespace CheeseTama.Core
             var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
             var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
             var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -336), new Vector2(260, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -366), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -402), new Vector2(280, 56));
+            var milkGrowthText = GetOrCreateText(panelTransform, "Milk Growth Text", "Milk Growth: Basic Milk Lv. 0", 16, TextAnchor.UpperLeft, new Vector2(16, -364), new Vector2(280, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -394), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -430), new Vector2(280, 72));
 
             controller.Configure(
                 nameText,
@@ -117,9 +118,10 @@ namespace CheeseTama.Core
                 affectionText,
                 maturationText,
                 hatchProgressText,
+                milkGrowthText,
                 lastSavedText,
                 messageText);
-            controller.Bind(manager.CurrentTama);
+            controller.Bind(manager.CurrentSave);
             controller.ShowMessage("Ready for care.");
             visualController.Bind(manager.CurrentTama);
 

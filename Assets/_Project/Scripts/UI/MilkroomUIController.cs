@@ -1,5 +1,6 @@
 using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Save;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,10 +20,12 @@ namespace CheeseTama.UI
         [SerializeField] private Text affectionText;
         [SerializeField] private Text maturationText;
         [SerializeField] private Text hatchProgressText;
+        [SerializeField] private Text milkGrowthText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
 
         private CheeseTamaModel current;
+        private CheeseTamaSaveData currentSave;
 
         public void Configure(
             Text nameLabel,
@@ -37,6 +40,7 @@ namespace CheeseTama.UI
             Text affectionLabel,
             Text maturationLabel,
             Text hatchProgressLabel,
+            Text milkGrowthLabel,
             Text lastSavedLabel,
             Text messageLabel)
         {
@@ -52,6 +56,7 @@ namespace CheeseTama.UI
             affectionText = affectionLabel;
             maturationText = maturationLabel;
             hatchProgressText = hatchProgressLabel;
+            milkGrowthText = milkGrowthLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
         }
@@ -59,6 +64,15 @@ namespace CheeseTama.UI
         public void Bind(CheeseTamaModel tama)
         {
             current = tama;
+            currentSave = null;
+            Refresh();
+        }
+
+        public void Bind(CheeseTamaSaveData saveData)
+        {
+            saveData?.EnsureRuntimeDefaults();
+            currentSave = saveData;
+            current = saveData?.cheeseTama;
             Refresh();
         }
 
@@ -81,6 +95,7 @@ namespace CheeseTama.UI
             SetText(affectionText, $"Affection: {current.stats.affection}");
             SetText(maturationText, $"Maturation: {current.stats.maturation}");
             SetText(hatchProgressText, FormatHatchProgress(current));
+            SetText(milkGrowthText, FormatMilkGrowth(currentSave, current));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
 
@@ -115,6 +130,51 @@ namespace CheeseTama.UI
             }
 
             return $"Hatch: {HatchingSystem.GetHatchProgressPercent(tama)}%";
+        }
+
+        private static string FormatMilkGrowth(CheeseTamaSaveData saveData, CheeseTamaModel tama)
+        {
+            var milkId = tama?.growthHistory?.lastFedMilkId;
+            if (string.IsNullOrWhiteSpace(milkId))
+            {
+                milkId = "basic_milk";
+            }
+
+            var entry = FindMilkGrowthEntry(saveData, milkId);
+            if (entry == null)
+            {
+                return "Milk Growth: Basic Milk Lv. 0";
+            }
+
+            return $"Milk Growth: {FormatMilkName(entry.milkId)} Lv. {entry.growthLevel} ({entry.growthPoints} pts)";
+        }
+
+        private static MilkGrowthSaveEntry FindMilkGrowthEntry(CheeseTamaSaveData saveData, string milkId)
+        {
+            if (saveData == null || saveData.milkGrowth == null)
+            {
+                return null;
+            }
+
+            foreach (var entry in saveData.milkGrowth)
+            {
+                if (entry != null && entry.milkId == milkId)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        private static string FormatMilkName(string milkId)
+        {
+            if (milkId == "basic_milk")
+            {
+                return "Basic Milk";
+            }
+
+            return string.IsNullOrWhiteSpace(milkId) ? "Milk" : milkId;
         }
 
         private static string FormatCondition(CheeseTamaModel tama)

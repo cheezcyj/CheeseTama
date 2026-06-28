@@ -139,6 +139,7 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.FeedMilk)
             {
                 manager.RegisterMilkDiscovery("basic_milk");
+                manager.RegisterMilkGrowth("basic_milk", 1);
             }
 
             if (result.hatched)
@@ -149,7 +150,7 @@ namespace CheeseTama.UI
 
         private void Refresh(string message, GameManager manager, bool celebrate)
         {
-            uiController.Bind(manager.CurrentTama);
+            uiController.Bind(manager.CurrentSave);
             uiController.ShowMessage(message);
 
             var visual = ResolveVisualController();

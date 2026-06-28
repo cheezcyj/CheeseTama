@@ -18,6 +18,7 @@ namespace CheeseTama.Save
         public void EnsureRuntimeDefaults()
         {
             cheeseTama ??= new CheeseTamaModel();
+            cheeseTama.EnsureRuntimeDefaults();
             unlocks ??= new UnlockSaveData();
             milkGrowth ??= new List<MilkGrowthSaveEntry>();
             collections ??= new CollectionSaveData();

@@ -22,6 +22,12 @@
       "maturation": 0,
       "affection": 10,
       "milkSatisfaction": 50
+    },
+    "growthHistory": {
+      "mostUsedMilkId": "basic_milk",
+      "mostUsedIngredientId": "none",
+      "careStyle": "gentle",
+      "lastFedMilkId": ""
     }
   },
   "unlocks": {
@@ -37,4 +43,3 @@
     "hiddenUnlockedOnly": []
   }
 }
-
