@@ -10,8 +10,8 @@ namespace CheeseTama.UI
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
-        private const float ReactionDuration = 2f;
-        private const float ReactionHopHeight = 2f;
+        private const float ReactionDuration = 0.55f;
+        private const float ReactionHopHeight = 0.32f;
 
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
@@ -19,7 +19,7 @@ namespace CheeseTama.UI
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
         private bool hasRestingLocalPosition;
-        private float reactionEndsAt;
+        private float reactionStartedAt;
         private bool isReacting;
 
         private void Awake()
@@ -47,21 +47,22 @@ namespace CheeseTama.UI
                 return;
             }
 
-            var remaining = Mathf.Clamp01((reactionEndsAt - Time.realtimeSinceStartup) / ReactionDuration);
-            var normalized = 1f - remaining;
-            var hop = Mathf.SmoothStep(0f, ReactionHopHeight, remaining);
-            var side = Mathf.Sin(normalized * Mathf.PI * 3f) * 0.22f * remaining;
-            var punch = remaining * 0.35f;
-            var wobble = Mathf.Sin(normalized * Mathf.PI * 8f) * 0.1f * remaining;
+            var normalized = Mathf.Clamp01((Time.realtimeSinceStartup - reactionStartedAt) / ReactionDuration);
+            var arc = Mathf.Sin(normalized * Mathf.PI);
+            var settle = 1f - Mathf.SmoothStep(0f, 1f, normalized);
+            var hop = arc * ReactionHopHeight;
+            var side = Mathf.Sin(normalized * Mathf.PI * 2f) * 0.035f * settle;
+            var punch = arc * 0.08f;
+            var wobble = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.025f * settle;
 
             transform.localPosition = restingLocalPosition + Vector3.up * hop + Vector3.right * side;
             transform.localScale = new Vector3(
                 baseScale.x * (1f + punch + wobble),
                 baseScale.y * (1f + punch * 0.65f - wobble),
                 baseScale.z * (1f + punch + wobble));
-            SetColor(Color.Lerp(baseColor, Color.white, remaining * 0.5f));
+            SetColor(Color.Lerp(baseColor, Color.white, arc * 0.12f));
 
-            if (remaining <= 0f)
+            if (normalized >= 1f)
             {
                 isReacting = false;
                 transform.localPosition = restingLocalPosition;
@@ -92,14 +93,13 @@ namespace CheeseTama.UI
         public void React()
         {
             CaptureRestingPosition();
-            reactionEndsAt = Time.realtimeSinceStartup + ReactionDuration;
+            reactionStartedAt = Time.realtimeSinceStartup;
             isReacting = true;
 
             var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
-            transform.localPosition = restingLocalPosition + Vector3.up * ReactionHopHeight;
-            transform.localScale = baseScale * 1.45f;
-            SetColor(Color.white);
-            Debug.Log($"CheeseTama visual reaction started on {gameObject.name}. localPosition={transform.localPosition}");
+            transform.localPosition = restingLocalPosition;
+            transform.localScale = new Vector3(baseScale.x * 1.04f, baseScale.y * 0.98f, baseScale.z * 1.04f);
+            SetColor(Color.Lerp(GetStateColor(current), Color.white, 0.08f));
         }
 
         private void EnsureRenderer()
