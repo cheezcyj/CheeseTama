@@ -13,10 +13,15 @@ namespace CheeseTama.Core
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void BuildActiveScene()
+        {
+            StarterSceneBuilder.BuildForScene(SceneManager.GetActiveScene().name);
+        }
+
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             StarterSceneBuilder.BuildForScene(scene.name);
         }
     }
 }
-

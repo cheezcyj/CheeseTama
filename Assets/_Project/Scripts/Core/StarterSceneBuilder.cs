@@ -12,9 +12,24 @@ namespace CheeseTama.Core
     {
         public static GameManager EnsureCoreSystems()
         {
+            if (GameManager.Instance != null)
+            {
+                if (GameManager.Instance.CurrentSave == null)
+                {
+                    GameManager.Instance.LoadOrCreateGame();
+                }
+
+                return GameManager.Instance;
+            }
+
             var existing = Object.FindFirstObjectByType<GameManager>();
             if (existing != null)
             {
+                if (existing.CurrentSave == null)
+                {
+                    existing.LoadOrCreateGame();
+                }
+
                 return existing;
             }
 
@@ -159,9 +174,15 @@ namespace CheeseTama.Core
             MilkroomUIController controller,
             CheeseTamaVisualController visualController)
         {
+            if (controller == null)
+            {
+                Debug.LogWarning("MilkroomUIController is missing.");
+                return;
+            }
+
             controller.Refresh();
             controller.ShowMessage(result.message);
-            visualController.React();
+            visualController?.React();
             Debug.Log(result.message);
         }
 
@@ -171,9 +192,14 @@ namespace CheeseTama.Core
             CheeseTamaVisualController visualController)
         {
             manager?.SaveGame();
+            if (manager == null || controller == null)
+            {
+                return;
+            }
+
             controller.Bind(manager.CurrentTama);
-            visualController.Bind(manager.CurrentTama);
-            visualController.React();
+            visualController?.Bind(manager.CurrentTama);
+            visualController?.React();
             controller.ShowMessage("Saved CheeseTama test data.");
             Debug.Log("Saved CheeseTama test data.");
         }
@@ -183,10 +209,15 @@ namespace CheeseTama.Core
             MilkroomUIController controller,
             CheeseTamaVisualController visualController)
         {
+            if (manager == null || controller == null)
+            {
+                return;
+            }
+
             manager.ReloadGame();
             controller.Bind(manager.CurrentTama);
-            visualController.Bind(manager.CurrentTama);
-            visualController.React();
+            visualController?.Bind(manager.CurrentTama);
+            visualController?.React();
             controller.ShowMessage("Reloaded CheeseTama save data.");
             Debug.Log("Reloaded CheeseTama save data.");
         }
@@ -196,10 +227,15 @@ namespace CheeseTama.Core
             MilkroomUIController controller,
             CheeseTamaVisualController visualController)
         {
+            if (manager == null || controller == null)
+            {
+                return;
+            }
+
             manager.ResetGame();
             controller.Bind(manager.CurrentTama);
-            visualController.Bind(manager.CurrentTama);
-            visualController.React();
+            visualController?.Bind(manager.CurrentTama);
+            visualController?.React();
             controller.ShowMessage("Reset CheeseTama save data.");
             Debug.Log("Reset CheeseTama save data.");
         }
