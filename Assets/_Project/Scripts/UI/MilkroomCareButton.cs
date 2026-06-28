@@ -83,26 +83,26 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.Save)
             {
                 manager.SaveGame();
-                Refresh("Saved CheeseTama test data.", manager);
+                Refresh("Saved CheeseTama test data.", manager, false);
                 return;
             }
 
             if (action == MilkroomCareAction.Reload)
             {
                 manager.ReloadGame();
-                Refresh("Reloaded CheeseTama save data.", manager);
+                Refresh("Reloaded CheeseTama save data.", manager, false);
                 return;
             }
 
             if (action == MilkroomCareAction.Reset)
             {
                 manager.ResetGame();
-                Refresh("Reset CheeseTama save data.", manager);
+                Refresh("Reset CheeseTama save data.", manager, false);
                 return;
             }
 
             var result = RunCareAction(manager);
-            Refresh(result.message, manager);
+            Refresh(result.message, manager, result.hatched);
         }
 
         private CareActionResult RunCareAction(GameManager manager)
@@ -117,7 +117,7 @@ namespace CheeseTama.UI
             };
         }
 
-        private void Refresh(string message, GameManager manager)
+        private void Refresh(string message, GameManager manager, bool celebrate)
         {
             uiController.Bind(manager.CurrentTama);
             uiController.ShowMessage(message);
@@ -126,7 +126,7 @@ namespace CheeseTama.UI
             if (visual != null)
             {
                 visual.Bind(manager.CurrentTama);
-                visual.React();
+                visual.React(celebrate);
             }
             else
             {

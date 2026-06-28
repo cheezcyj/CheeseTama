@@ -80,12 +80,18 @@ namespace CheeseTama.Gameplay.Care
 
             if (hatched)
             {
-                return new CareActionResult(true, true, "The egg hatched into a soft CheeseTama.");
+                return new CareActionResult(true, true, "The shell opened. A soft CheeseTama woke up.");
             }
 
             if (tama.level > levelBefore)
             {
-                return new CareActionResult(true, false, $"{message} Level up!");
+                return new CareActionResult(true, false, $"{message} Level up. Hatch {HatchingSystem.GetHatchProgressPercent(tama)}%.");
+            }
+
+            var hatchProgress = HatchingSystem.GetHatchProgressPercent(tama);
+            if (!tama.isHatched && hatchProgress >= 75)
+            {
+                return new CareActionResult(true, false, $"{message} The shell feels warm. Hatch {hatchProgress}%.");
             }
 
             return new CareActionResult(true, false, message);
@@ -97,4 +103,3 @@ namespace CheeseTama.Gameplay.Care
         }
     }
 }
-

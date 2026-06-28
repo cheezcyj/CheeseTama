@@ -20,3 +20,4 @@
 - Hold the care reaction at its peak first so Transform position changes are visible in Inspector.
 - Move MaterialPropertyBlock creation out of the visual controller field initializer to satisfy Unity runtime rules.
 - Tune CheeseTama care feedback into a shorter, gentler hop and remove temporary visual diagnostics.
+- Add Hatch progress to the Milkroom status panel and celebrate the first hatch with a stronger visual reaction.

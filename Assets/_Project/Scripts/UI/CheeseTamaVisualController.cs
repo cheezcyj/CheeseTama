@@ -10,8 +10,14 @@ namespace CheeseTama.UI
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
-        private const float ReactionDuration = 0.55f;
-        private const float ReactionHopHeight = 0.32f;
+        private const float CareReactionDuration = 0.55f;
+        private const float CareReactionHopHeight = 0.32f;
+        private const float CareReactionPunch = 0.08f;
+        private const float CareReactionFlash = 0.12f;
+        private const float HatchReactionDuration = 1.15f;
+        private const float HatchReactionHopHeight = 0.72f;
+        private const float HatchReactionPunch = 0.2f;
+        private const float HatchReactionFlash = 0.38f;
 
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
@@ -20,6 +26,10 @@ namespace CheeseTama.UI
         private Vector3 restingLocalPosition;
         private bool hasRestingLocalPosition;
         private float reactionStartedAt;
+        private float reactionDuration = CareReactionDuration;
+        private float reactionHopHeight = CareReactionHopHeight;
+        private float reactionPunch = CareReactionPunch;
+        private float reactionFlash = CareReactionFlash;
         private bool isReacting;
 
         private void Awake()
@@ -47,12 +57,12 @@ namespace CheeseTama.UI
                 return;
             }
 
-            var normalized = Mathf.Clamp01((Time.realtimeSinceStartup - reactionStartedAt) / ReactionDuration);
+            var normalized = Mathf.Clamp01((Time.realtimeSinceStartup - reactionStartedAt) / reactionDuration);
             var arc = Mathf.Sin(normalized * Mathf.PI);
             var settle = 1f - Mathf.SmoothStep(0f, 1f, normalized);
-            var hop = arc * ReactionHopHeight;
+            var hop = arc * reactionHopHeight;
             var side = Mathf.Sin(normalized * Mathf.PI * 2f) * 0.035f * settle;
-            var punch = arc * 0.08f;
+            var punch = arc * reactionPunch;
             var wobble = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.025f * settle;
 
             transform.localPosition = restingLocalPosition + Vector3.up * hop + Vector3.right * side;
@@ -60,7 +70,7 @@ namespace CheeseTama.UI
                 baseScale.x * (1f + punch + wobble),
                 baseScale.y * (1f + punch * 0.65f - wobble),
                 baseScale.z * (1f + punch + wobble));
-            SetColor(Color.Lerp(baseColor, Color.white, arc * 0.12f));
+            SetColor(Color.Lerp(baseColor, Color.white, arc * reactionFlash));
 
             if (normalized >= 1f)
             {
@@ -90,16 +100,22 @@ namespace CheeseTama.UI
             SetColor(GetStateColor(current));
         }
 
-        public void React()
+        public void React(bool celebrate = false)
         {
             CaptureRestingPosition();
             reactionStartedAt = Time.realtimeSinceStartup;
+            reactionDuration = celebrate ? HatchReactionDuration : CareReactionDuration;
+            reactionHopHeight = celebrate ? HatchReactionHopHeight : CareReactionHopHeight;
+            reactionPunch = celebrate ? HatchReactionPunch : CareReactionPunch;
+            reactionFlash = celebrate ? HatchReactionFlash : CareReactionFlash;
             isReacting = true;
 
             var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
             transform.localPosition = restingLocalPosition;
-            transform.localScale = new Vector3(baseScale.x * 1.04f, baseScale.y * 0.98f, baseScale.z * 1.04f);
-            SetColor(Color.Lerp(GetStateColor(current), Color.white, 0.08f));
+            var squash = celebrate ? 0.94f : 0.98f;
+            var stretch = celebrate ? 1.1f : 1.04f;
+            transform.localScale = new Vector3(baseScale.x * stretch, baseScale.y * squash, baseScale.z * stretch);
+            SetColor(Color.Lerp(GetStateColor(current), Color.white, celebrate ? 0.2f : 0.08f));
         }
 
         private void EnsureRenderer()

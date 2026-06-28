@@ -82,7 +82,7 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 430));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 462));
             var panelTransform = panel.transform;
 
             var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
@@ -95,8 +95,9 @@ namespace CheeseTama.Core
             var healthText = GetOrCreateText(panelTransform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -224), new Vector2(260, 24));
             var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -252), new Vector2(260, 24));
             var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -310), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -346), new Vector2(280, 56));
+            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -338), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -374), new Vector2(280, 56));
 
             controller.Configure(
                 nameText,
@@ -109,6 +110,7 @@ namespace CheeseTama.Core
                 healthText,
                 affectionText,
                 maturationText,
+                hatchProgressText,
                 lastSavedText,
                 messageText);
             controller.Bind(manager.CurrentTama);
