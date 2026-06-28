@@ -160,6 +160,9 @@ namespace CheeseTama.Core
 
             var collectionButton = GetOrCreateButton(canvas.transform, "Collection Button", "Collection", new Vector2(700, 36));
             ConfigureNavigationButton(collectionButton, SceneNames.Collection, true);
+
+            var debugButton = GetOrCreateButton(canvas.transform, "Debug Button", "Debug", new Vector2(840, 36));
+            ConfigureNavigationButton(debugButton, SceneNames.Debug, true);
         }
 
         public static void BuildCollectionScene()
@@ -195,10 +198,58 @@ namespace CheeseTama.Core
 
         public static void BuildDebugScene()
         {
-            EnsureCoreSystems();
+            var manager = EnsureCoreSystems();
+            manager.RefreshDerivedCollectionRecords();
             EnsureCamera("Debug Camera");
+            EnsureLight();
             EnsureEventSystem();
+            var visualController = EnsureCheeseTamaPlaceholder();
+            var canvas = EnsureCanvas("Debug Canvas");
+
+            var controller = Object.FindFirstObjectByType<DebugUIController>();
+            if (controller == null)
+            {
+                controller = canvas.gameObject.AddComponent<DebugUIController>();
+            }
+
             EnsureTitle("Debug Canvas", "Debug", "Developer test surface");
+
+            var panel = GetOrCreatePanel(canvas.transform, "Debug State Panel", new Vector2(24, -180), new Vector2(420, 520));
+            var panelTransform = panel.transform;
+            var stateText = GetOrCreateText(panelTransform, "Debug State Text", "Debug State", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(380, 360));
+            var messageText = GetOrCreateText(panelTransform, "Debug Message Text", "Pick a preset.", 14, TextAnchor.UpperLeft, new Vector2(16, -400), new Vector2(380, 80));
+
+            controller.Configure(stateText, messageText);
+            controller.Bind(manager.CurrentSave);
+            controller.ShowMessage("Pick a preset to check values and CheeseTama expressions.");
+            visualController.Bind(manager.CurrentTama);
+
+            var hungryButton = GetOrCreateButton(canvas.transform, "Hungry Preset Button", "Hungry", new Vector2(-490, 96));
+            ConfigureDebugButton(hungryButton, DebugAction.SetHungry, controller, visualController);
+
+            var sleepyButton = GetOrCreateButton(canvas.transform, "Sleepy Preset Button", "Sleepy", new Vector2(-350, 96));
+            ConfigureDebugButton(sleepyButton, DebugAction.SetSleepy, controller, visualController);
+
+            var messyButton = GetOrCreateButton(canvas.transform, "Messy Preset Button", "Messy", new Vector2(-210, 96));
+            ConfigureDebugButton(messyButton, DebugAction.SetMessy, controller, visualController);
+
+            var unwellButton = GetOrCreateButton(canvas.transform, "Unwell Preset Button", "Unwell", new Vector2(-70, 96));
+            ConfigureDebugButton(unwellButton, DebugAction.SetUnwell, controller, visualController);
+
+            var cheerfulButton = GetOrCreateButton(canvas.transform, "Cheerful Preset Button", "Cheerful", new Vector2(70, 96));
+            ConfigureDebugButton(cheerfulButton, DebugAction.SetCheerful, controller, visualController);
+
+            var hatchButton = GetOrCreateButton(canvas.transform, "Hatch Preset Button", "Hatch", new Vector2(210, 96));
+            ConfigureDebugButton(hatchButton, DebugAction.HatchNow, controller, visualController);
+
+            var unlockStarButton = GetOrCreateButton(canvas.transform, "Unlock Star Preset Button", "Unlock Star", new Vector2(-210, 36));
+            ConfigureDebugButton(unlockStarButton, DebugAction.UnlockStarMilk, controller, visualController);
+
+            var resetButton = GetOrCreateButton(canvas.transform, "Debug Reset Button", "Reset", new Vector2(-70, 36));
+            ConfigureDebugButton(resetButton, DebugAction.ResetSave, controller, visualController);
+
+            var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(70, 36));
+            ConfigureNavigationButton(milkroomButton, SceneNames.Milkroom, true);
         }
 
         private static Camera EnsureCamera(string name)
@@ -471,6 +522,22 @@ namespace CheeseTama.Core
             }
 
             careButton.Configure(action, controller, visualController);
+        }
+
+        private static void ConfigureDebugButton(
+            Button button,
+            DebugAction action,
+            DebugUIController controller,
+            CheeseTamaVisualController visualController)
+        {
+            button.onClick.RemoveAllListeners();
+            var debugButton = button.GetComponent<DebugActionButton>();
+            if (debugButton == null)
+            {
+                debugButton = button.gameObject.AddComponent<DebugActionButton>();
+            }
+
+            debugButton.Configure(action, controller, visualController);
         }
 
         private static void ConfigureNavigationButton(Button button, string targetSceneName, bool saveBeforeLoad)
