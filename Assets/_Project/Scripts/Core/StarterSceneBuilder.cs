@@ -61,31 +61,37 @@ namespace CheeseTama.Core
             EnsureCheeseTamaPlaceholder();
 
             var canvas = EnsureCanvas("Milkroom Canvas");
-            if (Object.FindFirstObjectByType<MilkroomUIController>() != null)
+            var controller = Object.FindFirstObjectByType<MilkroomUIController>();
+            if (controller == null)
             {
-                return;
+                controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var controller = canvas.gameObject.AddComponent<MilkroomUIController>();
-            var panel = CreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(260, 254));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(260, 254));
+            var panelTransform = panel.transform;
 
-            var nameText = CreateText(panel.transform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(228, 30));
-            var levelText = CreateText(panel.transform, "Level Text", "Lv. 1", 18, TextAnchor.UpperLeft, new Vector2(16, -48), new Vector2(228, 26));
-            var hungerText = CreateText(panel.transform, "Hunger Text", "Hunger: 80", 16, TextAnchor.UpperLeft, new Vector2(16, -84), new Vector2(228, 24));
-            var moodText = CreateText(panel.transform, "Mood Text", "Mood: 70", 16, TextAnchor.UpperLeft, new Vector2(16, -112), new Vector2(228, 24));
-            var cleanlinessText = CreateText(panel.transform, "Cleanliness Text", "Cleanliness: 90", 16, TextAnchor.UpperLeft, new Vector2(16, -140), new Vector2(228, 24));
-            var sleepinessText = CreateText(panel.transform, "Sleepiness Text", "Sleepiness: 20", 16, TextAnchor.UpperLeft, new Vector2(16, -168), new Vector2(228, 24));
-            var healthText = CreateText(panel.transform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -196), new Vector2(228, 24));
+            var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(228, 30));
+            var levelText = GetOrCreateText(panelTransform, "Level Text", "Lv. 1", 18, TextAnchor.UpperLeft, new Vector2(16, -48), new Vector2(228, 26));
+            var hungerText = GetOrCreateText(panelTransform, "Hunger Text", "Hunger: 80", 16, TextAnchor.UpperLeft, new Vector2(16, -84), new Vector2(228, 24));
+            var moodText = GetOrCreateText(panelTransform, "Mood Text", "Mood: 70", 16, TextAnchor.UpperLeft, new Vector2(16, -112), new Vector2(228, 24));
+            var cleanlinessText = GetOrCreateText(panelTransform, "Cleanliness Text", "Cleanliness: 90", 16, TextAnchor.UpperLeft, new Vector2(16, -140), new Vector2(228, 24));
+            var sleepinessText = GetOrCreateText(panelTransform, "Sleepiness Text", "Sleepiness: 20", 16, TextAnchor.UpperLeft, new Vector2(16, -168), new Vector2(228, 24));
+            var healthText = GetOrCreateText(panelTransform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -196), new Vector2(228, 24));
 
             controller.Configure(nameText, levelText, hungerText, moodText, cleanlinessText, sleepinessText, healthText);
             controller.Bind(manager.CurrentTama);
 
-            CreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-150, 36))
-                .onClick.AddListener(() => FeedTestMilk(manager, controller));
-            CreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(0, 36))
-                .onClick.AddListener(() => CleanTestRoom(manager, controller));
-            CreateButton(canvas.transform, "Save Button", "Save", new Vector2(150, 36))
-                .onClick.AddListener(() => SaveTestGame(manager));
+            var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-150, 36));
+            feedButton.onClick.RemoveAllListeners();
+            feedButton.onClick.AddListener(() => FeedTestMilk(manager, controller));
+
+            var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(0, 36));
+            cleanButton.onClick.RemoveAllListeners();
+            cleanButton.onClick.AddListener(() => CleanTestRoom(manager, controller));
+
+            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(150, 36));
+            saveButton.onClick.RemoveAllListeners();
+            saveButton.onClick.AddListener(() => SaveTestGame(manager));
         }
 
         public static void BuildCollectionScene()
@@ -268,6 +274,17 @@ namespace CheeseTama.Core
             return panel;
         }
 
+        private static GameObject GetOrCreatePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
+        {
+            var existing = parent.Find(name);
+            if (existing != null)
+            {
+                return existing.gameObject;
+            }
+
+            return CreatePanel(parent, name, anchoredPosition, size);
+        }
+
         private static Text CreateText(
             Transform parent,
             string name,
@@ -297,6 +314,25 @@ namespace CheeseTama.Core
             return label;
         }
 
+        private static Text GetOrCreateText(
+            Transform parent,
+            string name,
+            string text,
+            int fontSize,
+            TextAnchor alignment,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            bool centered = false)
+        {
+            var existing = parent.Find(name);
+            if (existing != null && existing.TryGetComponent(out Text existingText))
+            {
+                return existingText;
+            }
+
+            return CreateText(parent, name, text, fontSize, alignment, anchoredPosition, size, centered);
+        }
+
         private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
         {
             var buttonObject = new GameObject(name);
@@ -317,6 +353,17 @@ namespace CheeseTama.Core
 
             CreateText(buttonObject.transform, "Label", label, 16, TextAnchor.MiddleCenter, Vector2.zero, rect.sizeDelta, true);
             return button;
+        }
+
+        private static Button GetOrCreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
+        {
+            var existing = parent.Find(name);
+            if (existing != null && existing.TryGetComponent(out Button existingButton))
+            {
+                return existingButton;
+            }
+
+            return CreateButton(parent, name, label, anchoredPosition);
         }
 
         private static Font GetDefaultFont()
