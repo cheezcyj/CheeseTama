@@ -31,3 +31,4 @@
 - Add a Star Milk prototype that unlocks from Basic Milk Lv. 2 and can be fed from the Milkroom.
 - Split Basic and Star Milk growth displays and backfill missing milk milestone collection records.
 - Add a visible hatched CheeseTama form with face details and friendly display names after hatching.
+- Add condition-based facial expressions for hatched CheeseTama.
