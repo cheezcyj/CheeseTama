@@ -1,0 +1,22 @@
+{
+  "id": "hidden_001",
+  "internalCategory": "internal",
+  "displayNameAfterUnlock": "Unlocked Card",
+  "rarity": "Epic",
+  "isHiddenUntilUnlocked": true,
+  "displayPolicy": {
+    "showSlotBeforeUnlock": false,
+    "showNameBeforeUnlock": false,
+    "showRarityBeforeUnlock": false,
+    "showCategoryBeforeUnlock": false,
+    "showConditionBeforeUnlock": false,
+    "showConditionAfterUnlock": false,
+    "showNameAfterUnlock": true,
+    "showRarityAfterUnlock": true,
+    "showCardImageAfterUnlock": true,
+    "showQuoteAfterUnlock": true,
+    "showDeepTextAfterUnlock": true,
+    "showAcquiredDateAfterUnlock": true
+  }
+}
+

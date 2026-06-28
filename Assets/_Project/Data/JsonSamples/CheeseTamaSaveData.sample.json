@@ -1,0 +1,40 @@
+{
+  "version": "0.1.0",
+  "playerId": "local_player",
+  "cheeseTama": {
+    "id": "ct_001",
+    "name": "CheeseTama",
+    "eggType": "cream_egg",
+    "isHatched": false,
+    "level": 1,
+    "levelProgress": 0,
+    "maxLevel": 33,
+    "form": "egg",
+    "evolutionId": "",
+    "createdAtIso": "2026-06-28T09:00:00+09:00",
+    "lastSavedAtIso": "2026-06-28T09:00:00+09:00",
+    "stats": {
+      "hunger": 80,
+      "mood": 70,
+      "cleanliness": 90,
+      "sleepiness": 20,
+      "health": 100,
+      "maturation": 0,
+      "affection": 10,
+      "milkSatisfaction": 50
+    }
+  },
+  "unlocks": {
+    "starEggUnlocked": false,
+    "starMilkUnlocked": false,
+    "fantasyPowderEnabled": false
+  },
+  "milkGrowth": [],
+  "collections": {
+    "milk": [],
+    "evolution": [],
+    "events": [],
+    "hiddenUnlockedOnly": []
+  }
+}
+

@@ -1,0 +1,19 @@
+{
+  "name": "CheeseTama.Editor",
+  "rootNamespace": "CheeseTama.Editor",
+  "references": [
+    "CheeseTama"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+
