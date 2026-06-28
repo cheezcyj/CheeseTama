@@ -242,6 +242,14 @@ namespace CheeseTama.Core
                 changed |= AddUniqueRecord(CurrentSave.collections.events, "star_milk_unlocked");
             }
 
+            if (CurrentTama != null && CurrentTama.isHatched)
+            {
+                var evolutionId = string.IsNullOrWhiteSpace(CurrentTama.evolutionId)
+                    ? CurrentTama.form
+                    : CurrentTama.evolutionId;
+                changed |= AddUniqueRecord(CurrentSave.collections.evolution, evolutionId);
+            }
+
             if (changed)
             {
                 SaveGame();

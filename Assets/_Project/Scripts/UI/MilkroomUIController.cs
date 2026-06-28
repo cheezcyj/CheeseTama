@@ -91,7 +91,7 @@ namespace CheeseTama.UI
 
             SetText(nameText, current.name);
             SetText(levelText, $"Lv. {current.level} ({current.levelProgress}%)");
-            SetText(formText, $"Form: {current.form}");
+            SetText(formText, $"Form: {FormatFormName(current.form)}");
             SetText(conditionText, $"Condition: {FormatCondition(current)}");
             SetText(hungerText, $"Hunger: {current.stats.hunger}");
             SetText(moodText, $"Mood: {current.stats.mood}");
@@ -138,6 +138,21 @@ namespace CheeseTama.UI
             }
 
             return $"Hatch: {HatchingSystem.GetHatchProgressPercent(tama)}%";
+        }
+
+        private static string FormatFormName(string form)
+        {
+            if (form == "egg")
+            {
+                return "Egg";
+            }
+
+            if (form == "soft_cheesetama")
+            {
+                return "Soft CheeseTama";
+            }
+
+            return string.IsNullOrWhiteSpace(form) ? "Unknown" : form;
         }
 
         private static string FormatMilkGrowthLine(CheeseTamaSaveData saveData, string milkId, string displayName)

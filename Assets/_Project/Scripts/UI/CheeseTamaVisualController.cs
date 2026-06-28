@@ -22,6 +22,7 @@ namespace CheeseTama.UI
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
         private MaterialPropertyBlock propertyBlock;
+        private Transform faceRoot;
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
         private bool hasRestingLocalPosition;
@@ -36,6 +37,7 @@ namespace CheeseTama.UI
         {
             EnsurePropertyBlock();
             EnsureRenderer();
+            EnsureHatchedFeatures();
             CaptureRestingPosition();
         }
 
@@ -48,6 +50,7 @@ namespace CheeseTama.UI
 
             var baseScale = current.isHatched ? hatchedScale : eggScale;
             var baseColor = GetStateColor(current);
+            UpdateHatchedFeatureVisibility();
 
             if (!isReacting)
             {
@@ -84,6 +87,7 @@ namespace CheeseTama.UI
         public void Bind(CheeseTamaModel tama)
         {
             EnsureRenderer();
+            EnsureHatchedFeatures();
             CaptureRestingPosition();
             current = tama;
             if (current == null)
@@ -98,6 +102,7 @@ namespace CheeseTama.UI
             }
 
             SetColor(GetStateColor(current));
+            UpdateHatchedFeatureVisibility();
         }
 
         public void React(bool celebrate = false)
@@ -131,6 +136,57 @@ namespace CheeseTama.UI
             {
                 targetRenderer.enabled = true;
             }
+        }
+
+        private void EnsureHatchedFeatures()
+        {
+            if (faceRoot != null)
+            {
+                return;
+            }
+
+            var root = new GameObject("Hatched Face Root");
+            root.transform.SetParent(transform, false);
+            faceRoot = root.transform;
+
+            CreateFeature("Left Eye", PrimitiveType.Sphere, new Vector3(-0.3f, 0.2f, -0.58f), new Vector3(0.14f, 0.14f, 0.04f), new Color(0.17f, 0.11f, 0.08f));
+            CreateFeature("Right Eye", PrimitiveType.Sphere, new Vector3(0.3f, 0.2f, -0.58f), new Vector3(0.14f, 0.14f, 0.04f), new Color(0.17f, 0.11f, 0.08f));
+            CreateFeature("Smile", PrimitiveType.Cube, new Vector3(0f, -0.16f, -0.6f), new Vector3(0.34f, 0.055f, 0.035f), new Color(0.24f, 0.13f, 0.08f));
+            CreateFeature("Left Cheek", PrimitiveType.Sphere, new Vector3(-0.46f, -0.08f, -0.56f), new Vector3(0.18f, 0.1f, 0.035f), new Color(1f, 0.48f, 0.32f));
+            CreateFeature("Right Cheek", PrimitiveType.Sphere, new Vector3(0.46f, -0.08f, -0.56f), new Vector3(0.18f, 0.1f, 0.035f), new Color(1f, 0.48f, 0.32f));
+            CreateFeature("Cheese Hole A", PrimitiveType.Sphere, new Vector3(-0.2f, 0.48f, -0.57f), new Vector3(0.11f, 0.08f, 0.025f), new Color(0.82f, 0.5f, 0.12f));
+            CreateFeature("Cheese Hole B", PrimitiveType.Sphere, new Vector3(0.42f, 0.46f, -0.55f), new Vector3(0.08f, 0.06f, 0.025f), new Color(0.82f, 0.5f, 0.12f));
+            CreateFeature("Cheese Hole C", PrimitiveType.Sphere, new Vector3(0.18f, -0.42f, -0.56f), new Vector3(0.1f, 0.075f, 0.025f), new Color(0.82f, 0.5f, 0.12f));
+            UpdateHatchedFeatureVisibility();
+        }
+
+        private void CreateFeature(string name, PrimitiveType primitive, Vector3 localPosition, Vector3 localScale, Color color)
+        {
+            var feature = GameObject.CreatePrimitive(primitive);
+            feature.name = name;
+            feature.transform.SetParent(faceRoot, false);
+            feature.transform.localPosition = localPosition;
+            feature.transform.localRotation = Quaternion.identity;
+            feature.transform.localScale = localScale;
+
+            var collider = feature.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Destroy(collider);
+            }
+
+            var renderer = feature.GetComponent<Renderer>();
+            PaintFeature(renderer, color);
+        }
+
+        private void UpdateHatchedFeatureVisibility()
+        {
+            if (faceRoot == null)
+            {
+                return;
+            }
+
+            faceRoot.gameObject.SetActive(current != null && current.isHatched);
         }
 
         private void CaptureRestingPosition()
@@ -171,6 +227,20 @@ namespace CheeseTama.UI
             propertyBlock.SetColor(BaseColorId, color);
             propertyBlock.SetColor(ColorId, color);
             targetRenderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private void PaintFeature(Renderer renderer, Color color)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            EnsurePropertyBlock();
+            renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(BaseColorId, color);
+            propertyBlock.SetColor(ColorId, color);
+            renderer.SetPropertyBlock(propertyBlock);
         }
 
         private void EnsurePropertyBlock()

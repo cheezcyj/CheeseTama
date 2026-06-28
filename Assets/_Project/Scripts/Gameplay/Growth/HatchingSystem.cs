@@ -13,6 +13,7 @@ namespace CheeseTama.Gameplay.Growth
             }
 
             tama.isHatched = true;
+            tama.name = "Soft CheeseTama";
             tama.form = "soft_cheesetama";
             return true;
         }

@@ -24,6 +24,14 @@ namespace CheeseTama.Gameplay
         {
             stats ??= StatBlock.CreateDefault();
             growthHistory ??= new GrowthHistory();
+
+            if (isHatched
+                && form == "soft_cheesetama"
+                && string.IsNullOrWhiteSpace(evolutionId)
+                && (string.IsNullOrWhiteSpace(name) || name == "CheeseTama"))
+            {
+                name = "Soft CheeseTama";
+            }
         }
     }
 

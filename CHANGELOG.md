@@ -30,3 +30,4 @@
 - Record Basic Milk growth milestones as collection events with readable Collection scene labels.
 - Add a Star Milk prototype that unlocks from Basic Milk Lv. 2 and can be fed from the Milkroom.
 - Split Basic and Star Milk growth displays and backfill missing milk milestone collection records.
+- Add a visible hatched CheeseTama form with face details and friendly display names after hatching.
