@@ -10,3 +10,4 @@
 - Rebind Milkroom UI and button actions at runtime when the scene already contains generated UI.
 - Added basic care actions for feeding, playing, cleaning, resting, and visible progress feedback.
 - Added visible last-save feedback plus Reload and Reset test buttons.
+- Added CheeseTama placeholder color and pulse feedback for care actions.

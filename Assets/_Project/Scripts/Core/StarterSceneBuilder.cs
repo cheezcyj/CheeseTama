@@ -60,7 +60,7 @@ namespace CheeseTama.Core
             EnsureCamera("Milkroom Camera");
             EnsureLight();
             EnsureEventSystem();
-            EnsureCheeseTamaPlaceholder();
+            var visualController = EnsureCheeseTamaPlaceholder();
 
             var canvas = EnsureCanvas("Milkroom Canvas");
             var controller = Object.FindFirstObjectByType<MilkroomUIController>();
@@ -100,34 +100,35 @@ namespace CheeseTama.Core
                 messageText);
             controller.Bind(manager.CurrentTama);
             controller.ShowMessage("Ready for care.");
+            visualController.Bind(manager.CurrentTama);
 
             var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-480, 36));
             feedButton.onClick.RemoveAllListeners();
-            feedButton.onClick.AddListener(() => ApplyCareResult(careActions.FeedMilk(manager.CurrentTama), controller));
+            feedButton.onClick.AddListener(() => ApplyCareResult(careActions.FeedMilk(manager.CurrentTama), controller, visualController));
 
             var playButton = GetOrCreateButton(canvas.transform, "Play Button", "Play", new Vector2(-320, 36));
             playButton.onClick.RemoveAllListeners();
-            playButton.onClick.AddListener(() => ApplyCareResult(careActions.Play(manager.CurrentTama), controller));
+            playButton.onClick.AddListener(() => ApplyCareResult(careActions.Play(manager.CurrentTama), controller, visualController));
 
             var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(-160, 36));
             cleanButton.onClick.RemoveAllListeners();
-            cleanButton.onClick.AddListener(() => ApplyCareResult(careActions.Clean(manager.CurrentTama), controller));
+            cleanButton.onClick.AddListener(() => ApplyCareResult(careActions.Clean(manager.CurrentTama), controller, visualController));
 
             var restButton = GetOrCreateButton(canvas.transform, "Rest Button", "Rest", new Vector2(0, 36));
             restButton.onClick.RemoveAllListeners();
-            restButton.onClick.AddListener(() => ApplyCareResult(careActions.Rest(manager.CurrentTama), controller));
+            restButton.onClick.AddListener(() => ApplyCareResult(careActions.Rest(manager.CurrentTama), controller, visualController));
 
             var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(160, 36));
             saveButton.onClick.RemoveAllListeners();
-            saveButton.onClick.AddListener(() => SaveTestGame(manager, controller));
+            saveButton.onClick.AddListener(() => SaveTestGame(manager, controller, visualController));
 
             var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(320, 36));
             reloadButton.onClick.RemoveAllListeners();
-            reloadButton.onClick.AddListener(() => ReloadTestGame(manager, controller));
+            reloadButton.onClick.AddListener(() => ReloadTestGame(manager, controller, visualController));
 
             var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(480, 36));
             resetButton.onClick.RemoveAllListeners();
-            resetButton.onClick.AddListener(() => ResetTestGame(manager, controller));
+            resetButton.onClick.AddListener(() => ResetTestGame(manager, controller, visualController));
         }
 
         public static void BuildCollectionScene()
@@ -153,33 +154,52 @@ namespace CheeseTama.Core
             EnsureTitle("Debug Canvas", "Debug", "Developer test surface");
         }
 
-        private static void ApplyCareResult(CareActionResult result, MilkroomUIController controller)
+        private static void ApplyCareResult(
+            CareActionResult result,
+            MilkroomUIController controller,
+            CheeseTamaVisualController visualController)
         {
             controller.Refresh();
             controller.ShowMessage(result.message);
+            visualController.React();
             Debug.Log(result.message);
         }
 
-        private static void SaveTestGame(GameManager manager, MilkroomUIController controller)
+        private static void SaveTestGame(
+            GameManager manager,
+            MilkroomUIController controller,
+            CheeseTamaVisualController visualController)
         {
             manager?.SaveGame();
             controller.Bind(manager.CurrentTama);
+            visualController.Bind(manager.CurrentTama);
+            visualController.React();
             controller.ShowMessage("Saved CheeseTama test data.");
             Debug.Log("Saved CheeseTama test data.");
         }
 
-        private static void ReloadTestGame(GameManager manager, MilkroomUIController controller)
+        private static void ReloadTestGame(
+            GameManager manager,
+            MilkroomUIController controller,
+            CheeseTamaVisualController visualController)
         {
             manager.ReloadGame();
             controller.Bind(manager.CurrentTama);
+            visualController.Bind(manager.CurrentTama);
+            visualController.React();
             controller.ShowMessage("Reloaded CheeseTama save data.");
             Debug.Log("Reloaded CheeseTama save data.");
         }
 
-        private static void ResetTestGame(GameManager manager, MilkroomUIController controller)
+        private static void ResetTestGame(
+            GameManager manager,
+            MilkroomUIController controller,
+            CheeseTamaVisualController visualController)
         {
             manager.ResetGame();
             controller.Bind(manager.CurrentTama);
+            visualController.Bind(manager.CurrentTama);
+            visualController.React();
             controller.ShowMessage("Reset CheeseTama save data.");
             Debug.Log("Reset CheeseTama save data.");
         }
@@ -216,11 +236,12 @@ namespace CheeseTama.Core
             lightObject.transform.rotation = Quaternion.Euler(50, -30, 0);
         }
 
-        private static void EnsureCheeseTamaPlaceholder()
+        private static CheeseTamaVisualController EnsureCheeseTamaPlaceholder()
         {
-            if (GameObject.Find("CheeseTama Egg Placeholder") != null)
+            var existing = GameObject.Find("CheeseTama Egg Placeholder");
+            if (existing != null)
             {
-                return;
+                return GetOrCreateVisualController(existing);
             }
 
             var egg = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -228,20 +249,18 @@ namespace CheeseTama.Core
             egg.transform.position = new Vector3(0, -0.3f, 0);
             egg.transform.localScale = new Vector3(1.25f, 1.55f, 1.25f);
 
-            var renderer = egg.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                var shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null)
-                {
-                    shader = Shader.Find("Standard");
-                }
+            return GetOrCreateVisualController(egg);
+        }
 
-                renderer.sharedMaterial = new Material(shader)
-                {
-                    color = new Color(1f, 0.84f, 0.28f)
-                };
+        private static CheeseTamaVisualController GetOrCreateVisualController(GameObject target)
+        {
+            var controller = target.GetComponent<CheeseTamaVisualController>();
+            if (controller == null)
+            {
+                controller = target.AddComponent<CheeseTamaVisualController>();
             }
+
+            return controller;
         }
 
         private static Canvas EnsureCanvas(string name)
