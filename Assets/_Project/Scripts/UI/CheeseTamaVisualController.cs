@@ -10,15 +10,21 @@ namespace CheeseTama.UI
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
+        private const float ReactionDuration = 0.45f;
+        private const float ReactionHopHeight = 0.42f;
+
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
         private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
         private CheeseTamaModel current;
-        private float pulseTimer;
+        private Vector3 restingLocalPosition;
+        private bool hasRestingLocalPosition;
+        private float reactionTimer;
 
         private void Awake()
         {
             EnsureRenderer();
+            CaptureRestingPosition();
         }
 
         private void Update()
@@ -28,16 +34,36 @@ namespace CheeseTama.UI
                 return;
             }
 
-            pulseTimer = Mathf.Max(0, pulseTimer - Time.deltaTime);
+            reactionTimer = Mathf.Max(0f, reactionTimer - Time.deltaTime);
             var baseScale = current.isHatched ? hatchedScale : eggScale;
-            var pulse = pulseTimer > 0 ? Mathf.Sin(pulseTimer * 18f) * 0.08f : 0f;
-            transform.localScale = Vector3.Lerp(transform.localScale, baseScale * (1f + pulse), Time.deltaTime * 12f);
-            SetColor(GetStateColor(current));
+            var baseColor = GetStateColor(current);
+
+            if (reactionTimer <= 0f)
+            {
+                transform.localPosition = Vector3.Lerp(transform.localPosition, restingLocalPosition, Time.deltaTime * 14f);
+                transform.localScale = Vector3.Lerp(transform.localScale, baseScale, Time.deltaTime * 14f);
+                SetColor(baseColor);
+                return;
+            }
+
+            var normalized = 1f - reactionTimer / ReactionDuration;
+            var hop = Mathf.Sin(normalized * Mathf.PI) * ReactionHopHeight;
+            var punch = Mathf.Sin(normalized * Mathf.PI) * 0.18f;
+            var wobble = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.04f;
+            var targetScale = new Vector3(
+                baseScale.x * (1f + punch + wobble),
+                baseScale.y * (1f + punch * 0.55f - wobble),
+                baseScale.z * (1f + punch + wobble));
+
+            transform.localPosition = Vector3.Lerp(transform.localPosition, restingLocalPosition + Vector3.up * hop, Time.deltaTime * 22f);
+            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * 22f);
+            SetColor(Color.Lerp(baseColor, Color.white, Mathf.Sin(normalized * Mathf.PI) * 0.35f));
         }
 
         public void Bind(CheeseTamaModel tama)
         {
             EnsureRenderer();
+            CaptureRestingPosition();
             current = tama;
             if (current == null)
             {
@@ -45,12 +71,14 @@ namespace CheeseTama.UI
             }
 
             transform.localScale = current.isHatched ? hatchedScale : eggScale;
+            transform.localPosition = restingLocalPosition;
             SetColor(GetStateColor(current));
         }
 
         public void React()
         {
-            pulseTimer = 0.35f;
+            CaptureRestingPosition();
+            reactionTimer = ReactionDuration;
         }
 
         private void EnsureRenderer()
@@ -66,6 +94,17 @@ namespace CheeseTama.UI
             {
                 targetRenderer.enabled = true;
             }
+        }
+
+        private void CaptureRestingPosition()
+        {
+            if (hasRestingLocalPosition)
+            {
+                return;
+            }
+
+            restingLocalPosition = transform.localPosition;
+            hasRestingLocalPosition = true;
         }
 
         private void DisableSpriteRendererIfPresent()
@@ -126,4 +165,3 @@ namespace CheeseTama.UI
         }
     }
 }
-
