@@ -25,3 +25,4 @@
 - Fix the Wait 1h button compiler error caused by duplicate local variable names.
 - Add a Milkroom condition line and tint CheeseTama by hunger, cleanliness, sleepiness, and health state.
 - Connect first collection records from Milkroom care and add a generated Collection scene summary panel.
+- Add scene navigation buttons between Boot, Milkroom, and Collection prototype scenes.

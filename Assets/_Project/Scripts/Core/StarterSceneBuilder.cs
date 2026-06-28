@@ -65,6 +65,10 @@ namespace CheeseTama.Core
             EnsureEventSystem();
             EnsureCanvas("Boot Canvas");
             EnsureTitle("Boot Canvas", "CheeseTama", "Loading core systems");
+
+            var canvas = EnsureCanvas("Boot Canvas");
+            var startButton = GetOrCreateButton(canvas.transform, "Start Button", "Start", new Vector2(0, 120));
+            ConfigureNavigationButton(startButton, SceneNames.Milkroom, false);
         }
 
         public static void BuildMilkroomScene()
@@ -142,6 +146,9 @@ namespace CheeseTama.Core
 
             var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(640, 36));
             ConfigureCareButton(resetButton, MilkroomCareAction.Reset, controller, visualController);
+
+            var collectionButton = GetOrCreateButton(canvas.transform, "Collection Button", "Collection", new Vector2(800, 36));
+            ConfigureNavigationButton(collectionButton, SceneNames.Collection, true);
         }
 
         public static void BuildCollectionScene()
@@ -169,6 +176,9 @@ namespace CheeseTama.Core
 
             controller.Configure(milkText, evolutionText, eventText, hiddenText, messageText);
             controller.Bind(manager.CurrentSave);
+
+            var backButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(0, 36));
+            ConfigureNavigationButton(backButton, SceneNames.Milkroom, false);
         }
 
         public static void BuildDebugScene()
@@ -431,6 +441,18 @@ namespace CheeseTama.Core
             }
 
             careButton.Configure(action, controller, visualController);
+        }
+
+        private static void ConfigureNavigationButton(Button button, string targetSceneName, bool saveBeforeLoad)
+        {
+            button.onClick.RemoveAllListeners();
+            var navigationButton = button.GetComponent<SceneNavigationButton>();
+            if (navigationButton == null)
+            {
+                navigationButton = button.gameObject.AddComponent<SceneNavigationButton>();
+            }
+
+            navigationButton.Configure(targetSceneName, saveBeforeLoad);
         }
 
         private static void ConfigureButton(Button button, string label, Vector2 anchoredPosition)
