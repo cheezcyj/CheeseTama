@@ -25,6 +25,23 @@ namespace CheeseTama.Gameplay.Care
             return AddCareProgress(tama, 8, "CheeseTama drank milk.");
         }
 
+        public CareActionResult FeedStarMilk(CheeseTamaModel tama)
+        {
+            if (tama == null)
+            {
+                return MissingTama();
+            }
+
+            tama.stats.hunger += 24;
+            tama.stats.mood += 8;
+            tama.stats.sleepiness += 3;
+            tama.stats.affection += 5;
+            tama.stats.milkSatisfaction += 8;
+            tama.stats.ClampAll();
+
+            return AddCareProgress(tama, 12, "CheeseTama drank star milk.");
+        }
+
         public CareActionResult Play(CheeseTamaModel tama)
         {
             if (tama == null)

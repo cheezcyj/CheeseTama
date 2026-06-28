@@ -28,3 +28,4 @@
 - Add scene navigation buttons between Boot, Milkroom, and Collection prototype scenes.
 - Persist Basic Milk growth points from Milkroom feeding and show milk growth in the status panel.
 - Record Basic Milk growth milestones as collection events with readable Collection scene labels.
+- Add a Star Milk prototype that unlocks from Basic Milk Lv. 2 and can be fed from the Milkroom.

@@ -86,7 +86,7 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 540));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 570));
             var panelTransform = panel.transform;
 
             var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
@@ -102,8 +102,9 @@ namespace CheeseTama.Core
             var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
             var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -336), new Vector2(260, 24));
             var milkGrowthText = GetOrCreateText(panelTransform, "Milk Growth Text", "Milk Growth: Basic Milk Lv. 0", 16, TextAnchor.UpperLeft, new Vector2(16, -364), new Vector2(280, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -394), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -430), new Vector2(280, 72));
+            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -392), new Vector2(280, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -422), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -458), new Vector2(280, 72));
 
             controller.Configure(
                 nameText,
@@ -119,37 +120,41 @@ namespace CheeseTama.Core
                 maturationText,
                 hatchProgressText,
                 milkGrowthText,
+                unlockText,
                 lastSavedText,
                 messageText);
             controller.Bind(manager.CurrentSave);
             controller.ShowMessage("Ready for care.");
             visualController.Bind(manager.CurrentTama);
 
-            var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-480, 36));
+            var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-560, 36));
             ConfigureCareButton(feedButton, MilkroomCareAction.FeedMilk, controller, visualController);
 
-            var playButton = GetOrCreateButton(canvas.transform, "Play Button", "Play", new Vector2(-320, 36));
+            var starMilkButton = GetOrCreateButton(canvas.transform, "Star Milk Button", "Star Milk", new Vector2(-420, 36));
+            ConfigureCareButton(starMilkButton, MilkroomCareAction.FeedStarMilk, controller, visualController);
+
+            var playButton = GetOrCreateButton(canvas.transform, "Play Button", "Play", new Vector2(-280, 36));
             ConfigureCareButton(playButton, MilkroomCareAction.Play, controller, visualController);
 
-            var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(-160, 36));
+            var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(-140, 36));
             ConfigureCareButton(cleanButton, MilkroomCareAction.Clean, controller, visualController);
 
             var restButton = GetOrCreateButton(canvas.transform, "Rest Button", "Rest", new Vector2(0, 36));
             ConfigureCareButton(restButton, MilkroomCareAction.Rest, controller, visualController);
 
-            var waitHourButton = GetOrCreateButton(canvas.transform, "Wait Hour Button", "Wait 1h", new Vector2(160, 36));
+            var waitHourButton = GetOrCreateButton(canvas.transform, "Wait Hour Button", "Wait 1h", new Vector2(140, 36));
             ConfigureCareButton(waitHourButton, MilkroomCareAction.WaitHour, controller, visualController);
 
-            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(320, 36));
+            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(280, 36));
             ConfigureCareButton(saveButton, MilkroomCareAction.Save, controller, visualController);
 
-            var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(480, 36));
+            var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(420, 36));
             ConfigureCareButton(reloadButton, MilkroomCareAction.Reload, controller, visualController);
 
-            var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(640, 36));
+            var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(560, 36));
             ConfigureCareButton(resetButton, MilkroomCareAction.Reset, controller, visualController);
 
-            var collectionButton = GetOrCreateButton(canvas.transform, "Collection Button", "Collection", new Vector2(800, 36));
+            var collectionButton = GetOrCreateButton(canvas.transform, "Collection Button", "Collection", new Vector2(700, 36));
             ConfigureNavigationButton(collectionButton, SceneNames.Collection, true);
         }
 

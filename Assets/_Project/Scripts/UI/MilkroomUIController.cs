@@ -21,6 +21,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text maturationText;
         [SerializeField] private Text hatchProgressText;
         [SerializeField] private Text milkGrowthText;
+        [SerializeField] private Text unlockText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
 
@@ -41,6 +42,7 @@ namespace CheeseTama.UI
             Text maturationLabel,
             Text hatchProgressLabel,
             Text milkGrowthLabel,
+            Text unlockLabel,
             Text lastSavedLabel,
             Text messageLabel)
         {
@@ -57,6 +59,7 @@ namespace CheeseTama.UI
             maturationText = maturationLabel;
             hatchProgressText = hatchProgressLabel;
             milkGrowthText = milkGrowthLabel;
+            unlockText = unlockLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
         }
@@ -96,6 +99,7 @@ namespace CheeseTama.UI
             SetText(maturationText, $"Maturation: {current.stats.maturation}");
             SetText(hatchProgressText, FormatHatchProgress(current));
             SetText(milkGrowthText, FormatMilkGrowth(currentSave, current));
+            SetText(unlockText, FormatUnlocks(currentSave));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
 
@@ -174,7 +178,20 @@ namespace CheeseTama.UI
                 return "Basic Milk";
             }
 
+            if (milkId == "star_milk")
+            {
+                return "Star Milk";
+            }
+
             return string.IsNullOrWhiteSpace(milkId) ? "Milk" : milkId;
+        }
+
+        private static string FormatUnlocks(CheeseTamaSaveData saveData)
+        {
+            var starMilkState = saveData != null && saveData.unlocks != null && saveData.unlocks.starMilkUnlocked
+                ? "Star Milk unlocked"
+                : "Star Milk locked";
+            return $"Unlocks: {starMilkState}";
         }
 
         private static string FormatCondition(CheeseTamaModel tama)

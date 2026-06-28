@@ -90,6 +90,16 @@ namespace CheeseTama.UI
                 return "Basic Milk";
             }
 
+            if (id == "star_milk")
+            {
+                return "Star Milk";
+            }
+
+            if (id == "star_milk_unlocked")
+            {
+                return "Star Milk unlocked";
+            }
+
             if (id == "soft_cheesetama")
             {
                 return "Soft CheeseTama";
@@ -99,6 +109,12 @@ namespace CheeseTama.UI
             if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(BasicMilkGrowthPrefix))
             {
                 return $"Basic Milk reached Lv. {id.Substring(BasicMilkGrowthPrefix.Length)}";
+            }
+
+            const string StarMilkGrowthPrefix = "star_milk_growth_lv_";
+            if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(StarMilkGrowthPrefix))
+            {
+                return $"Star Milk reached Lv. {id.Substring(StarMilkGrowthPrefix.Length)}";
             }
 
             return string.IsNullOrWhiteSpace(id) ? "unknown" : id;

@@ -11,6 +11,9 @@ namespace CheeseTama.Core
 {
     public sealed class GameManager : MonoBehaviour
     {
+        private const string BasicMilkId = "basic_milk";
+        private const string StarMilkId = "star_milk";
+
         [SerializeField] private DataRegistry dataRegistry;
         [SerializeField] private SaveManager saveManager;
 
@@ -134,6 +137,40 @@ namespace CheeseTama.Core
             CurrentSave.EnsureRuntimeDefaults();
             collectionSystem.RegisterEvent(CurrentSave.collections, eventId);
             SaveGame();
+        }
+
+        public bool IsMilkUnlocked(string milkId)
+        {
+            if (milkId == BasicMilkId)
+            {
+                return true;
+            }
+
+            if (CurrentSave == null)
+            {
+                return false;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            return milkId == StarMilkId && CurrentSave.unlocks.starMilkUnlocked;
+        }
+
+        public bool UnlockStarMilk()
+        {
+            if (CurrentSave == null)
+            {
+                return false;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            if (CurrentSave.unlocks.starMilkUnlocked)
+            {
+                return false;
+            }
+
+            CurrentSave.unlocks.starMilkUnlocked = true;
+            SaveGame();
+            return true;
         }
 
         public MilkGrowthSaveEntry RegisterMilkGrowth(string milkId, int points)

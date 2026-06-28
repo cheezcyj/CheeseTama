@@ -14,13 +14,16 @@ namespace CheeseTama.UI
         Save,
         Reload,
         Reset,
-        WaitHour
+        WaitHour,
+        FeedStarMilk
     }
 
     [RequireComponent(typeof(Button))]
     public sealed class MilkroomCareButton : MonoBehaviour
     {
         private const string BasicMilkId = "basic_milk";
+        private const string StarMilkId = "star_milk";
+        private const int StarMilkUnlockBasicMilkLevel = 2;
 
         [SerializeField] private MilkroomCareAction action;
         [SerializeField] private MilkroomUIController uiController;
@@ -114,6 +117,12 @@ namespace CheeseTama.UI
                 return;
             }
 
+            if (action == MilkroomCareAction.FeedStarMilk && !manager.IsMilkUnlocked(StarMilkId))
+            {
+                Refresh("Star Milk is locked. Raise Basic Milk to Lv. 2.", manager, false);
+                return;
+            }
+
             var careResult = RunCareAction(manager);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
             Refresh(CombineMessages(careResult.message, discoveryMessage), manager, careResult.hatched);
@@ -124,6 +133,7 @@ namespace CheeseTama.UI
             return action switch
             {
                 MilkroomCareAction.FeedMilk => careActions.FeedMilk(manager.CurrentTama),
+                MilkroomCareAction.FeedStarMilk => careActions.FeedStarMilk(manager.CurrentTama),
                 MilkroomCareAction.Play => careActions.Play(manager.CurrentTama),
                 MilkroomCareAction.Clean => careActions.Clean(manager.CurrentTama),
                 MilkroomCareAction.Rest => careActions.Rest(manager.CurrentTama),
@@ -141,17 +151,21 @@ namespace CheeseTama.UI
             var message = string.Empty;
             if (action == MilkroomCareAction.FeedMilk)
             {
-                var previousGrowth = manager.FindMilkGrowth(BasicMilkId);
-                var previousLevel = previousGrowth?.growthLevel ?? 0;
-                manager.RegisterMilkDiscovery(BasicMilkId);
-
-                var growth = manager.RegisterMilkGrowth(BasicMilkId, 1);
-                if (growth != null && growth.growthLevel > previousLevel)
+                message = RegisterMilkProgress(manager, BasicMilkId, 1);
+                var growth = manager.FindMilkGrowth(BasicMilkId);
+                if (growth != null
+                    && growth.growthLevel >= StarMilkUnlockBasicMilkLevel
+                    && manager.UnlockStarMilk())
                 {
-                    var eventId = $"{BasicMilkId}_growth_lv_{growth.growthLevel}";
-                    manager.RegisterEventDiscovery(eventId);
-                    message = $"Basic Milk reached Lv. {growth.growthLevel}.";
+                    manager.RegisterMilkDiscovery(StarMilkId);
+                    manager.RegisterEventDiscovery("star_milk_unlocked");
+                    message = CombineMessages(message, "Star Milk unlocked.");
                 }
+            }
+
+            if (action == MilkroomCareAction.FeedStarMilk)
+            {
+                message = RegisterMilkProgress(manager, StarMilkId, 2);
             }
 
             if (result.hatched)
@@ -160,6 +174,23 @@ namespace CheeseTama.UI
             }
 
             return message;
+        }
+
+        private static string RegisterMilkProgress(GameManager manager, string milkId, int growthPoints)
+        {
+            var previousGrowth = manager.FindMilkGrowth(milkId);
+            var previousLevel = previousGrowth?.growthLevel ?? 0;
+            manager.RegisterMilkDiscovery(milkId);
+
+            var growth = manager.RegisterMilkGrowth(milkId, growthPoints);
+            if (growth == null || growth.growthLevel <= previousLevel)
+            {
+                return string.Empty;
+            }
+
+            var eventId = $"{milkId}_growth_lv_{growth.growthLevel}";
+            manager.RegisterEventDiscovery(eventId);
+            return $"{FormatMilkName(milkId)} reached Lv. {growth.growthLevel}.";
         }
 
         private static string CombineMessages(string primary, string secondary)
@@ -175,6 +206,11 @@ namespace CheeseTama.UI
             }
 
             return $"{primary} {secondary}";
+        }
+
+        private static string FormatMilkName(string milkId)
+        {
+            return milkId == StarMilkId ? "Star Milk" : "Basic Milk";
         }
 
         private void Refresh(string message, GameManager manager, bool celebrate)
