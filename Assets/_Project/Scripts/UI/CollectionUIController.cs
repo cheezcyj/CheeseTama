@@ -123,6 +123,16 @@ namespace CheeseTama.UI
                 return "Star Milk unlocked";
             }
 
+            if (id == "cheese_snack_fed")
+            {
+                return "Cheese Snack tasted";
+            }
+
+            if (id == "crumbly_snack")
+            {
+                return "Crumbly snack";
+            }
+
             if (id == "quiet_hum")
             {
                 return "Quiet milkroom hum";
@@ -188,6 +198,11 @@ namespace CheeseTama.UI
             if (id == "milkroom_listener")
             {
                 return "Milkroom Listener";
+            }
+
+            if (id == "first_snack_bite")
+            {
+                return "First Snack Bite";
             }
 
             if (id == "warm_balance")

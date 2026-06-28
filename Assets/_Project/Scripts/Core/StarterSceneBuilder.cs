@@ -131,6 +131,9 @@ namespace CheeseTama.Core
             controller.ShowMessage("Ready for care.");
             visualController.Bind(manager.CurrentTama);
 
+            var snackButton = GetOrCreateButton(canvas.transform, "Snack Button", "Snack", new Vector2(-700, 36));
+            ConfigureCareButton(snackButton, MilkroomCareAction.FeedSnack, controller, visualController);
+
             var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-560, 36));
             ConfigureCareButton(feedButton, MilkroomCareAction.FeedMilk, controller, visualController);
 

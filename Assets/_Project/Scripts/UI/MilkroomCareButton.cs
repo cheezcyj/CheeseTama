@@ -16,7 +16,8 @@ namespace CheeseTama.UI
         Reload,
         Reset,
         WaitHour,
-        FeedStarMilk
+        FeedStarMilk,
+        FeedSnack
     }
 
     [RequireComponent(typeof(Button))]
@@ -137,6 +138,7 @@ namespace CheeseTama.UI
             {
                 MilkroomCareAction.FeedMilk => careActions.FeedMilk(manager.CurrentTama),
                 MilkroomCareAction.FeedStarMilk => careActions.FeedStarMilk(manager.CurrentTama),
+                MilkroomCareAction.FeedSnack => careActions.FeedSnack(manager.CurrentTama),
                 MilkroomCareAction.Play => careActions.Play(manager.CurrentTama),
                 MilkroomCareAction.Clean => careActions.Clean(manager.CurrentTama),
                 MilkroomCareAction.Rest => careActions.Rest(manager.CurrentTama),
@@ -171,6 +173,11 @@ namespace CheeseTama.UI
                 message = RegisterMilkProgress(manager, StarMilkId, 2);
             }
 
+            if (action == MilkroomCareAction.FeedSnack)
+            {
+                message = RegisterSnackDiscovery(manager);
+            }
+
             if (result.hatched)
             {
                 manager.RegisterCurrentEvolutionDiscovery();
@@ -193,6 +200,25 @@ namespace CheeseTama.UI
             }
 
             return $"{FormatMilkName(milkId)} reached Lv. {growth.growthLevel}.";
+        }
+
+        private static string RegisterSnackDiscovery(GameManager manager)
+        {
+            var message = manager.RegisterEventDiscovery("cheese_snack_fed")
+                ? "Cheese Snack recorded."
+                : string.Empty;
+
+            var tama = manager.CurrentTama;
+            if (tama != null
+                && tama.stats != null
+                && tama.stats.cleanliness < 60
+                && manager.RegisterEventDiscovery("crumbly_snack"))
+            {
+                message = CombineMessages(message, "Crumbly snack moment recorded.");
+            }
+
+            manager.RefreshDerivedCollectionRecords();
+            return message;
         }
 
         private static CareEventResult RegisterRandomEvent(GameManager manager)

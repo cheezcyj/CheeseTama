@@ -297,6 +297,11 @@ namespace CheeseTama.Core
                 changed |= hiddenCollectionSystem.Unlock(collections, "milkroom_listener", now);
             }
 
+            if (collections.events != null && collections.events.Contains("cheese_snack_fed"))
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "first_snack_bite", now);
+            }
+
             if (CurrentTama != null
                 && CurrentTama.isHatched
                 && CurrentTama.stats != null
