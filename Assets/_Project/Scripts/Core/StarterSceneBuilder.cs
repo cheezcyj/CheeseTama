@@ -82,27 +82,29 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 462));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 490));
             var panelTransform = panel.transform;
 
             var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
             var levelText = GetOrCreateText(panelTransform, "Level Text", "Lv. 1 (0%)", 18, TextAnchor.UpperLeft, new Vector2(16, -48), new Vector2(260, 26));
             var formText = GetOrCreateText(panelTransform, "Form Text", "Form: egg", 16, TextAnchor.UpperLeft, new Vector2(16, -78), new Vector2(260, 24));
-            var hungerText = GetOrCreateText(panelTransform, "Hunger Text", "Hunger: 80", 16, TextAnchor.UpperLeft, new Vector2(16, -112), new Vector2(260, 24));
-            var moodText = GetOrCreateText(panelTransform, "Mood Text", "Mood: 70", 16, TextAnchor.UpperLeft, new Vector2(16, -140), new Vector2(260, 24));
-            var cleanlinessText = GetOrCreateText(panelTransform, "Cleanliness Text", "Cleanliness: 90", 16, TextAnchor.UpperLeft, new Vector2(16, -168), new Vector2(260, 24));
-            var sleepinessText = GetOrCreateText(panelTransform, "Sleepiness Text", "Sleepiness: 20", 16, TextAnchor.UpperLeft, new Vector2(16, -196), new Vector2(260, 24));
-            var healthText = GetOrCreateText(panelTransform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -224), new Vector2(260, 24));
-            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -252), new Vector2(260, 24));
-            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
-            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -338), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -374), new Vector2(280, 56));
+            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "Condition: warm", 16, TextAnchor.UpperLeft, new Vector2(16, -106), new Vector2(260, 24));
+            var hungerText = GetOrCreateText(panelTransform, "Hunger Text", "Hunger: 80", 16, TextAnchor.UpperLeft, new Vector2(16, -140), new Vector2(260, 24));
+            var moodText = GetOrCreateText(panelTransform, "Mood Text", "Mood: 70", 16, TextAnchor.UpperLeft, new Vector2(16, -168), new Vector2(260, 24));
+            var cleanlinessText = GetOrCreateText(panelTransform, "Cleanliness Text", "Cleanliness: 90", 16, TextAnchor.UpperLeft, new Vector2(16, -196), new Vector2(260, 24));
+            var sleepinessText = GetOrCreateText(panelTransform, "Sleepiness Text", "Sleepiness: 20", 16, TextAnchor.UpperLeft, new Vector2(16, -224), new Vector2(260, 24));
+            var healthText = GetOrCreateText(panelTransform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -252), new Vector2(260, 24));
+            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
+            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
+            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -336), new Vector2(260, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -366), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -402), new Vector2(280, 56));
 
             controller.Configure(
                 nameText,
                 levelText,
                 formText,
+                conditionText,
                 hungerText,
                 moodText,
                 cleanlinessText,

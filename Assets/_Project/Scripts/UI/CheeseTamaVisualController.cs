@@ -188,14 +188,24 @@ namespace CheeseTama.UI
                 return new Color(1f, 0.84f, 0.28f);
             }
 
-            if (tama.isHatched)
-            {
-                return new Color(1f, 0.74f, 0.28f);
-            }
-
             if (tama.stats.health < 35)
             {
                 return new Color(0.75f, 0.82f, 0.95f);
+            }
+
+            if (tama.stats.hunger < 25)
+            {
+                return new Color(0.96f, 0.72f, 0.44f);
+            }
+
+            if (tama.stats.cleanliness < 35)
+            {
+                return new Color(0.72f, 0.64f, 0.48f);
+            }
+
+            if (tama.stats.sleepiness > 75)
+            {
+                return new Color(0.72f, 0.72f, 0.92f);
             }
 
             if (tama.stats.mood > 80)
@@ -203,9 +213,9 @@ namespace CheeseTama.UI
                 return new Color(1f, 0.9f, 0.38f);
             }
 
-            if (tama.stats.cleanliness < 35)
+            if (tama.isHatched)
             {
-                return new Color(0.72f, 0.64f, 0.48f);
+                return new Color(1f, 0.74f, 0.28f);
             }
 
             return new Color(1f, 0.84f, 0.28f);

@@ -10,6 +10,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text nameText;
         [SerializeField] private Text levelText;
         [SerializeField] private Text formText;
+        [SerializeField] private Text conditionText;
         [SerializeField] private Text hungerText;
         [SerializeField] private Text moodText;
         [SerializeField] private Text cleanlinessText;
@@ -27,6 +28,7 @@ namespace CheeseTama.UI
             Text nameLabel,
             Text levelLabel,
             Text formLabel,
+            Text conditionLabel,
             Text hungerLabel,
             Text moodLabel,
             Text cleanlinessLabel,
@@ -41,6 +43,7 @@ namespace CheeseTama.UI
             nameText = nameLabel;
             levelText = levelLabel;
             formText = formLabel;
+            conditionText = conditionLabel;
             hungerText = hungerLabel;
             moodText = moodLabel;
             cleanlinessText = cleanlinessLabel;
@@ -69,6 +72,7 @@ namespace CheeseTama.UI
             SetText(nameText, current.name);
             SetText(levelText, $"Lv. {current.level} ({current.levelProgress}%)");
             SetText(formText, $"Form: {current.form}");
+            SetText(conditionText, $"Condition: {FormatCondition(current)}");
             SetText(hungerText, $"Hunger: {current.stats.hunger}");
             SetText(moodText, $"Mood: {current.stats.mood}");
             SetText(cleanlinessText, $"Cleanliness: {current.stats.cleanliness}");
@@ -111,6 +115,41 @@ namespace CheeseTama.UI
             }
 
             return $"Hatch: {HatchingSystem.GetHatchProgressPercent(tama)}%";
+        }
+
+        private static string FormatCondition(CheeseTamaModel tama)
+        {
+            if (tama == null || tama.stats == null)
+            {
+                return "unknown";
+            }
+
+            if (tama.stats.health < 35)
+            {
+                return "unwell";
+            }
+
+            if (tama.stats.hunger < 25)
+            {
+                return "hungry";
+            }
+
+            if (tama.stats.cleanliness < 35)
+            {
+                return "messy";
+            }
+
+            if (tama.stats.sleepiness > 75)
+            {
+                return "sleepy";
+            }
+
+            if (tama.stats.mood > 80)
+            {
+                return "cheerful";
+            }
+
+            return tama.isHatched ? "curious" : "warm";
         }
     }
 }
