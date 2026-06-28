@@ -248,7 +248,10 @@ namespace CheeseTama.Core
             var resetButton = GetOrCreateButton(canvas.transform, "Debug Reset Button", "Reset", new Vector2(-70, 36));
             ConfigureDebugButton(resetButton, DebugAction.ResetSave, controller, visualController);
 
-            var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(70, 36));
+            var forceEventButton = GetOrCreateButton(canvas.transform, "Force Event Button", "Force Event", new Vector2(70, 36));
+            ConfigureDebugButton(forceEventButton, DebugAction.ForceEvent, controller, visualController);
+
+            var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(210, 36));
             ConfigureNavigationButton(milkroomButton, SceneNames.Milkroom, true);
         }
 

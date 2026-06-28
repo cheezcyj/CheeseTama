@@ -4,6 +4,7 @@ using CheeseTama.Collections;
 using CheeseTama.Data;
 using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Events;
 using CheeseTama.Gameplay.Stats;
 using CheeseTama.Save;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace CheeseTama.Core
         private readonly TimeProgressionSystem timeProgressionSystem = new TimeProgressionSystem();
         private readonly CollectionSystem collectionSystem = new CollectionSystem();
         private readonly MilkGrowthSystem milkGrowthSystem = new MilkGrowthSystem();
+        private readonly RandomEventSystem randomEventSystem = new RandomEventSystem();
 
         public static GameManager Instance { get; private set; }
         public DataRegistry DataRegistry => dataRegistry;
@@ -254,6 +256,16 @@ namespace CheeseTama.Core
             {
                 SaveGame();
             }
+        }
+
+        public CareEventResult TryRollCareEvent()
+        {
+            return randomEventSystem.RollCareEvent(CurrentTama);
+        }
+
+        public CareEventResult ForceCareEvent()
+        {
+            return randomEventSystem.RollCareEvent(CurrentTama, true);
         }
 
         private bool AddMilkGrowthMilestoneRecords(string milkId, int growthLevel)

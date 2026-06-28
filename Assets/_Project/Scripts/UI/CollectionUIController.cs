@@ -100,6 +100,36 @@ namespace CheeseTama.UI
                 return "Star Milk unlocked";
             }
 
+            if (id == "quiet_hum")
+            {
+                return "Quiet milkroom hum";
+            }
+
+            if (id == "small_fever")
+            {
+                return "Small fever";
+            }
+
+            if (id == "hungry_peep")
+            {
+                return "Hungry peep";
+            }
+
+            if (id == "dusty_corner")
+            {
+                return "Dusty corner";
+            }
+
+            if (id == "sleepy_yawn")
+            {
+                return "Sleepy yawn";
+            }
+
+            if (id == "happy_wiggle")
+            {
+                return "Happy wiggle";
+            }
+
             if (id == "soft_cheesetama")
             {
                 return "Soft CheeseTama";

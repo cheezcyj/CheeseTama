@@ -113,7 +113,8 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.WaitHour)
             {
                 var timeResult = manager.ApplyTimeSkipHours(1);
-                Refresh(timeResult.ToSummary("In the milkroom,"), manager, false);
+                var eventMessage = RegisterRandomEvent(manager);
+                Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), eventMessage), manager, false);
                 return;
             }
 
@@ -125,7 +126,8 @@ namespace CheeseTama.UI
 
             var careResult = RunCareAction(manager);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
-            Refresh(CombineMessages(careResult.message, discoveryMessage), manager, careResult.hatched);
+            var eventMessage = careResult.hatched ? string.Empty : RegisterRandomEvent(manager);
+            Refresh(CombineMessages(CombineMessages(careResult.message, discoveryMessage), eventMessage), manager, careResult.hatched);
         }
 
         private CareActionResult RunCareAction(GameManager manager)
@@ -190,6 +192,18 @@ namespace CheeseTama.UI
             }
 
             return $"{FormatMilkName(milkId)} reached Lv. {growth.growthLevel}.";
+        }
+
+        private static string RegisterRandomEvent(GameManager manager)
+        {
+            var eventResult = manager.TryRollCareEvent();
+            if (!eventResult.occurred)
+            {
+                return string.Empty;
+            }
+
+            manager.RegisterEventDiscovery(eventResult.eventId);
+            return eventResult.message;
         }
 
         private static string CombineMessages(string primary, string secondary)

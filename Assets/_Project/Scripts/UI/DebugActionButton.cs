@@ -16,7 +16,8 @@ namespace CheeseTama.UI
         SetCheerful,
         HatchNow,
         UnlockStarMilk,
-        ResetSave
+        ResetSave,
+        ForceEvent
     }
 
     [RequireComponent(typeof(Button))]
@@ -141,9 +142,23 @@ namespace CheeseTama.UI
                     manager.RegisterMilkDiscovery(StarMilkId);
                     manager.RegisterEventDiscovery("star_milk_unlocked");
                     return "Debug unlock applied: Star Milk is available.";
+                case DebugAction.ForceEvent:
+                    return ForceCareEvent(manager);
                 default:
                     return "No debug action was selected.";
             }
+        }
+
+        private static string ForceCareEvent(GameManager manager)
+        {
+            var eventResult = manager.ForceCareEvent();
+            if (!eventResult.occurred)
+            {
+                return "Debug event roll found no event.";
+            }
+
+            manager.RegisterEventDiscovery(eventResult.eventId);
+            return eventResult.message;
         }
 
         private static bool IsConditionPreset(DebugAction debugAction)
