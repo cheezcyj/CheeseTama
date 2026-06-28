@@ -113,6 +113,7 @@ namespace CheeseTama.UI
             }
 
             var careResult = RunCareAction(manager);
+            RegisterCollectionDiscoveries(manager, careResult);
             Refresh(careResult.message, manager, careResult.hatched);
         }
 
@@ -126,6 +127,24 @@ namespace CheeseTama.UI
                 MilkroomCareAction.Rest => careActions.Rest(manager.CurrentTama),
                 _ => new CareActionResult(false, false, "No care action was selected.")
             };
+        }
+
+        private void RegisterCollectionDiscoveries(GameManager manager, CareActionResult result)
+        {
+            if (manager == null || !result.success)
+            {
+                return;
+            }
+
+            if (action == MilkroomCareAction.FeedMilk)
+            {
+                manager.RegisterMilkDiscovery("basic_milk");
+            }
+
+            if (result.hatched)
+            {
+                manager.RegisterCurrentEvolutionDiscovery();
+            }
         }
 
         private void Refresh(string message, GameManager manager, bool celebrate)

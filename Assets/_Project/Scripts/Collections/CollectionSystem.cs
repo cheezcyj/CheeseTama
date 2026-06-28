@@ -6,17 +6,35 @@ namespace CheeseTama.Collections
     {
         public void RegisterMilk(CollectionSaveData collections, string milkId)
         {
-            AddUnique(collections?.milk, milkId);
+            if (collections == null)
+            {
+                return;
+            }
+
+            collections.EnsureRuntimeDefaults();
+            AddUnique(collections.milk, milkId);
         }
 
         public void RegisterEvolution(CollectionSaveData collections, string evolutionId)
         {
-            AddUnique(collections?.evolution, evolutionId);
+            if (collections == null)
+            {
+                return;
+            }
+
+            collections.EnsureRuntimeDefaults();
+            AddUnique(collections.evolution, evolutionId);
         }
 
         public void RegisterEvent(CollectionSaveData collections, string eventId)
         {
-            AddUnique(collections?.events, eventId);
+            if (collections == null)
+            {
+                return;
+            }
+
+            collections.EnsureRuntimeDefaults();
+            AddUnique(collections.events, eventId);
         }
 
         private static void AddUnique(ICollection<string> target, string id)
@@ -30,4 +48,3 @@ namespace CheeseTama.Collections
         }
     }
 }
-

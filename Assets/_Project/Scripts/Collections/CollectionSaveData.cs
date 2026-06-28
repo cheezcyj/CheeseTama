@@ -10,6 +10,14 @@ namespace CheeseTama.Collections
         public List<string> evolution = new List<string>();
         public List<string> events = new List<string>();
         public List<HiddenCollectionSaveEntry> hiddenUnlockedOnly = new List<HiddenCollectionSaveEntry>();
+
+        public void EnsureRuntimeDefaults()
+        {
+            milk ??= new List<string>();
+            evolution ??= new List<string>();
+            events ??= new List<string>();
+            hiddenUnlockedOnly ??= new List<HiddenCollectionSaveEntry>();
+        }
     }
 
     [Serializable]
@@ -19,4 +27,3 @@ namespace CheeseTama.Collections
         public string acquiredAtIso;
     }
 }
-

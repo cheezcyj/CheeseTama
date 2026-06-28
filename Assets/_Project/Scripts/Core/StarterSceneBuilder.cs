@@ -146,17 +146,29 @@ namespace CheeseTama.Core
 
         public static void BuildCollectionScene()
         {
-            EnsureCoreSystems();
+            var manager = EnsureCoreSystems();
             EnsureCamera("Collection Camera");
             EnsureEventSystem();
             var canvas = EnsureCanvas("Collection Canvas");
 
-            if (Object.FindFirstObjectByType<CollectionUIController>() == null)
+            var controller = Object.FindFirstObjectByType<CollectionUIController>();
+            if (controller == null)
             {
-                canvas.gameObject.AddComponent<CollectionUIController>();
+                controller = canvas.gameObject.AddComponent<CollectionUIController>();
             }
 
             EnsureTitle("Collection Canvas", "Collection", "Only discovered records appear here");
+
+            var panel = GetOrCreatePanel(canvas.transform, "Collection Records Panel", new Vector2(24, -180), new Vector2(560, 430));
+            var panelTransform = panel.transform;
+            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "Milk Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(520, 82));
+            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "Evolution Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -108), new Vector2(520, 82));
+            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "Event Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -200), new Vector2(520, 82));
+            var hiddenText = GetOrCreateText(panelTransform, "Hidden Records Text", "Hidden Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -292), new Vector2(520, 32));
+            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "Feed milk and hatch CheeseTama to add records here.", 14, TextAnchor.UpperLeft, new Vector2(16, -342), new Vector2(520, 64));
+
+            controller.Configure(milkText, evolutionText, eventText, hiddenText, messageText);
+            controller.Bind(manager.CurrentSave);
         }
 
         public static void BuildDebugScene()

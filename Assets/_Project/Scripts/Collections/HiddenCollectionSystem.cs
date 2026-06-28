@@ -16,6 +16,7 @@ namespace CheeseTama.Collections
                 return visible;
             }
 
+            collections.EnsureRuntimeDefaults();
             foreach (var definition in definitions)
             {
                 if (definition == null || !IsUnlocked(collections, definition.id))
@@ -31,7 +32,13 @@ namespace CheeseTama.Collections
 
         public void Unlock(CollectionSaveData collections, string hiddenId, DateTimeOffset acquiredAt)
         {
-            if (collections == null || string.IsNullOrWhiteSpace(hiddenId) || IsUnlocked(collections, hiddenId))
+            if (collections == null || string.IsNullOrWhiteSpace(hiddenId))
+            {
+                return;
+            }
+
+            collections.EnsureRuntimeDefaults();
+            if (IsUnlocked(collections, hiddenId))
             {
                 return;
             }
@@ -47,7 +54,7 @@ namespace CheeseTama.Collections
         {
             foreach (var entry in collections.hiddenUnlockedOnly)
             {
-                if (entry.id == id)
+                if (entry != null && entry.id == id)
                 {
                     return true;
                 }
@@ -57,4 +64,3 @@ namespace CheeseTama.Collections
         }
     }
 }
-

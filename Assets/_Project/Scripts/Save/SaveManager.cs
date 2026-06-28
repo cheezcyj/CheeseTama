@@ -22,7 +22,9 @@ namespace CheeseTama.Save
             }
 
             var json = File.ReadAllText(SaveFilePath);
-            return JsonUtility.FromJson<CheeseTamaSaveData>(json) ?? CreateDefaultSave();
+            var loaded = JsonUtility.FromJson<CheeseTamaSaveData>(json) ?? CreateDefaultSave();
+            loaded.EnsureRuntimeDefaults();
+            return loaded;
         }
 
         public void Save(CheeseTamaSaveData saveData)
@@ -32,6 +34,7 @@ namespace CheeseTama.Save
                 return;
             }
 
+            saveData.EnsureRuntimeDefaults();
             saveData.cheeseTama.lastSavedAtIso = TimeUtility.NowIso();
             var json = JsonUtility.ToJson(saveData, true);
             Directory.CreateDirectory(Path.GetDirectoryName(SaveFilePath));
@@ -53,6 +56,7 @@ namespace CheeseTama.Save
         {
             var now = DateTimeOffset.Now.ToString("O");
             var save = new CheeseTamaSaveData();
+            save.EnsureRuntimeDefaults();
             save.cheeseTama.createdAtIso = now;
             save.cheeseTama.lastSavedAtIso = now;
             return save;

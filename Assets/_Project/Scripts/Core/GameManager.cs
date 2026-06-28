@@ -1,4 +1,5 @@
 using System;
+using CheeseTama.Collections;
 using CheeseTama.Data;
 using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Stats;
@@ -13,6 +14,7 @@ namespace CheeseTama.Core
         [SerializeField] private SaveManager saveManager;
 
         private readonly TimeProgressionSystem timeProgressionSystem = new TimeProgressionSystem();
+        private readonly CollectionSystem collectionSystem = new CollectionSystem();
 
         public static GameManager Instance { get; private set; }
         public DataRegistry DataRegistry => dataRegistry;
@@ -91,6 +93,33 @@ namespace CheeseTama.Core
             LastTimeProgression = timeProgressionSystem.ApplyCareTicks(CurrentTama, hours);
             SaveGame();
             return LastTimeProgression;
+        }
+
+        public void RegisterMilkDiscovery(string milkId)
+        {
+            if (CurrentSave == null)
+            {
+                return;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            collectionSystem.RegisterMilk(CurrentSave.collections, milkId);
+            SaveGame();
+        }
+
+        public void RegisterCurrentEvolutionDiscovery()
+        {
+            if (CurrentSave == null || CurrentTama == null)
+            {
+                return;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var evolutionId = string.IsNullOrWhiteSpace(CurrentTama.evolutionId)
+                ? CurrentTama.form
+                : CurrentTama.evolutionId;
+            collectionSystem.RegisterEvolution(CurrentSave.collections, evolutionId);
+            SaveGame();
         }
     }
 }

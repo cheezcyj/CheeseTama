@@ -14,6 +14,15 @@ namespace CheeseTama.Save
         public UnlockSaveData unlocks = new UnlockSaveData();
         public List<MilkGrowthSaveEntry> milkGrowth = new List<MilkGrowthSaveEntry>();
         public CollectionSaveData collections = new CollectionSaveData();
+
+        public void EnsureRuntimeDefaults()
+        {
+            cheeseTama ??= new CheeseTamaModel();
+            unlocks ??= new UnlockSaveData();
+            milkGrowth ??= new List<MilkGrowthSaveEntry>();
+            collections ??= new CollectionSaveData();
+            collections.EnsureRuntimeDefaults();
+        }
     }
 
     [Serializable]
@@ -24,4 +33,3 @@ namespace CheeseTama.Save
         public int growthPoints;
     }
 }
-
