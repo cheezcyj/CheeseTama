@@ -129,13 +129,16 @@ namespace CheeseTama.Core
             var restButton = GetOrCreateButton(canvas.transform, "Rest Button", "Rest", new Vector2(0, 36));
             ConfigureCareButton(restButton, MilkroomCareAction.Rest, controller, visualController);
 
-            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(160, 36));
+            var waitHourButton = GetOrCreateButton(canvas.transform, "Wait Hour Button", "Wait 1h", new Vector2(160, 36));
+            ConfigureCareButton(waitHourButton, MilkroomCareAction.WaitHour, controller, visualController);
+
+            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(320, 36));
             ConfigureCareButton(saveButton, MilkroomCareAction.Save, controller, visualController);
 
-            var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(320, 36));
+            var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(480, 36));
             ConfigureCareButton(reloadButton, MilkroomCareAction.Reload, controller, visualController);
 
-            var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(480, 36));
+            var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(640, 36));
             ConfigureCareButton(resetButton, MilkroomCareAction.Reset, controller, visualController);
         }
 

@@ -21,3 +21,4 @@
 - Move MaterialPropertyBlock creation out of the visual controller field initializer to satisfy Unity runtime rules.
 - Tune CheeseTama care feedback into a shorter, gentler hop and remove temporary visual diagnostics.
 - Add Hatch progress to the Milkroom status panel and celebrate the first hatch with a stronger visual reaction.
+- Connect offline time progression on load and add a Wait 1h prototype button for stat-decay testing.

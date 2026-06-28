@@ -13,7 +13,8 @@ namespace CheeseTama.UI
         Rest,
         Save,
         Reload,
-        Reset
+        Reset,
+        WaitHour
     }
 
     [RequireComponent(typeof(Button))]
@@ -90,7 +91,10 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.Reload)
             {
                 manager.ReloadGame();
-                Refresh("Reloaded CheeseTama save data.", manager, false);
+                var reloadMessage = manager.LastTimeProgression.applied
+                    ? manager.LastTimeProgression.ToSummary("While away,")
+                    : "Reloaded CheeseTama save data.";
+                Refresh(reloadMessage, manager, false);
                 return;
             }
 
@@ -98,6 +102,13 @@ namespace CheeseTama.UI
             {
                 manager.ResetGame();
                 Refresh("Reset CheeseTama save data.", manager, false);
+                return;
+            }
+
+            if (action == MilkroomCareAction.WaitHour)
+            {
+                var result = manager.ApplyTimeSkipHours(1);
+                Refresh(result.ToSummary("In the milkroom,"), manager, false);
                 return;
             }
 

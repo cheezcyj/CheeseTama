@@ -1,5 +1,7 @@
+using System;
 using CheeseTama.Data;
 using CheeseTama.Gameplay;
+using CheeseTama.Gameplay.Stats;
 using CheeseTama.Save;
 using UnityEngine;
 
@@ -10,10 +12,13 @@ namespace CheeseTama.Core
         [SerializeField] private DataRegistry dataRegistry;
         [SerializeField] private SaveManager saveManager;
 
+        private readonly TimeProgressionSystem timeProgressionSystem = new TimeProgressionSystem();
+
         public static GameManager Instance { get; private set; }
         public DataRegistry DataRegistry => dataRegistry;
         public CheeseTamaSaveData CurrentSave { get; private set; }
         public CheeseTamaModel CurrentTama => CurrentSave?.cheeseTama;
+        public TimeProgressionResult LastTimeProgression { get; private set; }
         public string SaveFilePath => saveManager != null ? saveManager.SaveFilePath : string.Empty;
 
         private void Awake()
@@ -40,6 +45,11 @@ namespace CheeseTama.Core
             }
 
             CurrentSave = saveManager.LoadOrCreate();
+            LastTimeProgression = timeProgressionSystem.ApplyOfflineProgress(CurrentTama, DateTimeOffset.Now);
+            if (LastTimeProgression.applied)
+            {
+                saveManager.Save(CurrentSave);
+            }
         }
 
         public void ReloadGame()
@@ -57,6 +67,7 @@ namespace CheeseTama.Core
 
             saveManager.DeleteSave();
             CurrentSave = saveManager.LoadOrCreate();
+            LastTimeProgression = TimeProgressionResult.None();
         }
 
         public void SaveGame()
@@ -67,6 +78,19 @@ namespace CheeseTama.Core
             }
 
             saveManager.Save(CurrentSave);
+        }
+
+        public TimeProgressionResult ApplyTimeSkipHours(int hours)
+        {
+            if (CurrentTama == null || hours <= 0)
+            {
+                LastTimeProgression = TimeProgressionResult.None();
+                return LastTimeProgression;
+            }
+
+            LastTimeProgression = timeProgressionSystem.ApplyCareTicks(CurrentTama, hours);
+            SaveGame();
+            return LastTimeProgression;
         }
     }
 }
