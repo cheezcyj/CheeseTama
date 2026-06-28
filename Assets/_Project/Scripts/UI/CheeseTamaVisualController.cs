@@ -1,4 +1,5 @@
 using CheeseTama.Gameplay;
+using System.Collections;
 using UnityEngine;
 
 namespace CheeseTama.UI
@@ -10,8 +11,8 @@ namespace CheeseTama.UI
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
-        private const float ReactionDuration = 0.45f;
-        private const float ReactionHopHeight = 0.42f;
+        private const float ReactionDuration = 0.6f;
+        private const float ReactionHopHeight = 0.9f;
 
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
@@ -19,7 +20,7 @@ namespace CheeseTama.UI
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
         private bool hasRestingLocalPosition;
-        private float reactionTimer;
+        private Coroutine reactionRoutine;
 
         private void Awake()
         {
@@ -34,30 +35,14 @@ namespace CheeseTama.UI
                 return;
             }
 
-            reactionTimer = Mathf.Max(0f, reactionTimer - Time.deltaTime);
-            var baseScale = current.isHatched ? hatchedScale : eggScale;
-            var baseColor = GetStateColor(current);
-
-            if (reactionTimer <= 0f)
+            if (reactionRoutine != null)
             {
-                transform.localPosition = Vector3.Lerp(transform.localPosition, restingLocalPosition, Time.deltaTime * 14f);
-                transform.localScale = Vector3.Lerp(transform.localScale, baseScale, Time.deltaTime * 14f);
-                SetColor(baseColor);
                 return;
             }
 
-            var normalized = 1f - reactionTimer / ReactionDuration;
-            var hop = Mathf.Sin(normalized * Mathf.PI) * ReactionHopHeight;
-            var punch = Mathf.Sin(normalized * Mathf.PI) * 0.18f;
-            var wobble = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.04f;
-            var targetScale = new Vector3(
-                baseScale.x * (1f + punch + wobble),
-                baseScale.y * (1f + punch * 0.55f - wobble),
-                baseScale.z * (1f + punch + wobble));
-
-            transform.localPosition = Vector3.Lerp(transform.localPosition, restingLocalPosition + Vector3.up * hop, Time.deltaTime * 22f);
-            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * 22f);
-            SetColor(Color.Lerp(baseColor, Color.white, Mathf.Sin(normalized * Mathf.PI) * 0.35f));
+            var baseScale = current.isHatched ? hatchedScale : eggScale;
+            transform.localScale = Vector3.Lerp(transform.localScale, baseScale, Time.deltaTime * 12f);
+            SetColor(GetStateColor(current));
         }
 
         public void Bind(CheeseTamaModel tama)
@@ -78,7 +63,13 @@ namespace CheeseTama.UI
         public void React()
         {
             CaptureRestingPosition();
-            reactionTimer = ReactionDuration;
+
+            if (reactionRoutine != null)
+            {
+                StopCoroutine(reactionRoutine);
+            }
+
+            reactionRoutine = StartCoroutine(PlayReaction());
         }
 
         private void EnsureRenderer()
@@ -105,6 +96,36 @@ namespace CheeseTama.UI
 
             restingLocalPosition = transform.localPosition;
             hasRestingLocalPosition = true;
+        }
+
+        private IEnumerator PlayReaction()
+        {
+            var elapsed = 0f;
+            var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
+            var baseColor = current != null ? GetStateColor(current) : new Color(1f, 0.84f, 0.28f);
+
+            while (elapsed < ReactionDuration)
+            {
+                var normalized = Mathf.Clamp01(elapsed / ReactionDuration);
+                var hop = Mathf.Sin(normalized * Mathf.PI) * ReactionHopHeight;
+                var punch = Mathf.Sin(normalized * Mathf.PI) * 0.26f;
+                var wobble = Mathf.Sin(normalized * Mathf.PI * 5f) * 0.08f;
+
+                transform.localPosition = restingLocalPosition + Vector3.up * hop;
+                transform.localScale = new Vector3(
+                    baseScale.x * (1f + punch + wobble),
+                    baseScale.y * (1f + punch * 0.65f - wobble),
+                    baseScale.z * (1f + punch + wobble));
+                SetColor(Color.Lerp(baseColor, Color.white, Mathf.Sin(normalized * Mathf.PI) * 0.45f));
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.localPosition = restingLocalPosition;
+            transform.localScale = baseScale;
+            SetColor(baseColor);
+            reactionRoutine = null;
         }
 
         private void DisableSpriteRendererIfPresent()

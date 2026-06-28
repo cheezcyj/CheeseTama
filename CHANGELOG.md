@@ -15,3 +15,4 @@
 - Prefer the active GameManager instance and force scene rebinding after Play Mode scene load.
 - Added per-button MilkroomCareButton components so care actions bind reliably in Play Mode.
 - Made CheeseTama care feedback visibly hop, pulse, and flash after button actions.
+- Reworked care feedback into a direct hop coroutine and added a visual-controller fallback lookup.

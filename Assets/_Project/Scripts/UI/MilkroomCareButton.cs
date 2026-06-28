@@ -122,10 +122,15 @@ namespace CheeseTama.UI
             uiController.Bind(manager.CurrentTama);
             uiController.ShowMessage(message);
 
-            if (visualController != null)
+            var visual = ResolveVisualController();
+            if (visual != null)
             {
-                visualController.Bind(manager.CurrentTama);
-                visualController.React();
+                visual.Bind(manager.CurrentTama);
+                visual.React();
+            }
+            else
+            {
+                Debug.LogWarning("MilkroomCareButton could not find CheeseTama visual controller.");
             }
 
             Debug.Log(message);
@@ -140,8 +145,36 @@ namespace CheeseTama.UI
 
             if (visualController == null)
             {
-                visualController = Object.FindFirstObjectByType<CheeseTamaVisualController>();
+                ResolveVisualController();
             }
+        }
+
+        private CheeseTamaVisualController ResolveVisualController()
+        {
+            if (visualController != null)
+            {
+                return visualController;
+            }
+
+            visualController = Object.FindFirstObjectByType<CheeseTamaVisualController>();
+            if (visualController != null)
+            {
+                return visualController;
+            }
+
+            var eggObject = GameObject.Find("CheeseTama Egg Placeholder");
+            if (eggObject == null)
+            {
+                return null;
+            }
+
+            visualController = eggObject.GetComponent<CheeseTamaVisualController>();
+            if (visualController == null)
+            {
+                visualController = eggObject.AddComponent<CheeseTamaVisualController>();
+            }
+
+            return visualController;
         }
     }
 }
