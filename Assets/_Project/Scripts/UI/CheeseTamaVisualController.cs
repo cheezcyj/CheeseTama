@@ -15,7 +15,7 @@ namespace CheeseTama.UI
 
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
-        private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        private MaterialPropertyBlock propertyBlock;
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
         private bool hasRestingLocalPosition;
@@ -24,6 +24,7 @@ namespace CheeseTama.UI
 
         private void Awake()
         {
+            EnsurePropertyBlock();
             EnsureRenderer();
             CaptureRestingPosition();
         }
@@ -138,6 +139,8 @@ namespace CheeseTama.UI
 
         private void SetColor(Color color)
         {
+            EnsurePropertyBlock();
+
             if (targetRenderer == null)
             {
                 EnsureRenderer();
@@ -152,6 +155,14 @@ namespace CheeseTama.UI
             propertyBlock.SetColor(BaseColorId, color);
             propertyBlock.SetColor(ColorId, color);
             targetRenderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private void EnsurePropertyBlock()
+        {
+            if (propertyBlock == null)
+            {
+                propertyBlock = new MaterialPropertyBlock();
+            }
         }
 
         private static Color GetStateColor(CheeseTamaModel tama)

@@ -18,3 +18,4 @@
 - Reworked care feedback into a direct hop coroutine and added a visual-controller fallback lookup.
 - Changed care feedback to an immediate realtime reaction and added logs for visual trigger diagnosis.
 - Hold the care reaction at its peak first so Transform position changes are visible in Inspector.
+- Move MaterialPropertyBlock creation out of the visual controller field initializer to satisfy Unity runtime rules.
