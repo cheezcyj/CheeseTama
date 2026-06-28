@@ -107,13 +107,13 @@ namespace CheeseTama.UI
 
             if (action == MilkroomCareAction.WaitHour)
             {
-                var result = manager.ApplyTimeSkipHours(1);
-                Refresh(result.ToSummary("In the milkroom,"), manager, false);
+                var timeResult = manager.ApplyTimeSkipHours(1);
+                Refresh(timeResult.ToSummary("In the milkroom,"), manager, false);
                 return;
             }
 
-            var result = RunCareAction(manager);
-            Refresh(result.message, manager, result.hatched);
+            var careResult = RunCareAction(manager);
+            Refresh(careResult.message, manager, careResult.hatched);
         }
 
         private CareActionResult RunCareAction(GameManager manager)

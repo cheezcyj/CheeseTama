@@ -22,3 +22,4 @@
 - Tune CheeseTama care feedback into a shorter, gentler hop and remove temporary visual diagnostics.
 - Add Hatch progress to the Milkroom status panel and celebrate the first hatch with a stronger visual reaction.
 - Connect offline time progression on load and add a Wait 1h prototype button for stat-decay testing.
+- Fix the Wait 1h button compiler error caused by duplicate local variable names.
