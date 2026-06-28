@@ -1,5 +1,4 @@
 using CheeseTama.Gameplay;
-using System.Collections;
 using UnityEngine;
 
 namespace CheeseTama.UI
@@ -11,16 +10,18 @@ namespace CheeseTama.UI
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
-        private const float ReactionDuration = 0.6f;
-        private const float ReactionHopHeight = 0.9f;
+        private const float ReactionDuration = 1.25f;
+        private const float ReactionHopHeight = 1.6f;
 
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
         private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
+        private Vector3 restingWorldPosition;
         private bool hasRestingLocalPosition;
-        private Coroutine reactionRoutine;
+        private float reactionStartedAt;
+        private bool isReacting;
 
         private void Awake()
         {
@@ -28,21 +29,45 @@ namespace CheeseTama.UI
             CaptureRestingPosition();
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (current == null)
             {
                 return;
             }
 
-            if (reactionRoutine != null)
+            var baseScale = current.isHatched ? hatchedScale : eggScale;
+            var baseColor = GetStateColor(current);
+
+            if (!isReacting)
             {
+                transform.localPosition = Vector3.Lerp(transform.localPosition, restingLocalPosition, Time.unscaledDeltaTime * 12f);
+                transform.localScale = Vector3.Lerp(transform.localScale, baseScale, Time.unscaledDeltaTime * 12f);
+                SetColor(baseColor);
                 return;
             }
 
-            var baseScale = current.isHatched ? hatchedScale : eggScale;
-            transform.localScale = Vector3.Lerp(transform.localScale, baseScale, Time.deltaTime * 12f);
-            SetColor(GetStateColor(current));
+            var normalized = Mathf.Clamp01((Time.realtimeSinceStartup - reactionStartedAt) / ReactionDuration);
+            var arc = Mathf.Sin(normalized * Mathf.PI);
+            var hop = arc * ReactionHopHeight;
+            var side = Mathf.Sin(normalized * Mathf.PI * 2f) * 0.22f;
+            var punch = arc * 0.35f;
+            var wobble = Mathf.Sin(normalized * Mathf.PI * 6f) * 0.1f;
+
+            transform.position = restingWorldPosition + Vector3.up * hop + Vector3.right * side;
+            transform.localScale = new Vector3(
+                baseScale.x * (1f + punch + wobble),
+                baseScale.y * (1f + punch * 0.65f - wobble),
+                baseScale.z * (1f + punch + wobble));
+            SetColor(Color.Lerp(baseColor, Color.white, arc * 0.5f));
+
+            if (normalized >= 1f)
+            {
+                isReacting = false;
+                transform.localPosition = restingLocalPosition;
+                transform.localScale = baseScale;
+                SetColor(baseColor);
+            }
         }
 
         public void Bind(CheeseTamaModel tama)
@@ -55,21 +80,26 @@ namespace CheeseTama.UI
                 return;
             }
 
-            transform.localScale = current.isHatched ? hatchedScale : eggScale;
-            transform.localPosition = restingLocalPosition;
+            if (!isReacting)
+            {
+                transform.localScale = current.isHatched ? hatchedScale : eggScale;
+                transform.localPosition = restingLocalPosition;
+            }
+
             SetColor(GetStateColor(current));
         }
 
         public void React()
         {
             CaptureRestingPosition();
+            reactionStartedAt = Time.realtimeSinceStartup;
+            isReacting = true;
 
-            if (reactionRoutine != null)
-            {
-                StopCoroutine(reactionRoutine);
-            }
-
-            reactionRoutine = StartCoroutine(PlayReaction());
+            var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
+            transform.position = restingWorldPosition + Vector3.up * ReactionHopHeight;
+            transform.localScale = baseScale * 1.45f;
+            SetColor(Color.white);
+            Debug.Log($"CheeseTama visual reaction started on {gameObject.name}.");
         }
 
         private void EnsureRenderer()
@@ -95,37 +125,8 @@ namespace CheeseTama.UI
             }
 
             restingLocalPosition = transform.localPosition;
+            restingWorldPosition = transform.position;
             hasRestingLocalPosition = true;
-        }
-
-        private IEnumerator PlayReaction()
-        {
-            var elapsed = 0f;
-            var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
-            var baseColor = current != null ? GetStateColor(current) : new Color(1f, 0.84f, 0.28f);
-
-            while (elapsed < ReactionDuration)
-            {
-                var normalized = Mathf.Clamp01(elapsed / ReactionDuration);
-                var hop = Mathf.Sin(normalized * Mathf.PI) * ReactionHopHeight;
-                var punch = Mathf.Sin(normalized * Mathf.PI) * 0.26f;
-                var wobble = Mathf.Sin(normalized * Mathf.PI * 5f) * 0.08f;
-
-                transform.localPosition = restingLocalPosition + Vector3.up * hop;
-                transform.localScale = new Vector3(
-                    baseScale.x * (1f + punch + wobble),
-                    baseScale.y * (1f + punch * 0.65f - wobble),
-                    baseScale.z * (1f + punch + wobble));
-                SetColor(Color.Lerp(baseColor, Color.white, Mathf.Sin(normalized * Mathf.PI) * 0.45f));
-
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            transform.localPosition = restingLocalPosition;
-            transform.localScale = baseScale;
-            SetColor(baseColor);
-            reactionRoutine = null;
         }
 
         private void DisableSpriteRendererIfPresent()

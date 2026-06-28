@@ -125,6 +125,7 @@ namespace CheeseTama.UI
             var visual = ResolveVisualController();
             if (visual != null)
             {
+                Debug.Log($"MilkroomCareButton triggered visual reaction on {visual.gameObject.name}.");
                 visual.Bind(manager.CurrentTama);
                 visual.React();
             }
