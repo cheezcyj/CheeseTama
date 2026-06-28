@@ -11,4 +11,4 @@
 - Added basic care actions for feeding, playing, cleaning, resting, and visible progress feedback.
 - Added visible last-save feedback plus Reload and Reset test buttons.
 - Added CheeseTama placeholder color and pulse feedback for care actions.
-- Switched the placeholder visual to SpriteRenderer to avoid magenta shader fallback.
+- Restored the mesh renderer path and uses property blocks so the egg stays visible in Play Mode.
