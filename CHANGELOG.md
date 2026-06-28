@@ -35,3 +35,4 @@
 - Add Debug scene controls for quick condition, hatch, and Star Milk unlock testing.
 - Add care-based random events and a Debug force-event button for collection testing.
 - Add visible CheeseTama event reactions with a brief floating event cue.
+- Unlock and display hidden collection records from hatch, Star Milk, events, and balanced care.

@@ -30,17 +30,17 @@ namespace CheeseTama.Collections
             return visible;
         }
 
-        public void Unlock(CollectionSaveData collections, string hiddenId, DateTimeOffset acquiredAt)
+        public bool Unlock(CollectionSaveData collections, string hiddenId, DateTimeOffset acquiredAt)
         {
             if (collections == null || string.IsNullOrWhiteSpace(hiddenId))
             {
-                return;
+                return false;
             }
 
             collections.EnsureRuntimeDefaults();
             if (IsUnlocked(collections, hiddenId))
             {
-                return;
+                return false;
             }
 
             collections.hiddenUnlockedOnly.Add(new HiddenCollectionSaveEntry
@@ -48,6 +48,7 @@ namespace CheeseTama.Collections
                 id = hiddenId,
                 acquiredAtIso = acquiredAt.ToString("O")
             });
+            return true;
         }
 
         private static bool IsUnlocked(CollectionSaveData collections, string id)

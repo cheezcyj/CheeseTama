@@ -21,6 +21,7 @@ namespace CheeseTama.Core
 
         private readonly TimeProgressionSystem timeProgressionSystem = new TimeProgressionSystem();
         private readonly CollectionSystem collectionSystem = new CollectionSystem();
+        private readonly HiddenCollectionSystem hiddenCollectionSystem = new HiddenCollectionSystem();
         private readonly MilkGrowthSystem milkGrowthSystem = new MilkGrowthSystem();
         private readonly RandomEventSystem randomEventSystem = new RandomEventSystem();
 
@@ -252,6 +253,8 @@ namespace CheeseTama.Core
                 changed |= AddUniqueRecord(CurrentSave.collections.evolution, evolutionId);
             }
 
+            changed |= UnlockHiddenCollectionRecords();
+
             if (changed)
             {
                 SaveGame();
@@ -266,6 +269,47 @@ namespace CheeseTama.Core
         public CareEventResult ForceCareEvent()
         {
             return randomEventSystem.RollCareEvent(CurrentTama, true);
+        }
+
+        private bool UnlockHiddenCollectionRecords()
+        {
+            if (CurrentSave == null)
+            {
+                return false;
+            }
+
+            var changed = false;
+            var now = DateTimeOffset.Now;
+            var collections = CurrentSave.collections;
+
+            if (CurrentTama != null && CurrentTama.isHatched)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "first_soft_hatch", now);
+            }
+
+            if (CurrentSave.unlocks.starMilkUnlocked)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "star_milk_keeper", now);
+            }
+
+            if (collections.events != null && collections.events.Count >= 3)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "milkroom_listener", now);
+            }
+
+            if (CurrentTama != null
+                && CurrentTama.isHatched
+                && CurrentTama.stats != null
+                && CurrentTama.stats.hunger >= 70
+                && CurrentTama.stats.mood >= 70
+                && CurrentTama.stats.cleanliness >= 70
+                && CurrentTama.stats.sleepiness <= 35
+                && CurrentTama.stats.health >= 80)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "warm_balance", now);
+            }
+
+            return changed;
         }
 
         private bool AddMilkGrowthMilestoneRecords(string milkId, int growthLevel)

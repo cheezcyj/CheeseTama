@@ -46,7 +46,7 @@ namespace CheeseTama.UI
             SetText(milkText, FormatRecordList("Milk Records", saveData.collections.milk, FormatKnownRecordName));
             SetText(evolutionText, FormatRecordList("Evolution Records", saveData.collections.evolution, FormatKnownRecordName));
             SetText(eventText, FormatRecordList("Event Records", saveData.collections.events, FormatKnownRecordName));
-            SetText(hiddenText, $"Hidden Records: {saveData.collections.hiddenUnlockedOnly.Count}");
+            SetText(hiddenText, FormatHiddenRecordList(saveData.collections.hiddenUnlockedOnly));
             SetText(messageText, "Feed milk and hatch CheeseTama to add records here.");
         }
 
@@ -81,6 +81,29 @@ namespace CheeseTama.UI
             }
 
             return $"{title}: {records.Count}\n- {string.Join("\n- ", labels)}";
+        }
+
+        private static string FormatHiddenRecordList(System.Collections.Generic.List<HiddenCollectionSaveEntry> records)
+        {
+            if (records == null || records.Count == 0)
+            {
+                return "Hidden Records: 0\n- none yet";
+            }
+
+            var labels = new string[records.Count];
+            for (var i = 0; i < records.Count; i++)
+            {
+                var entry = records[i];
+                if (entry == null)
+                {
+                    labels[i] = "unknown";
+                    continue;
+                }
+
+                labels[i] = $"{FormatHiddenRecordName(entry.id)} ({FormatIso(entry.acquiredAtIso)})";
+            }
+
+            return $"Hidden Records: {records.Count}\n- {string.Join("\n- ", labels)}";
         }
 
         private static string FormatKnownRecordName(string id)
@@ -148,6 +171,41 @@ namespace CheeseTama.UI
             }
 
             return string.IsNullOrWhiteSpace(id) ? "unknown" : id;
+        }
+
+        private static string FormatHiddenRecordName(string id)
+        {
+            if (id == "first_soft_hatch")
+            {
+                return "First Soft Hatch";
+            }
+
+            if (id == "star_milk_keeper")
+            {
+                return "Star Milk Keeper";
+            }
+
+            if (id == "milkroom_listener")
+            {
+                return "Milkroom Listener";
+            }
+
+            if (id == "warm_balance")
+            {
+                return "Warm Balance";
+            }
+
+            return string.IsNullOrWhiteSpace(id) ? "unknown" : id;
+        }
+
+        private static string FormatIso(string iso)
+        {
+            if (string.IsNullOrWhiteSpace(iso))
+            {
+                return "unknown";
+            }
+
+            return iso.Length > 10 ? iso.Substring(0, 10) : iso;
         }
 
         private static void SetText(Text target, string value)

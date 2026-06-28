@@ -51,6 +51,7 @@ namespace CheeseTama.UI
             builder.AppendLine(FormatMilkGrowthLine("basic_milk", "Basic Milk"));
             builder.AppendLine(FormatStarMilkLine());
             builder.AppendLine(FormatUnlocks());
+            builder.AppendLine(FormatHiddenRecords());
             SetText(stateText, builder.ToString());
         }
 
@@ -104,6 +105,16 @@ namespace CheeseTama.UI
                 ? "Star Milk unlocked"
                 : "Star Milk locked";
             return $"Unlocks: {starMilkState}";
+        }
+
+        private string FormatHiddenRecords()
+        {
+            var count = currentSave != null
+                && currentSave.collections != null
+                && currentSave.collections.hiddenUnlockedOnly != null
+                ? currentSave.collections.hiddenUnlockedOnly.Count
+                : 0;
+            return $"Hidden Records: {count}";
         }
 
         private static string FormatFormName(string form)
