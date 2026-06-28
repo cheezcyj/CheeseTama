@@ -13,3 +13,4 @@
 - Added CheeseTama placeholder color and pulse feedback for care actions.
 - Restored the mesh renderer path and uses property blocks so the egg stays visible in Play Mode.
 - Prefer the active GameManager instance and force scene rebinding after Play Mode scene load.
+- Added per-button MilkroomCareButton components so care actions bind reliably in Play Mode.

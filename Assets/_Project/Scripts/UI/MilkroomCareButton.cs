@@ -1,0 +1,147 @@
+using CheeseTama.Core;
+using CheeseTama.Gameplay.Care;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace CheeseTama.UI
+{
+    public enum MilkroomCareAction
+    {
+        FeedMilk,
+        Play,
+        Clean,
+        Rest,
+        Save,
+        Reload,
+        Reset
+    }
+
+    [RequireComponent(typeof(Button))]
+    public sealed class MilkroomCareButton : MonoBehaviour
+    {
+        [SerializeField] private MilkroomCareAction action;
+        [SerializeField] private MilkroomUIController uiController;
+        [SerializeField] private CheeseTamaVisualController visualController;
+
+        private readonly CareActionSystem careActions = new CareActionSystem();
+        private Button button;
+
+        private void Awake()
+        {
+            button = GetComponent<Button>();
+        }
+
+        private void OnEnable()
+        {
+            button ??= GetComponent<Button>();
+            button.onClick.RemoveListener(HandleClick);
+            button.onClick.AddListener(HandleClick);
+        }
+
+        private void OnDisable()
+        {
+            if (button != null)
+            {
+                button.onClick.RemoveListener(HandleClick);
+            }
+        }
+
+        public void Configure(
+            MilkroomCareAction careAction,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController cheeseTamaVisual)
+        {
+            action = careAction;
+            uiController = milkroomUi;
+            visualController = cheeseTamaVisual;
+            EnsureButtonListener();
+        }
+
+        private void EnsureButtonListener()
+        {
+            button ??= GetComponent<Button>();
+            button.onClick.RemoveListener(HandleClick);
+            button.onClick.AddListener(HandleClick);
+        }
+
+        private void HandleClick()
+        {
+            ResolveReferences();
+
+            var manager = StarterSceneBuilder.EnsureCoreSystems();
+            if (manager.CurrentSave == null)
+            {
+                manager.LoadOrCreateGame();
+            }
+
+            if (uiController == null)
+            {
+                Debug.LogWarning("MilkroomCareButton could not find MilkroomUIController.");
+                return;
+            }
+
+            if (action == MilkroomCareAction.Save)
+            {
+                manager.SaveGame();
+                Refresh("Saved CheeseTama test data.", manager);
+                return;
+            }
+
+            if (action == MilkroomCareAction.Reload)
+            {
+                manager.ReloadGame();
+                Refresh("Reloaded CheeseTama save data.", manager);
+                return;
+            }
+
+            if (action == MilkroomCareAction.Reset)
+            {
+                manager.ResetGame();
+                Refresh("Reset CheeseTama save data.", manager);
+                return;
+            }
+
+            var result = RunCareAction(manager);
+            Refresh(result.message, manager);
+        }
+
+        private CareActionResult RunCareAction(GameManager manager)
+        {
+            return action switch
+            {
+                MilkroomCareAction.FeedMilk => careActions.FeedMilk(manager.CurrentTama),
+                MilkroomCareAction.Play => careActions.Play(manager.CurrentTama),
+                MilkroomCareAction.Clean => careActions.Clean(manager.CurrentTama),
+                MilkroomCareAction.Rest => careActions.Rest(manager.CurrentTama),
+                _ => new CareActionResult(false, false, "No care action was selected.")
+            };
+        }
+
+        private void Refresh(string message, GameManager manager)
+        {
+            uiController.Bind(manager.CurrentTama);
+            uiController.ShowMessage(message);
+
+            if (visualController != null)
+            {
+                visualController.Bind(manager.CurrentTama);
+                visualController.React();
+            }
+
+            Debug.Log(message);
+        }
+
+        private void ResolveReferences()
+        {
+            if (uiController == null)
+            {
+                uiController = Object.FindFirstObjectByType<MilkroomUIController>();
+            }
+
+            if (visualController == null)
+            {
+                visualController = Object.FindFirstObjectByType<CheeseTamaVisualController>();
+            }
+        }
+    }
+}
