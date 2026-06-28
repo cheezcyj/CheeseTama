@@ -6,3 +6,4 @@
 - Added core gameplay, data, save, collection, and UI script skeletons.
 - Added placeholder scenes for Boot, Milkroom, Collection, and Debug.
 - Added runtime and editor starter scene builders for core managers and basic Milkroom UI.
+- Added EventSystem setup and basic test button actions for the Milkroom scene.

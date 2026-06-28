@@ -2,6 +2,7 @@ using CheeseTama.Data;
 using CheeseTama.Save;
 using CheeseTama.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace CheeseTama.Core
@@ -46,6 +47,7 @@ namespace CheeseTama.Core
         {
             EnsureCoreSystems();
             EnsureCamera("Boot Camera");
+            EnsureEventSystem();
             EnsureCanvas("Boot Canvas");
             EnsureTitle("Boot Canvas", "CheeseTama", "Loading core systems");
         }
@@ -55,6 +57,7 @@ namespace CheeseTama.Core
             var manager = EnsureCoreSystems();
             EnsureCamera("Milkroom Camera");
             EnsureLight();
+            EnsureEventSystem();
             EnsureCheeseTamaPlaceholder();
 
             var canvas = EnsureCanvas("Milkroom Canvas");
@@ -77,15 +80,19 @@ namespace CheeseTama.Core
             controller.Configure(nameText, levelText, hungerText, moodText, cleanlinessText, sleepinessText, healthText);
             controller.Bind(manager.CurrentTama);
 
-            CreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-150, 36));
-            CreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(0, 36));
-            CreateButton(canvas.transform, "Save Button", "Save", new Vector2(150, 36)).onClick.AddListener(manager.SaveGame);
+            CreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-150, 36))
+                .onClick.AddListener(() => FeedTestMilk(manager, controller));
+            CreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(0, 36))
+                .onClick.AddListener(() => CleanTestRoom(manager, controller));
+            CreateButton(canvas.transform, "Save Button", "Save", new Vector2(150, 36))
+                .onClick.AddListener(() => SaveTestGame(manager));
         }
 
         public static void BuildCollectionScene()
         {
             EnsureCoreSystems();
             EnsureCamera("Collection Camera");
+            EnsureEventSystem();
             var canvas = EnsureCanvas("Collection Canvas");
 
             if (Object.FindFirstObjectByType<CollectionUIController>() == null)
@@ -100,7 +107,43 @@ namespace CheeseTama.Core
         {
             EnsureCoreSystems();
             EnsureCamera("Debug Camera");
+            EnsureEventSystem();
             EnsureTitle("Debug Canvas", "Debug", "Developer test surface");
+        }
+
+        private static void FeedTestMilk(GameManager manager, MilkroomUIController controller)
+        {
+            var tama = manager != null ? manager.CurrentTama : null;
+            if (tama == null)
+            {
+                return;
+            }
+
+            tama.stats.hunger = Mathf.Clamp(tama.stats.hunger + 15, 0, 100);
+            tama.stats.mood = Mathf.Clamp(tama.stats.mood + 3, 0, 100);
+            tama.stats.affection = Mathf.Clamp(tama.stats.affection + 1, 0, 100);
+            controller.Refresh();
+            Debug.Log("Fed test milk.");
+        }
+
+        private static void CleanTestRoom(GameManager manager, MilkroomUIController controller)
+        {
+            var tama = manager != null ? manager.CurrentTama : null;
+            if (tama == null)
+            {
+                return;
+            }
+
+            tama.stats.cleanliness = Mathf.Clamp(tama.stats.cleanliness + 20, 0, 100);
+            tama.stats.health = Mathf.Clamp(tama.stats.health + 2, 0, 100);
+            controller.Refresh();
+            Debug.Log("Cleaned the test milkroom.");
+        }
+
+        private static void SaveTestGame(GameManager manager)
+        {
+            manager?.SaveGame();
+            Debug.Log("Saved CheeseTama test data.");
         }
 
         private static Camera EnsureCamera(string name)
@@ -182,6 +225,18 @@ namespace CheeseTama.Core
 
             canvasObject.AddComponent<GraphicRaycaster>();
             return canvas;
+        }
+
+        private static void EnsureEventSystem()
+        {
+            if (Object.FindFirstObjectByType<EventSystem>() != null)
+            {
+                return;
+            }
+
+            var eventSystemObject = new GameObject("EventSystem");
+            eventSystemObject.AddComponent<EventSystem>();
+            eventSystemObject.AddComponent<StandaloneInputModule>();
         }
 
         private static void EnsureTitle(string canvasName, string title, string subtitle)
