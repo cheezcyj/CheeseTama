@@ -14,6 +14,7 @@ namespace CheeseTama.Core
         public DataRegistry DataRegistry => dataRegistry;
         public CheeseTamaSaveData CurrentSave { get; private set; }
         public CheeseTamaModel CurrentTama => CurrentSave?.cheeseTama;
+        public string SaveFilePath => saveManager != null ? saveManager.SaveFilePath : string.Empty;
 
         private void Awake()
         {
@@ -38,6 +39,23 @@ namespace CheeseTama.Core
                 return;
             }
 
+            CurrentSave = saveManager.LoadOrCreate();
+        }
+
+        public void ReloadGame()
+        {
+            LoadOrCreateGame();
+        }
+
+        public void ResetGame()
+        {
+            if (saveManager == null)
+            {
+                CurrentSave = SaveManager.CreateDefaultSave();
+                return;
+            }
+
+            saveManager.DeleteSave();
             CurrentSave = saveManager.LoadOrCreate();
         }
 

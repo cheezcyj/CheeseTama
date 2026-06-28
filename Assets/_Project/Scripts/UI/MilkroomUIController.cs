@@ -16,6 +16,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text healthText;
         [SerializeField] private Text affectionText;
         [SerializeField] private Text maturationText;
+        [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
 
         private CheeseTamaModel current;
@@ -31,6 +32,7 @@ namespace CheeseTama.UI
             Text healthLabel,
             Text affectionLabel,
             Text maturationLabel,
+            Text lastSavedLabel,
             Text messageLabel)
         {
             nameText = nameLabel;
@@ -43,6 +45,7 @@ namespace CheeseTama.UI
             healthText = healthLabel;
             affectionText = affectionLabel;
             maturationText = maturationLabel;
+            lastSavedText = lastSavedLabel;
             messageText = messageLabel;
         }
 
@@ -69,6 +72,7 @@ namespace CheeseTama.UI
             SetText(healthText, $"Health: {current.stats.health}");
             SetText(affectionText, $"Affection: {current.stats.affection}");
             SetText(maturationText, $"Maturation: {current.stats.maturation}");
+            SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
 
         public void ShowMessage(string message)
@@ -83,6 +87,15 @@ namespace CheeseTama.UI
                 target.text = value;
             }
         }
+
+        private static string FormatIso(string iso)
+        {
+            if (string.IsNullOrWhiteSpace(iso))
+            {
+                return "Never";
+            }
+
+            return iso.Length > 19 ? iso.Substring(0, 19).Replace('T', ' ') : iso;
+        }
     }
 }
-

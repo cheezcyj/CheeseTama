@@ -10,6 +10,7 @@ namespace CheeseTama.Save
         [SerializeField] private string saveFileName = "cheesetama_save.json";
 
         public string SaveFilePath => Path.Combine(Application.persistentDataPath, saveFileName);
+        public bool HasSaveFile => File.Exists(SaveFilePath);
 
         public CheeseTamaSaveData LoadOrCreate()
         {
@@ -37,7 +38,18 @@ namespace CheeseTama.Save
             File.WriteAllText(SaveFilePath, json);
         }
 
-        private static CheeseTamaSaveData CreateDefaultSave()
+        public bool DeleteSave()
+        {
+            if (!File.Exists(SaveFilePath))
+            {
+                return false;
+            }
+
+            File.Delete(SaveFilePath);
+            return true;
+        }
+
+        public static CheeseTamaSaveData CreateDefaultSave()
         {
             var now = DateTimeOffset.Now.ToString("O");
             var save = new CheeseTamaSaveData();
@@ -47,4 +59,3 @@ namespace CheeseTama.Save
         }
     }
 }
-

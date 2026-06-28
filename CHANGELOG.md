@@ -9,3 +9,4 @@
 - Added EventSystem setup and basic test button actions for the Milkroom scene.
 - Rebind Milkroom UI and button actions at runtime when the scene already contains generated UI.
 - Added basic care actions for feeding, playing, cleaning, resting, and visible progress feedback.
+- Added visible last-save feedback plus Reload and Reset test buttons.

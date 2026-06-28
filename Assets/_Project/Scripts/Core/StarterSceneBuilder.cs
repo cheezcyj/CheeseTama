@@ -69,7 +69,7 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(300, 392));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 430));
             var panelTransform = panel.transform;
 
             var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
@@ -82,7 +82,8 @@ namespace CheeseTama.Core
             var healthText = GetOrCreateText(panelTransform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -224), new Vector2(260, 24));
             var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -252), new Vector2(260, 24));
             var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -322), new Vector2(260, 48));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -310), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -346), new Vector2(280, 56));
 
             controller.Configure(
                 nameText,
@@ -95,29 +96,38 @@ namespace CheeseTama.Core
                 healthText,
                 affectionText,
                 maturationText,
+                lastSavedText,
                 messageText);
             controller.Bind(manager.CurrentTama);
             controller.ShowMessage("Ready for care.");
 
-            var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-320, 36));
+            var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-480, 36));
             feedButton.onClick.RemoveAllListeners();
             feedButton.onClick.AddListener(() => ApplyCareResult(careActions.FeedMilk(manager.CurrentTama), controller));
 
-            var playButton = GetOrCreateButton(canvas.transform, "Play Button", "Play", new Vector2(-160, 36));
+            var playButton = GetOrCreateButton(canvas.transform, "Play Button", "Play", new Vector2(-320, 36));
             playButton.onClick.RemoveAllListeners();
             playButton.onClick.AddListener(() => ApplyCareResult(careActions.Play(manager.CurrentTama), controller));
 
-            var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(0, 36));
+            var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(-160, 36));
             cleanButton.onClick.RemoveAllListeners();
             cleanButton.onClick.AddListener(() => ApplyCareResult(careActions.Clean(manager.CurrentTama), controller));
 
-            var restButton = GetOrCreateButton(canvas.transform, "Rest Button", "Rest", new Vector2(160, 36));
+            var restButton = GetOrCreateButton(canvas.transform, "Rest Button", "Rest", new Vector2(0, 36));
             restButton.onClick.RemoveAllListeners();
             restButton.onClick.AddListener(() => ApplyCareResult(careActions.Rest(manager.CurrentTama), controller));
 
-            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(320, 36));
+            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(160, 36));
             saveButton.onClick.RemoveAllListeners();
             saveButton.onClick.AddListener(() => SaveTestGame(manager, controller));
+
+            var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(320, 36));
+            reloadButton.onClick.RemoveAllListeners();
+            reloadButton.onClick.AddListener(() => ReloadTestGame(manager, controller));
+
+            var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(480, 36));
+            resetButton.onClick.RemoveAllListeners();
+            resetButton.onClick.AddListener(() => ResetTestGame(manager, controller));
         }
 
         public static void BuildCollectionScene()
@@ -153,8 +163,25 @@ namespace CheeseTama.Core
         private static void SaveTestGame(GameManager manager, MilkroomUIController controller)
         {
             manager?.SaveGame();
+            controller.Bind(manager.CurrentTama);
             controller.ShowMessage("Saved CheeseTama test data.");
             Debug.Log("Saved CheeseTama test data.");
+        }
+
+        private static void ReloadTestGame(GameManager manager, MilkroomUIController controller)
+        {
+            manager.ReloadGame();
+            controller.Bind(manager.CurrentTama);
+            controller.ShowMessage("Reloaded CheeseTama save data.");
+            Debug.Log("Reloaded CheeseTama save data.");
+        }
+
+        private static void ResetTestGame(GameManager manager, MilkroomUIController controller)
+        {
+            manager.ResetGame();
+            controller.Bind(manager.CurrentTama);
+            controller.ShowMessage("Reset CheeseTama save data.");
+            Debug.Log("Reset CheeseTama save data.");
         }
 
         private static Camera EnsureCamera(string name)
@@ -440,4 +467,3 @@ namespace CheeseTama.Core
         }
     }
 }
-
