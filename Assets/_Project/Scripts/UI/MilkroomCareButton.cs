@@ -1,5 +1,6 @@
 using CheeseTama.Core;
 using CheeseTama.Gameplay.Care;
+using CheeseTama.Gameplay.Events;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -113,8 +114,8 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.WaitHour)
             {
                 var timeResult = manager.ApplyTimeSkipHours(1);
-                var timeEventMessage = RegisterRandomEvent(manager);
-                Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEventMessage), manager, false);
+                var timeEvent = RegisterRandomEvent(manager);
+                Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEvent.message), manager, false, timeEvent.eventId);
                 return;
             }
 
@@ -126,8 +127,8 @@ namespace CheeseTama.UI
 
             var careResult = RunCareAction(manager);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
-            var eventMessage = careResult.hatched ? string.Empty : RegisterRandomEvent(manager);
-            Refresh(CombineMessages(CombineMessages(careResult.message, discoveryMessage), eventMessage), manager, careResult.hatched);
+            var eventResult = careResult.hatched ? CareEventResult.None() : RegisterRandomEvent(manager);
+            Refresh(CombineMessages(CombineMessages(careResult.message, discoveryMessage), eventResult.message), manager, careResult.hatched, eventResult.eventId);
         }
 
         private CareActionResult RunCareAction(GameManager manager)
@@ -194,16 +195,16 @@ namespace CheeseTama.UI
             return $"{FormatMilkName(milkId)} reached Lv. {growth.growthLevel}.";
         }
 
-        private static string RegisterRandomEvent(GameManager manager)
+        private static CareEventResult RegisterRandomEvent(GameManager manager)
         {
             var eventResult = manager.TryRollCareEvent();
             if (!eventResult.occurred)
             {
-                return string.Empty;
+                return eventResult;
             }
 
             manager.RegisterEventDiscovery(eventResult.eventId);
-            return eventResult.message;
+            return eventResult;
         }
 
         private static string CombineMessages(string primary, string secondary)
@@ -226,7 +227,7 @@ namespace CheeseTama.UI
             return milkId == StarMilkId ? "Star Milk" : "Basic Milk";
         }
 
-        private void Refresh(string message, GameManager manager, bool celebrate)
+        private void Refresh(string message, GameManager manager, bool celebrate, string eventId = "")
         {
             uiController.Bind(manager.CurrentSave);
             uiController.ShowMessage(message);
@@ -235,7 +236,14 @@ namespace CheeseTama.UI
             if (visual != null)
             {
                 visual.Bind(manager.CurrentTama);
-                visual.React(celebrate);
+                if (string.IsNullOrWhiteSpace(eventId))
+                {
+                    visual.React(celebrate);
+                }
+                else
+                {
+                    visual.ReactEvent(eventId);
+                }
             }
             else
             {

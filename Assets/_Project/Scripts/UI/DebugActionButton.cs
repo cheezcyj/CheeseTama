@@ -1,5 +1,6 @@
 using CheeseTama.Core;
 using CheeseTama.Gameplay;
+using CheeseTama.Gameplay.Events;
 using CheeseTama.Gameplay.Growth;
 using CheeseTama.Gameplay.Stats;
 using UnityEngine;
@@ -93,14 +94,15 @@ namespace CheeseTama.UI
 
             tama.EnsureRuntimeDefaults();
             var celebrate = false;
-            var message = ApplyAction(manager, tama, ref celebrate);
+            var eventId = string.Empty;
+            var message = ApplyAction(manager, tama, ref celebrate, ref eventId);
 
             manager.RefreshDerivedCollectionRecords();
             manager.SaveGame();
-            Refresh(message, manager, celebrate);
+            Refresh(message, manager, celebrate, eventId);
         }
 
-        private string ApplyAction(GameManager manager, CheeseTamaModel tama, ref bool celebrate)
+        private string ApplyAction(GameManager manager, CheeseTamaModel tama, ref bool celebrate, ref string eventId)
         {
             if (IsConditionPreset(action))
             {
@@ -143,22 +145,24 @@ namespace CheeseTama.UI
                     manager.RegisterEventDiscovery("star_milk_unlocked");
                     return "Debug unlock applied: Star Milk is available.";
                 case DebugAction.ForceEvent:
-                    return ForceCareEvent(manager);
+                    var eventResult = ForceCareEvent(manager);
+                    eventId = eventResult.eventId;
+                    return eventResult.message;
                 default:
                     return "No debug action was selected.";
             }
         }
 
-        private static string ForceCareEvent(GameManager manager)
+        private static CareEventResult ForceCareEvent(GameManager manager)
         {
             var eventResult = manager.ForceCareEvent();
             if (!eventResult.occurred)
             {
-                return "Debug event roll found no event.";
+                return new CareEventResult(false, string.Empty, "Debug event roll found no event.");
             }
 
             manager.RegisterEventDiscovery(eventResult.eventId);
-            return eventResult.message;
+            return eventResult;
         }
 
         private static bool IsConditionPreset(DebugAction debugAction)
@@ -201,7 +205,7 @@ namespace CheeseTama.UI
             manager.RegisterCurrentEvolutionDiscovery();
         }
 
-        private void Refresh(string message, GameManager manager, bool celebrate)
+        private void Refresh(string message, GameManager manager, bool celebrate, string eventId = "")
         {
             uiController?.Bind(manager.CurrentSave);
             uiController?.ShowMessage(message);
@@ -210,7 +214,14 @@ namespace CheeseTama.UI
             if (visual != null)
             {
                 visual.Bind(manager.CurrentTama);
-                visual.React(celebrate);
+                if (string.IsNullOrWhiteSpace(eventId))
+                {
+                    visual.React(celebrate);
+                }
+                else
+                {
+                    visual.ReactEvent(eventId);
+                }
             }
             else
             {

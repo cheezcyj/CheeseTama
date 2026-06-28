@@ -34,3 +34,4 @@
 - Add condition-based facial expressions for hatched CheeseTama.
 - Add Debug scene controls for quick condition, hatch, and Star Milk unlock testing.
 - Add care-based random events and a Debug force-event button for collection testing.
+- Add visible CheeseTama event reactions with a brief floating event cue.

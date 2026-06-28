@@ -18,6 +18,11 @@ namespace CheeseTama.UI
         private const float HatchReactionHopHeight = 0.72f;
         private const float HatchReactionPunch = 0.2f;
         private const float HatchReactionFlash = 0.38f;
+        private const float EventReactionDuration = 0.95f;
+        private const float EventReactionHopHeight = 0.24f;
+        private const float EventReactionPunch = 0.12f;
+        private const float EventReactionFlash = 0.55f;
+        private const float EventCueDuration = 1.2f;
 
         private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
         private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
@@ -31,15 +36,21 @@ namespace CheeseTama.UI
         private Transform cheeseHoleA;
         private Transform cheeseHoleB;
         private Transform cheeseHoleC;
+        private Transform eventCue;
+        private Renderer eventCueRenderer;
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
+        private Vector3 eventCueBaseScale;
         private bool hasRestingLocalPosition;
         private float reactionStartedAt;
         private float reactionDuration = CareReactionDuration;
         private float reactionHopHeight = CareReactionHopHeight;
         private float reactionPunch = CareReactionPunch;
         private float reactionFlash = CareReactionFlash;
+        private float eventCueStartedAt;
+        private Color reactionTintColor = Color.white;
         private bool isReacting;
+        private bool eventCueVisible;
 
         private void Awake()
         {
@@ -60,6 +71,7 @@ namespace CheeseTama.UI
             var baseColor = GetStateColor(current);
             UpdateHatchedFeatureVisibility();
             UpdateHatchedFeatureAppearance();
+            UpdateEventCue();
 
             if (!isReacting)
             {
@@ -82,11 +94,12 @@ namespace CheeseTama.UI
                 baseScale.x * (1f + punch + wobble),
                 baseScale.y * (1f + punch * 0.65f - wobble),
                 baseScale.z * (1f + punch + wobble));
-            SetColor(Color.Lerp(baseColor, Color.white, arc * reactionFlash));
+            SetColor(Color.Lerp(baseColor, reactionTintColor, arc * reactionFlash));
 
             if (normalized >= 1f)
             {
                 isReacting = false;
+                reactionTintColor = Color.white;
                 transform.localPosition = restingLocalPosition;
                 transform.localScale = baseScale;
                 SetColor(baseColor);
@@ -118,11 +131,13 @@ namespace CheeseTama.UI
         public void React(bool celebrate = false)
         {
             CaptureRestingPosition();
+            HideEventCue();
             reactionStartedAt = Time.realtimeSinceStartup;
             reactionDuration = celebrate ? HatchReactionDuration : CareReactionDuration;
             reactionHopHeight = celebrate ? HatchReactionHopHeight : CareReactionHopHeight;
             reactionPunch = celebrate ? HatchReactionPunch : CareReactionPunch;
             reactionFlash = celebrate ? HatchReactionFlash : CareReactionFlash;
+            reactionTintColor = Color.white;
             isReacting = true;
 
             var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
@@ -131,6 +146,26 @@ namespace CheeseTama.UI
             var stretch = celebrate ? 1.1f : 1.04f;
             transform.localScale = new Vector3(baseScale.x * stretch, baseScale.y * squash, baseScale.z * stretch);
             SetColor(Color.Lerp(GetStateColor(current), Color.white, celebrate ? 0.2f : 0.08f));
+        }
+
+        public void ReactEvent(string eventId)
+        {
+            CaptureRestingPosition();
+            EnsureEventCue();
+
+            reactionTintColor = GetEventColor(eventId);
+            reactionStartedAt = Time.realtimeSinceStartup;
+            reactionDuration = EventReactionDuration;
+            reactionHopHeight = EventReactionHopHeight;
+            reactionPunch = EventReactionPunch;
+            reactionFlash = EventReactionFlash;
+            isReacting = true;
+
+            var baseScale = current != null && current.isHatched ? hatchedScale : eggScale;
+            transform.localPosition = restingLocalPosition;
+            transform.localScale = new Vector3(baseScale.x * 1.05f, baseScale.y * 0.97f, baseScale.z * 1.05f);
+            SetColor(Color.Lerp(GetStateColor(current), reactionTintColor, 0.22f));
+            ShowEventCue(eventId, reactionTintColor);
         }
 
         private void EnsureRenderer()
@@ -303,6 +338,78 @@ namespace CheeseTama.UI
             PaintFeature(feature.GetComponent<Renderer>(), color);
         }
 
+        private void EnsureEventCue()
+        {
+            if (eventCue != null)
+            {
+                return;
+            }
+
+            var cue = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            cue.name = "Event Cue";
+            cue.transform.SetParent(transform, false);
+            cue.transform.localPosition = new Vector3(0f, 1.1f, -0.08f);
+            cue.transform.localScale = new Vector3(0.18f, 0.18f, 0.06f);
+
+            var collider = cue.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Destroy(collider);
+            }
+
+            eventCue = cue.transform;
+            eventCueRenderer = cue.GetComponent<Renderer>();
+            eventCue.gameObject.SetActive(false);
+        }
+
+        private void ShowEventCue(string eventId, Color color)
+        {
+            if (eventCue == null)
+            {
+                return;
+            }
+
+            eventCueStartedAt = Time.realtimeSinceStartup;
+            eventCueVisible = true;
+            eventCueBaseScale = GetEventCueScale(eventId);
+            eventCue.localPosition = new Vector3(0f, 1.05f, -0.08f);
+            eventCue.localRotation = Quaternion.identity;
+            eventCue.localScale = eventCueBaseScale;
+            eventCue.gameObject.SetActive(true);
+            PaintFeature(eventCueRenderer, color);
+        }
+
+        private void UpdateEventCue()
+        {
+            if (!eventCueVisible || eventCue == null)
+            {
+                return;
+            }
+
+            var normalized = Mathf.Clamp01((Time.realtimeSinceStartup - eventCueStartedAt) / EventCueDuration);
+            if (normalized >= 1f)
+            {
+                HideEventCue();
+                return;
+            }
+
+            var arc = Mathf.Sin(normalized * Mathf.PI);
+            var drift = normalized * 0.18f;
+            var pulse = 1f + arc * 0.32f;
+            eventCue.localPosition = new Vector3(0f, 1.05f + arc * 0.16f + drift, -0.08f);
+            eventCue.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(normalized * Mathf.PI * 2f) * 14f);
+            eventCue.localScale = eventCueBaseScale * pulse;
+        }
+
+        private void HideEventCue()
+        {
+            eventCueVisible = false;
+            if (eventCue != null)
+            {
+                eventCue.gameObject.SetActive(false);
+            }
+        }
+
         private void CaptureRestingPosition()
         {
             if (hasRestingLocalPosition)
@@ -438,6 +545,30 @@ namespace CheeseTama.UI
             }
 
             return new Color(1f, 0.84f, 0.28f);
+        }
+
+        private static Color GetEventColor(string eventId)
+        {
+            return eventId switch
+            {
+                "happy_wiggle" => new Color(1f, 0.92f, 0.28f),
+                "small_fever" => new Color(0.5f, 0.72f, 1f),
+                "hungry_peep" => new Color(1f, 0.55f, 0.22f),
+                "dusty_corner" => new Color(0.55f, 0.42f, 0.26f),
+                "sleepy_yawn" => new Color(0.62f, 0.58f, 1f),
+                _ => new Color(0.62f, 0.95f, 0.82f)
+            };
+        }
+
+        private static Vector3 GetEventCueScale(string eventId)
+        {
+            return eventId switch
+            {
+                "sleepy_yawn" => new Vector3(0.24f, 0.12f, 0.05f),
+                "dusty_corner" => new Vector3(0.14f, 0.14f, 0.05f),
+                "happy_wiggle" => new Vector3(0.22f, 0.22f, 0.06f),
+                _ => new Vector3(0.18f, 0.18f, 0.06f)
+            };
         }
 
         private enum FaceExpression
