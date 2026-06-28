@@ -5,21 +5,17 @@ namespace CheeseTama.UI
 {
     public sealed class CheeseTamaVisualController : MonoBehaviour
     {
-        [SerializeField] private Renderer targetRenderer;
+        [SerializeField] private SpriteRenderer spriteRenderer;
 
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-
-        private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1.25f);
-        private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1.45f);
-        private Material runtimeMaterial;
+        private static Sprite circleSprite;
+        private readonly Vector3 eggScale = new Vector3(1.25f, 1.55f, 1f);
+        private readonly Vector3 hatchedScale = new Vector3(1.45f, 1.2f, 1f);
         private CheeseTamaModel current;
         private float pulseTimer;
 
         private void Awake()
         {
-            EnsureRenderer();
-            EnsureMaterial();
+            EnsureSpriteRenderer();
         }
 
         private void Update()
@@ -38,6 +34,7 @@ namespace CheeseTama.UI
 
         public void Bind(CheeseTamaModel tama)
         {
+            EnsureSpriteRenderer();
             current = tama;
             if (current == null)
             {
@@ -53,56 +50,74 @@ namespace CheeseTama.UI
             pulseTimer = 0.35f;
         }
 
-        private void EnsureRenderer()
+        private void EnsureSpriteRenderer()
         {
-            if (targetRenderer == null)
+            DisableMeshRendering();
+
+            if (spriteRenderer == null)
             {
-                targetRenderer = GetComponent<Renderer>();
+                spriteRenderer = GetComponent<SpriteRenderer>();
             }
+
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
+            }
+
+            spriteRenderer.sprite = GetCircleSprite();
+            spriteRenderer.sortingOrder = 0;
         }
 
-        private void EnsureMaterial()
+        private void DisableMeshRendering()
         {
-            if (targetRenderer == null)
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
             {
-                return;
+                meshRenderer.enabled = false;
             }
-
-            var shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null)
-            {
-                shader = Shader.Find("Unlit/Color");
-            }
-
-            if (shader == null)
-            {
-                shader = Shader.Find("Sprites/Default");
-            }
-
-            runtimeMaterial = shader != null ? new Material(shader) : new Material(targetRenderer.sharedMaterial);
-            targetRenderer.sharedMaterial = runtimeMaterial;
         }
 
         private void SetColor(Color color)
         {
-            if (runtimeMaterial == null)
+            EnsureSpriteRenderer();
+            spriteRenderer.color = color;
+        }
+
+        private static Sprite GetCircleSprite()
+        {
+            if (circleSprite != null)
             {
-                EnsureMaterial();
+                return circleSprite;
             }
 
-            if (runtimeMaterial == null)
+            const int size = 96;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
             {
-                return;
+                name = "Runtime CheeseTama Circle",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            var center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+            var radius = size * 0.46f;
+            var softEdge = size * 0.04f;
+            var pixels = new Color32[size * size];
+
+            for (var y = 0; y < size; y++)
+            {
+                for (var x = 0; x < size; x++)
+                {
+                    var distance = Vector2.Distance(new Vector2(x, y), center);
+                    var alpha = Mathf.Clamp01((radius - distance) / softEdge);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
             }
 
-            if (runtimeMaterial.HasProperty(BaseColorId))
-            {
-                runtimeMaterial.SetColor(BaseColorId, color);
-            }
-            else if (runtimeMaterial.HasProperty(ColorId))
-            {
-                runtimeMaterial.SetColor(ColorId, color);
-            }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            circleSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+            circleSprite.name = "Runtime CheeseTama Circle";
+            return circleSprite;
         }
 
         private static Color GetStateColor(CheeseTamaModel tama)
