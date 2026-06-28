@@ -113,8 +113,8 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.WaitHour)
             {
                 var timeResult = manager.ApplyTimeSkipHours(1);
-                var eventMessage = RegisterRandomEvent(manager);
-                Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), eventMessage), manager, false);
+                var timeEventMessage = RegisterRandomEvent(manager);
+                Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEventMessage), manager, false);
                 return;
             }
 
