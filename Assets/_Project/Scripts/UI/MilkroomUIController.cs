@@ -8,30 +8,42 @@ namespace CheeseTama.UI
     {
         [SerializeField] private Text nameText;
         [SerializeField] private Text levelText;
+        [SerializeField] private Text formText;
         [SerializeField] private Text hungerText;
         [SerializeField] private Text moodText;
         [SerializeField] private Text cleanlinessText;
         [SerializeField] private Text sleepinessText;
         [SerializeField] private Text healthText;
+        [SerializeField] private Text affectionText;
+        [SerializeField] private Text maturationText;
+        [SerializeField] private Text messageText;
 
         private CheeseTamaModel current;
 
         public void Configure(
             Text nameLabel,
             Text levelLabel,
+            Text formLabel,
             Text hungerLabel,
             Text moodLabel,
             Text cleanlinessLabel,
             Text sleepinessLabel,
-            Text healthLabel)
+            Text healthLabel,
+            Text affectionLabel,
+            Text maturationLabel,
+            Text messageLabel)
         {
             nameText = nameLabel;
             levelText = levelLabel;
+            formText = formLabel;
             hungerText = hungerLabel;
             moodText = moodLabel;
             cleanlinessText = cleanlinessLabel;
             sleepinessText = sleepinessLabel;
             healthText = healthLabel;
+            affectionText = affectionLabel;
+            maturationText = maturationLabel;
+            messageText = messageLabel;
         }
 
         public void Bind(CheeseTamaModel tama)
@@ -48,12 +60,20 @@ namespace CheeseTama.UI
             }
 
             SetText(nameText, current.name);
-            SetText(levelText, $"Lv. {current.level}");
+            SetText(levelText, $"Lv. {current.level} ({current.levelProgress}%)");
+            SetText(formText, $"Form: {current.form}");
             SetText(hungerText, $"Hunger: {current.stats.hunger}");
             SetText(moodText, $"Mood: {current.stats.mood}");
             SetText(cleanlinessText, $"Cleanliness: {current.stats.cleanliness}");
             SetText(sleepinessText, $"Sleepiness: {current.stats.sleepiness}");
             SetText(healthText, $"Health: {current.stats.health}");
+            SetText(affectionText, $"Affection: {current.stats.affection}");
+            SetText(maturationText, $"Maturation: {current.stats.maturation}");
+        }
+
+        public void ShowMessage(string message)
+        {
+            SetText(messageText, message);
         }
 
         private static void SetText(Text target, string value)
@@ -65,3 +85,4 @@ namespace CheeseTama.UI
         }
     }
 }
+
