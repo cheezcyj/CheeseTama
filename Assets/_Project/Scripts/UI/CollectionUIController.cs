@@ -43,9 +43,9 @@ namespace CheeseTama.UI
             }
 
             saveData.EnsureRuntimeDefaults();
-            SetText(milkText, FormatRecordList("Milk Records", saveData.collections.milk));
-            SetText(evolutionText, FormatRecordList("Evolution Records", saveData.collections.evolution));
-            SetText(eventText, FormatRecordList("Event Records", saveData.collections.events));
+            SetText(milkText, FormatRecordList("Milk Records", saveData.collections.milk, FormatKnownRecordName));
+            SetText(evolutionText, FormatRecordList("Evolution Records", saveData.collections.evolution, FormatKnownRecordName));
+            SetText(eventText, FormatRecordList("Event Records", saveData.collections.events, FormatKnownRecordName));
             SetText(hiddenText, $"Hidden Records: {saveData.collections.hiddenUnlockedOnly.Count}");
             SetText(messageText, "Feed milk and hatch CheeseTama to add records here.");
         }
@@ -64,14 +64,44 @@ namespace CheeseTama.UI
             return result;
         }
 
-        private static string FormatRecordList(string title, System.Collections.Generic.List<string> records)
+        private static string FormatRecordList(
+            string title,
+            System.Collections.Generic.List<string> records,
+            System.Func<string, string> formatter)
         {
             if (records == null || records.Count == 0)
             {
                 return $"{title}: 0\n- none yet";
             }
 
-            return $"{title}: {records.Count}\n- {string.Join("\n- ", records)}";
+            var labels = new string[records.Count];
+            for (var i = 0; i < records.Count; i++)
+            {
+                labels[i] = formatter != null ? formatter(records[i]) : records[i];
+            }
+
+            return $"{title}: {records.Count}\n- {string.Join("\n- ", labels)}";
+        }
+
+        private static string FormatKnownRecordName(string id)
+        {
+            if (id == "basic_milk")
+            {
+                return "Basic Milk";
+            }
+
+            if (id == "soft_cheesetama")
+            {
+                return "Soft CheeseTama";
+            }
+
+            const string BasicMilkGrowthPrefix = "basic_milk_growth_lv_";
+            if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(BasicMilkGrowthPrefix))
+            {
+                return $"Basic Milk reached Lv. {id.Substring(BasicMilkGrowthPrefix.Length)}";
+            }
+
+            return string.IsNullOrWhiteSpace(id) ? "unknown" : id;
         }
 
         private static void SetText(Text target, string value)

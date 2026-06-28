@@ -20,6 +20,8 @@ namespace CheeseTama.UI
     [RequireComponent(typeof(Button))]
     public sealed class MilkroomCareButton : MonoBehaviour
     {
+        private const string BasicMilkId = "basic_milk";
+
         [SerializeField] private MilkroomCareAction action;
         [SerializeField] private MilkroomUIController uiController;
         [SerializeField] private CheeseTamaVisualController visualController;
@@ -113,8 +115,8 @@ namespace CheeseTama.UI
             }
 
             var careResult = RunCareAction(manager);
-            RegisterCollectionDiscoveries(manager, careResult);
-            Refresh(careResult.message, manager, careResult.hatched);
+            var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
+            Refresh(CombineMessages(careResult.message, discoveryMessage), manager, careResult.hatched);
         }
 
         private CareActionResult RunCareAction(GameManager manager)
@@ -129,23 +131,50 @@ namespace CheeseTama.UI
             };
         }
 
-        private void RegisterCollectionDiscoveries(GameManager manager, CareActionResult result)
+        private string RegisterCollectionDiscoveries(GameManager manager, CareActionResult result)
         {
             if (manager == null || !result.success)
             {
-                return;
+                return string.Empty;
             }
 
+            var message = string.Empty;
             if (action == MilkroomCareAction.FeedMilk)
             {
-                manager.RegisterMilkDiscovery("basic_milk");
-                manager.RegisterMilkGrowth("basic_milk", 1);
+                var previousGrowth = manager.FindMilkGrowth(BasicMilkId);
+                var previousLevel = previousGrowth?.growthLevel ?? 0;
+                manager.RegisterMilkDiscovery(BasicMilkId);
+
+                var growth = manager.RegisterMilkGrowth(BasicMilkId, 1);
+                if (growth != null && growth.growthLevel > previousLevel)
+                {
+                    var eventId = $"{BasicMilkId}_growth_lv_{growth.growthLevel}";
+                    manager.RegisterEventDiscovery(eventId);
+                    message = $"Basic Milk reached Lv. {growth.growthLevel}.";
+                }
             }
 
             if (result.hatched)
             {
                 manager.RegisterCurrentEvolutionDiscovery();
             }
+
+            return message;
+        }
+
+        private static string CombineMessages(string primary, string secondary)
+        {
+            if (string.IsNullOrWhiteSpace(primary))
+            {
+                return secondary ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(secondary))
+            {
+                return primary;
+            }
+
+            return $"{primary} {secondary}";
         }
 
         private void Refresh(string message, GameManager manager, bool celebrate)

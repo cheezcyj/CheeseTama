@@ -124,6 +124,18 @@ namespace CheeseTama.Core
             SaveGame();
         }
 
+        public void RegisterEventDiscovery(string eventId)
+        {
+            if (CurrentSave == null)
+            {
+                return;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            collectionSystem.RegisterEvent(CurrentSave.collections, eventId);
+            SaveGame();
+        }
+
         public MilkGrowthSaveEntry RegisterMilkGrowth(string milkId, int points)
         {
             if (CurrentSave == null || CurrentTama == null)
