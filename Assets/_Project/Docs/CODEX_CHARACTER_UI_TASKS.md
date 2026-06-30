@@ -10,6 +10,7 @@
 - Save, Load, and Reset are moved into Settings > Data Management.
 - Reset requires typing `RESET`.
 - F12 Dev Panel is separated from the release-facing bottom bar.
+- Wait +1h is available from the F12 Dev Panel for testing time progression.
 
 ## Next Character Work
 

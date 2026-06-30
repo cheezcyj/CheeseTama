@@ -368,10 +368,13 @@ namespace CheeseTama.Core
 
             settingsController.Configure(settingsButton, closeSettingsButton, settingsModal);
 
-            var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1276, -746), new Vector2(300, 164));
+            var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1276, -718), new Vector2(300, 206));
             var devPanelTransform = devPanel.transform;
             GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "Dev Panel", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
-            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(18, -82), new Vector2(150, 42));
+            GetOrCreateText(devPanelTransform, "Dev Panel Help Text", "Editor test tools", 13, TextAnchor.UpperLeft, new Vector2(18, -48), new Vector2(240, 24));
+            var waitHourButton = GetOrCreateTopLeftButton(devPanelTransform, "Wait Hour Dev Button", "Wait +1h", new Vector2(18, -86), new Vector2(126, 42));
+            ConfigureCareButton(waitHourButton, MilkroomCareAction.WaitHour, controller, visualController);
+            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(158, -86), new Vector2(126, 42));
             ConfigureNavigationButton(debugSceneButton, SceneNames.Debug, true);
 
             var devPanelController = canvasTransform.GetComponent<DevPanelController>();

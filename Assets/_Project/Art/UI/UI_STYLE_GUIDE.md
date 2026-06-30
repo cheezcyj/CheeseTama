@@ -26,6 +26,7 @@ Debug controls:
 
 ```text
 Debug scene or F12 Dev Panel in Editor/Development builds only
+Wait +1h lives in the F12 Dev Panel for testing.
 ```
 
 ## Palette
