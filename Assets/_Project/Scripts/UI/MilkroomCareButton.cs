@@ -116,6 +116,7 @@ namespace CheeseTama.UI
             {
                 var timeResult = manager.ApplyTimeSkipHours(1);
                 var timeEvent = RegisterRandomEvent(manager);
+                PersistAfterInteraction(manager);
                 Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEvent.message), manager, false, timeEvent.eventId);
                 return;
             }
@@ -129,6 +130,7 @@ namespace CheeseTama.UI
             var careResult = RunCareAction(manager);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
             var eventResult = careResult.hatched ? CareEventResult.None() : RegisterRandomEvent(manager);
+            PersistCareResult(manager, careResult);
             Refresh(CombineMessages(CombineMessages(careResult.message, discoveryMessage), eventResult.message), manager, careResult.hatched, eventResult.eventId);
         }
 
@@ -231,6 +233,22 @@ namespace CheeseTama.UI
 
             manager.RegisterEventDiscovery(eventResult.eventId);
             return eventResult;
+        }
+
+        private static void PersistCareResult(GameManager manager, CareActionResult result)
+        {
+            if (!result.success)
+            {
+                return;
+            }
+
+            PersistAfterInteraction(manager);
+        }
+
+        private static void PersistAfterInteraction(GameManager manager)
+        {
+            manager.RefreshDerivedCollectionRecords();
+            manager.SaveGame();
         }
 
         private static string CombineMessages(string primary, string secondary)
