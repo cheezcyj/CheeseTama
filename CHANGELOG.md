@@ -2,7 +2,9 @@
 
 ## 0.1.0
 
+- Added the initial README and documented the MIT license.
 - Created the initial Unity project structure.
+- Updated the README with the early project setup/status notes.
 - Added core gameplay, data, save, collection, and UI script skeletons.
 - Added placeholder scenes for Boot, Milkroom, Collection, and Debug.
 - Added runtime and editor starter scene builders for core managers and basic Milkroom UI.
@@ -37,9 +39,21 @@
 - Add visible CheeseTama event reactions with a brief floating event cue.
 - Unlock and display hidden collection records from hatch, Star Milk, events, and balanced care.
 - Add a Cheese Snack care action with collection event records and a hidden first-snack record.
+- Refresh the README with the current implementation status and setup guidance.
 - Add Milkroom care tips that recommend the next action from current stats and unlocks.
 - Save every successful Milkroom interaction so stat-only care actions persist reliably.
 - Track cumulative care history with collection milestones and hidden care records.
 - Add a daily care routine with Milkroom progress, collection milestones, and a hidden regular-care record.
 - Use edit-mode-safe object cleanup for generated visual parts and duplicate core objects.
 - Add Milkroom stay-time tracking with 5/10/20/30 minute rewards, early economy values, and a Catch Drops prototype.
+- Add character art-direction docs, a UI style guide, and Codex task notes for the character/UI redesign pass.
+- Rework the Milkroom layout with clearer status/message surfaces, a bottom action bar, a settings panel, data-management controls, a developer panel, reset confirmation, and toast notifications.
+- Fix Settings data-management button overlap and make Save, Load, and Reset click targets behave reliably.
+- Improve the reset confirmation flow with a clearer input requirement and feedback message.
+- Move the Collection button to the top menu so it no longer competes with core care actions.
+- Move the Wait 1h time-skip button into the developer panel and keep the main care bar focused on player actions.
+- Improve the CheeseTama character silhouette, facial expression readability, status message visibility, and developer-panel placement.
+- Rebuild CheeseTama visuals toward the provided 2.5D cartoon cheese creature reference, including cheese holes, blush, limbs, shiny eyes, stage curls, and final-stage crown details.
+- Update GAME_DESIGN with the current design direction, implemented systems, UI rules, character direction, and next-priority work.
+- Update Unity package manifest and ProjectVersion metadata to match the current Unity 6000.0.78f1 project setup.
+- Expand Unity-focused .gitignore and .gitattributes rules, add VS Code helper settings, track the package lock file, sync ProjectSettings assets, and mirror backup-folder scene files into the tracked repository.
