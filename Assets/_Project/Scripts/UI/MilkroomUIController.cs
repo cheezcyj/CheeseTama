@@ -23,6 +23,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text basicMilkGrowthText;
         [SerializeField] private Text starMilkGrowthText;
         [SerializeField] private Text unlockText;
+        [SerializeField] private Text careSummaryText;
         [SerializeField] private Text careTipText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
@@ -46,6 +47,7 @@ namespace CheeseTama.UI
             Text basicMilkGrowthLabel,
             Text starMilkGrowthLabel,
             Text unlockLabel,
+            Text careSummaryLabel,
             Text careTipLabel,
             Text lastSavedLabel,
             Text messageLabel)
@@ -65,6 +67,7 @@ namespace CheeseTama.UI
             basicMilkGrowthText = basicMilkGrowthLabel;
             starMilkGrowthText = starMilkGrowthLabel;
             unlockText = unlockLabel;
+            careSummaryText = careSummaryLabel;
             careTipText = careTipLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
@@ -107,6 +110,7 @@ namespace CheeseTama.UI
             SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "Basic Milk"));
             SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
             SetText(unlockText, FormatUnlocks(currentSave));
+            SetText(careSummaryText, FormatCareSummary(currentSave));
             SetText(careTipText, FormatCareTip(currentSave, current));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
@@ -204,6 +208,17 @@ namespace CheeseTama.UI
                 ? "Star Milk unlocked"
                 : "Star Milk locked";
             return $"Unlocks: {starMilkState}";
+        }
+
+        private static string FormatCareSummary(CheeseTamaSaveData saveData)
+        {
+            var history = saveData?.careHistory;
+            if (history == null)
+            {
+                return "Care: 0 | Play 0 Clean 0 Rest 0";
+            }
+
+            return $"Care: {history.totalCareActions} | Play {history.playSessions} Clean {history.cleanings} Rest {history.rests}";
         }
 
         private static string FormatCareTip(CheeseTamaSaveData saveData, CheeseTamaModel tama)

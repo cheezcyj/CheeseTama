@@ -133,6 +133,51 @@ namespace CheeseTama.UI
                 return "Crumbly snack";
             }
 
+            if (id == "care_total_5")
+            {
+                return "5 care actions";
+            }
+
+            if (id == "care_total_15")
+            {
+                return "15 care actions";
+            }
+
+            if (id == "milk_feeds_5")
+            {
+                return "Fed milk 5 times";
+            }
+
+            if (id == "star_milk_feeds_3")
+            {
+                return "Fed Star Milk 3 times";
+            }
+
+            if (id == "snacks_fed_3")
+            {
+                return "Shared 3 snacks";
+            }
+
+            if (id == "play_sessions_3")
+            {
+                return "Played 3 times";
+            }
+
+            if (id == "cleanings_3")
+            {
+                return "Cleaned 3 times";
+            }
+
+            if (id == "rests_3")
+            {
+                return "Rested 3 times";
+            }
+
+            if (id == "wait_hours_3")
+            {
+                return "Waited 3 hours";
+            }
+
             if (id == "quiet_hum")
             {
                 return "Quiet milkroom hum";
@@ -203,6 +248,21 @@ namespace CheeseTama.UI
             if (id == "first_snack_bite")
             {
                 return "First Snack Bite";
+            }
+
+            if (id == "gentle_caretaker")
+            {
+                return "Gentle Caretaker";
+            }
+
+            if (id == "tidy_keeper")
+            {
+                return "Tidy Keeper";
+            }
+
+            if (id == "playful_friend")
+            {
+                return "Playful Friend";
             }
 
             if (id == "warm_balance")

@@ -115,6 +115,7 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.WaitHour)
             {
                 var timeResult = manager.ApplyTimeSkipHours(1);
+                manager.RegisterCareAction("wait_hour", timeResult.applied ? timeResult.hours : 1);
                 var timeEvent = RegisterRandomEvent(manager);
                 PersistAfterInteraction(manager);
                 Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEvent.message), manager, false, timeEvent.eventId);
@@ -128,6 +129,7 @@ namespace CheeseTama.UI
             }
 
             var careResult = RunCareAction(manager);
+            RegisterCareHistory(manager, careResult);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
             var eventResult = careResult.hatched ? CareEventResult.None() : RegisterRandomEvent(manager);
             PersistCareResult(manager, careResult);
@@ -145,6 +147,34 @@ namespace CheeseTama.UI
                 MilkroomCareAction.Clean => careActions.Clean(manager.CurrentTama),
                 MilkroomCareAction.Rest => careActions.Rest(manager.CurrentTama),
                 _ => new CareActionResult(false, false, "No care action was selected.")
+            };
+        }
+
+        private void RegisterCareHistory(GameManager manager, CareActionResult result)
+        {
+            if (!result.success)
+            {
+                return;
+            }
+
+            var actionId = GetCareActionId();
+            if (!string.IsNullOrWhiteSpace(actionId))
+            {
+                manager.RegisterCareAction(actionId);
+            }
+        }
+
+        private string GetCareActionId()
+        {
+            return action switch
+            {
+                MilkroomCareAction.FeedMilk => "feed_milk",
+                MilkroomCareAction.FeedStarMilk => "feed_star_milk",
+                MilkroomCareAction.FeedSnack => "feed_snack",
+                MilkroomCareAction.Play => "play",
+                MilkroomCareAction.Clean => "clean",
+                MilkroomCareAction.Rest => "rest",
+                _ => string.Empty
             };
         }
 

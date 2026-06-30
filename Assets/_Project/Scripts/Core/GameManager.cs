@@ -212,6 +212,46 @@ namespace CheeseTama.Core
             return milkGrowthSystem.FindEntry(CurrentSave.milkGrowth, milkId);
         }
 
+        public void RegisterCareAction(string actionId, int amount = 1)
+        {
+            if (CurrentSave == null || string.IsNullOrWhiteSpace(actionId))
+            {
+                return;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var safeAmount = Math.Max(1, amount);
+            var history = CurrentSave.careHistory;
+            history.totalCareActions += 1;
+            history.lastCareActionId = actionId;
+            history.lastCareActionAtIso = DateTimeOffset.Now.ToString("O");
+
+            switch (actionId)
+            {
+                case "feed_milk":
+                    history.milkFeeds += safeAmount;
+                    break;
+                case "feed_star_milk":
+                    history.starMilkFeeds += safeAmount;
+                    break;
+                case "feed_snack":
+                    history.snacksFed += safeAmount;
+                    break;
+                case "play":
+                    history.playSessions += safeAmount;
+                    break;
+                case "clean":
+                    history.cleanings += safeAmount;
+                    break;
+                case "rest":
+                    history.rests += safeAmount;
+                    break;
+                case "wait_hour":
+                    history.waitHours += safeAmount;
+                    break;
+            }
+        }
+
         public void RefreshDerivedCollectionRecords()
         {
             if (CurrentSave == null)
@@ -238,6 +278,8 @@ namespace CheeseTama.Core
 
                 changed |= AddMilkGrowthMilestoneRecords(entry.milkId, entry.growthLevel);
             }
+
+            changed |= AddCareMilestoneRecords(CurrentSave.careHistory);
 
             if (CurrentSave.unlocks.starMilkUnlocked)
             {
@@ -302,6 +344,21 @@ namespace CheeseTama.Core
                 changed |= hiddenCollectionSystem.Unlock(collections, "first_snack_bite", now);
             }
 
+            if (CurrentSave.careHistory != null && CurrentSave.careHistory.totalCareActions >= 10)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "gentle_caretaker", now);
+            }
+
+            if (CurrentSave.careHistory != null && CurrentSave.careHistory.cleanings >= 3)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "tidy_keeper", now);
+            }
+
+            if (CurrentSave.careHistory != null && CurrentSave.careHistory.playSessions >= 3)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "playful_friend", now);
+            }
+
             if (CurrentTama != null
                 && CurrentTama.isHatched
                 && CurrentTama.stats != null
@@ -315,6 +372,31 @@ namespace CheeseTama.Core
             }
 
             return changed;
+        }
+
+        private bool AddCareMilestoneRecords(CareHistorySaveData history)
+        {
+            if (history == null)
+            {
+                return false;
+            }
+
+            var changed = false;
+            changed |= AddThresholdRecord(history.totalCareActions, 5, "care_total_5");
+            changed |= AddThresholdRecord(history.totalCareActions, 15, "care_total_15");
+            changed |= AddThresholdRecord(history.milkFeeds, 5, "milk_feeds_5");
+            changed |= AddThresholdRecord(history.starMilkFeeds, 3, "star_milk_feeds_3");
+            changed |= AddThresholdRecord(history.snacksFed, 3, "snacks_fed_3");
+            changed |= AddThresholdRecord(history.playSessions, 3, "play_sessions_3");
+            changed |= AddThresholdRecord(history.cleanings, 3, "cleanings_3");
+            changed |= AddThresholdRecord(history.rests, 3, "rests_3");
+            changed |= AddThresholdRecord(history.waitHours, 3, "wait_hours_3");
+            return changed;
+        }
+
+        private bool AddThresholdRecord(int value, int threshold, string eventId)
+        {
+            return value >= threshold && AddUniqueRecord(CurrentSave.collections.events, eventId);
         }
 
         private bool AddMilkGrowthMilestoneRecords(string milkId, int growthLevel)

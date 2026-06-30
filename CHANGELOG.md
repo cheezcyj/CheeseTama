@@ -39,3 +39,4 @@
 - Add a Cheese Snack care action with collection event records and a hidden first-snack record.
 - Add Milkroom care tips that recommend the next action from current stats and unlocks.
 - Save every successful Milkroom interaction so stat-only care actions persist reliably.
+- Track cumulative care history with collection milestones and hidden care records.

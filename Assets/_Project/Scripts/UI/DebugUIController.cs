@@ -51,6 +51,7 @@ namespace CheeseTama.UI
             builder.AppendLine(FormatMilkGrowthLine("basic_milk", "Basic Milk"));
             builder.AppendLine(FormatStarMilkLine());
             builder.AppendLine(FormatUnlocks());
+            builder.AppendLine(FormatCareHistory());
             builder.AppendLine(FormatHiddenRecords());
             SetText(stateText, builder.ToString());
         }
@@ -115,6 +116,17 @@ namespace CheeseTama.UI
                 ? currentSave.collections.hiddenUnlockedOnly.Count
                 : 0;
             return $"Hidden Records: {count}";
+        }
+
+        private string FormatCareHistory()
+        {
+            var history = currentSave?.careHistory;
+            if (history == null)
+            {
+                return "Care: 0 actions";
+            }
+
+            return $"Care: {history.totalCareActions} actions, Wait {history.waitHours}h";
         }
 
         private static string FormatFormName(string form)
