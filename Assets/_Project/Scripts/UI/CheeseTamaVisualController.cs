@@ -1,4 +1,5 @@
 using CheeseTama.Gameplay;
+using CheeseTama.Utilities;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -7,9 +8,6 @@ namespace CheeseTama.UI
     public sealed class CheeseTamaVisualController : MonoBehaviour
     {
         [SerializeField] private Renderer targetRenderer;
-
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         private const float CareReactionDuration = 0.68f;
         private const float CareReactionHopHeight = 0.13f;
@@ -25,10 +23,16 @@ namespace CheeseTama.UI
         private const float EventReactionFlash = 0.4f;
         private const float EventCueDuration = 1.2f;
 
-        private MaterialPropertyBlock propertyBlock;
         private Transform modelRoot;
         private Transform visualRoot;
+        private Transform outlineRoot;
         private Transform cheeseMarksRoot;
+        private Transform bodyOutline;
+        private Transform leftArmOutline;
+        private Transform rightArmOutline;
+        private Transform leftFootOutline;
+        private Transform rightFootOutline;
+        private Transform topCurlOutline;
         private Transform body;
         private Transform leftArm;
         private Transform rightArm;
@@ -66,6 +70,12 @@ namespace CheeseTama.UI
         private Renderer largeHighlightRenderer;
         private Renderer smallHighlightRenderer;
         private Renderer softShadowRenderer;
+        private Renderer bodyOutlineRenderer;
+        private Renderer leftArmOutlineRenderer;
+        private Renderer rightArmOutlineRenderer;
+        private Renderer leftFootOutlineRenderer;
+        private Renderer rightFootOutlineRenderer;
+        private Renderer topCurlOutlineRenderer;
         private Renderer crownBandRenderer;
         private Renderer crownPointARenderer;
         private Renderer crownPointBRenderer;
@@ -97,7 +107,6 @@ namespace CheeseTama.UI
         private void Awake()
         {
             idleSeed = Random.Range(0f, 100f);
-            EnsurePropertyBlock();
             EnsureVisualRig();
             EnsureFaceRig();
             CaptureRestingPosition();
@@ -246,6 +255,7 @@ namespace CheeseTama.UI
 
             modelRoot = GetOrCreateChild(transform, "ModelRoot");
             visualRoot = GetOrCreateChild(modelRoot, "VisualRoot");
+            outlineRoot = GetOrCreateChild(visualRoot, "ToonOutline");
             cheeseMarksRoot = GetOrCreateChild(visualRoot, "CheeseMarks");
             RemoveLegacyVisualChild("Milk Belly Patch");
             RemoveLegacyVisualChild("Cream Cap");
@@ -261,6 +271,13 @@ namespace CheeseTama.UI
             {
                 RemoveLegacyVisualChild($"Cheese Speckle {i + 1}");
             }
+
+            bodyOutline = GetOrCreatePrimitiveChild(outlineRoot, "Body Toon Outline", PrimitiveType.Sphere);
+            leftArmOutline = GetOrCreatePrimitiveChild(outlineRoot, "Left Arm Toon Outline", PrimitiveType.Sphere);
+            rightArmOutline = GetOrCreatePrimitiveChild(outlineRoot, "Right Arm Toon Outline", PrimitiveType.Sphere);
+            leftFootOutline = GetOrCreatePrimitiveChild(outlineRoot, "Left Foot Toon Outline", PrimitiveType.Sphere);
+            rightFootOutline = GetOrCreatePrimitiveChild(outlineRoot, "Right Foot Toon Outline", PrimitiveType.Sphere);
+            topCurlOutline = GetOrCreatePrimitiveChild(outlineRoot, "Top Curl Toon Outline", PrimitiveType.Sphere);
 
             body = GetOrCreatePrimitiveChild(visualRoot, "Body", PrimitiveType.Sphere);
             leftArm = GetOrCreatePrimitiveChild(visualRoot, "Left Soft Arm", PrimitiveType.Sphere);
@@ -302,6 +319,12 @@ namespace CheeseTama.UI
             largeHighlightRenderer = largeHighlight.GetComponent<Renderer>();
             smallHighlightRenderer = smallHighlight.GetComponent<Renderer>();
             softShadowRenderer = softShadow.GetComponent<Renderer>();
+            bodyOutlineRenderer = bodyOutline.GetComponent<Renderer>();
+            leftArmOutlineRenderer = leftArmOutline.GetComponent<Renderer>();
+            rightArmOutlineRenderer = rightArmOutline.GetComponent<Renderer>();
+            leftFootOutlineRenderer = leftFootOutline.GetComponent<Renderer>();
+            rightFootOutlineRenderer = rightFootOutline.GetComponent<Renderer>();
+            topCurlOutlineRenderer = topCurlOutline.GetComponent<Renderer>();
             crownBandRenderer = crownBand.GetComponent<Renderer>();
             crownPointARenderer = crownPointA.GetComponent<Renderer>();
             crownPointBRenderer = crownPointB.GetComponent<Renderer>();
@@ -317,6 +340,12 @@ namespace CheeseTama.UI
             ConfigureOverlayRenderer(largeHighlightRenderer);
             ConfigureOverlayRenderer(smallHighlightRenderer);
             ConfigureOverlayRenderer(softShadowRenderer);
+            ConfigureOverlayRenderer(bodyOutlineRenderer);
+            ConfigureOverlayRenderer(leftArmOutlineRenderer);
+            ConfigureOverlayRenderer(rightArmOutlineRenderer);
+            ConfigureOverlayRenderer(leftFootOutlineRenderer);
+            ConfigureOverlayRenderer(rightFootOutlineRenderer);
+            ConfigureOverlayRenderer(topCurlOutlineRenderer);
             ConfigureOverlayRenderer(crownBandRenderer);
             ConfigureOverlayRenderer(crownPointARenderer);
             ConfigureOverlayRenderer(crownPointBRenderer);
@@ -396,6 +425,13 @@ namespace CheeseTama.UI
             var hasCrown = stage == CharacterStage.Final && isReacting && reactionFlash >= HatchReactionFlash;
             var bodyHeight = isEgg ? 1.12f : stage >= CharacterStage.Mature ? 1.03f : 0.98f;
             var bodyWidth = isEgg ? 1.08f : stage >= CharacterStage.Mature ? 1.3f : 1.18f;
+
+            ConfigurePart(bodyOutline, new Vector3(0f, isEgg ? -0.04f : -0.06f, 0.08f), new Vector3(bodyWidth + 0.08f, bodyHeight + 0.08f, (isEgg ? 0.9f : 0.92f) + 0.04f), Quaternion.identity, true);
+            ConfigurePart(leftArmOutline, new Vector3(-0.88f, -0.08f, -0.02f), new Vector3(0.28f, 0.32f, 0.2f), Quaternion.Euler(0f, 0f, 18f), !isEgg);
+            ConfigurePart(rightArmOutline, new Vector3(0.88f, -0.08f, -0.02f), new Vector3(0.28f, 0.32f, 0.2f), Quaternion.Euler(0f, 0f, -18f), !isEgg);
+            ConfigurePart(leftFootOutline, new Vector3(-0.44f, -0.78f, -0.08f), new Vector3(0.34f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, -5f), !isEgg);
+            ConfigurePart(rightFootOutline, new Vector3(0.44f, -0.78f, -0.08f), new Vector3(0.34f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, 5f), !isEgg);
+            ConfigurePart(topCurlOutline, new Vector3(0.18f, 0.73f, -0.01f), new Vector3(0.21f, 0.36f, 0.15f), Quaternion.Euler(0f, 0f, -25f), hasCurl);
 
             ConfigurePart(body, new Vector3(0f, isEgg ? -0.04f : -0.06f, 0f), new Vector3(bodyWidth, bodyHeight, isEgg ? 0.9f : 0.92f), Quaternion.identity, true);
             ConfigurePart(leftArm, new Vector3(-0.86f, -0.08f, -0.1f), new Vector3(0.24f, 0.28f, 0.19f), Quaternion.Euler(0f, 0f, 18f), !isEgg);
@@ -557,6 +593,12 @@ namespace CheeseTama.UI
             PaintFeature(largeHighlightRenderer, new Color(1f, 0.98f, 0.86f));
             PaintFeature(smallHighlightRenderer, new Color(1f, 0.98f, 0.86f));
             PaintFeature(softShadowRenderer, new Color(0.26f, 0.17f, 0.08f, 0.28f));
+            PaintFeature(bodyOutlineRenderer, new Color(0.42f, 0.22f, 0.08f));
+            PaintFeature(leftArmOutlineRenderer, new Color(0.42f, 0.22f, 0.08f));
+            PaintFeature(rightArmOutlineRenderer, new Color(0.42f, 0.22f, 0.08f));
+            PaintFeature(leftFootOutlineRenderer, new Color(0.42f, 0.22f, 0.08f));
+            PaintFeature(rightFootOutlineRenderer, new Color(0.42f, 0.22f, 0.08f));
+            PaintFeature(topCurlOutlineRenderer, new Color(0.42f, 0.22f, 0.08f));
             PaintFeature(crownBandRenderer, crownColor);
             PaintFeature(crownPointARenderer, crownColor);
             PaintFeature(crownPointBRenderer, crownColor);
@@ -796,11 +838,7 @@ namespace CheeseTama.UI
                 return;
             }
 
-            EnsurePropertyBlock();
-            renderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetColor(BaseColorId, color);
-            propertyBlock.SetColor(ColorId, color);
-            renderer.SetPropertyBlock(propertyBlock);
+            ToonMaterialUtility.Apply(renderer, ToonMaterialUtility.InferProfile(renderer), color);
         }
 
         private static void DestroySafely(Object target)
@@ -817,14 +855,6 @@ namespace CheeseTama.UI
             }
 
             DestroyImmediate(target);
-        }
-
-        private void EnsurePropertyBlock()
-        {
-            if (propertyBlock == null)
-            {
-                propertyBlock = new MaterialPropertyBlock();
-            }
         }
 
         private static CharacterStage GetStage(CheeseTamaModel tama)

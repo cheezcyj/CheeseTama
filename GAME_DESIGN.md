@@ -35,7 +35,7 @@ The first public impression should stay simple and cozy: a cute CheeseTama egg g
 
 ## Character Art Direction
 
-CheeseTama should follow the provided 2.5D cartoon concept sheet.
+CheeseTama is a 3D character rendered for 2D illustration readability: stable front-facing camera, warm toon material, simple silhouette, rim/outline support, and soft squash/stretch motion.
 
 ### Visual Identity
 
@@ -47,7 +47,7 @@ CheeseTama should follow the provided 2.5D cartoon concept sheet.
 - Small cute mouth: idle smile, happy smile, sleepy line, worried frown, or small open mouth.
 - Tiny soft arms and little oval feet after hatch.
 - Top curl from the soft/grown stage onward.
-- Small honey-gold crown for Lv.33 final form.
+- Honey-gold crown parts are reserved for celebration/cosmetic cues, not always-on base-form readability.
 - Milk-white glossy highlights and a soft oval shadow.
 
 ### Growth Silhouette
@@ -61,7 +61,7 @@ CheeseTama should follow the provided 2.5D cartoon concept sheet.
 
 ### Runtime Placeholder Rule
 
-Until final art assets exist, the runtime visual controller may build the character procedurally with primitive shapes, but it must still read as the concept character: yellow pudding body, orange holes, glossy highlights, large eyes, blush, tiny limbs, and soft motion.
+Until final art assets exist, the runtime visual controller may build the character procedurally with grouped primitive shapes, but it must not read as a raw primitive. Toon material profiles, outline geometry, face parts, cheese marks, glossy highlights, soft shadow, and motion are required.
 
 ## Milkroom UI Layout
 

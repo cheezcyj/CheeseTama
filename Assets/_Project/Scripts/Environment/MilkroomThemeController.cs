@@ -1,3 +1,4 @@
+using CheeseTama.Utilities;
 using UnityEngine;
 
 namespace CheeseTama.Environment
@@ -9,17 +10,12 @@ namespace CheeseTama.Environment
         public const string NightThemeId = "milkroom_night";
         public const string RainyThemeId = "milkroom_rainy";
 
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-
         [SerializeField] private string currentThemeId = MorningThemeId;
         [SerializeField] private Transform backgroundRoot;
         [SerializeField] private Transform midgroundRoot;
         [SerializeField] private Transform playAreaRoot;
         [SerializeField] private Transform foregroundRoot;
         [SerializeField] private Transform themeVfxRoot;
-
-        private MaterialPropertyBlock propertyBlock;
 
         public string CurrentThemeId => currentThemeId;
 
@@ -177,11 +173,7 @@ namespace CheeseTama.Environment
                 return;
             }
 
-            propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetColor(BaseColorId, color);
-            propertyBlock.SetColor(ColorId, color);
-            renderer.SetPropertyBlock(propertyBlock);
+            ToonMaterialUtility.Apply(renderer, ToonMaterialUtility.InferProfile(renderer), color);
         }
 
         private void SetThemeVfxVisibility(string themeId)

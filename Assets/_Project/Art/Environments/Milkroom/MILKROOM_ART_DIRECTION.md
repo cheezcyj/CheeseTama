@@ -2,9 +2,21 @@
 
 ## Goal
 
-The Milkroom should feel like a cozy 2.5D cartoon room where CheeseTama lives: soft milk-white light, warm wood, visible milk bottles, a central rug, and gentle seasonal/time-of-day variation.
+The Milkroom is a 3D room staged with a front-facing camera and toon-rendered 2D readability: soft milk-white light, warm wood, visible milk bottles, a central rug, and gentle seasonal/time-of-day variation.
 
-## Runtime Layer Structure
+## Runtime Scene Structure
+
+```text
+MilkroomSceneRoot
+|-- CameraRig
+|-- Lighting
+|-- Environment
+|-- Character
+|-- VFX
+`-- UI
+```
+
+## Environment Layer Structure
 
 ```text
 Milkroom Background
@@ -27,7 +39,7 @@ Milkroom Background
 - Central soft round rug.
 - Milk bottle shelves and jars.
 - Fridge with a small friendly face.
-- Armchair/cushion, dresser, table lamp, plant, chalkboard.
+- Armchair/cushion, dresser, table lamp, plant, chalkboard, blending table.
 - Small foreground milk drops for depth.
 
 ## Theme IDs
@@ -41,6 +53,7 @@ Milkroom Background
 
 - Empty default Unity room.
 - Cold gray placeholder look.
+- Single flat background plane pretending to be a room.
 - Horror or dungeon lighting.
 - Realistic food props that make CheeseTama read as edible.
 - Hidden late-game theme labels or conditions in the public UI.

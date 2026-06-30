@@ -2,7 +2,7 @@
 
 ## Goal
 
-CheeseTama should match the provided 2.5D cartoon concept sheet: a warm yellow cheese creature with a soft pudding body, glossy milk highlights, orange cheese holes, big sparkling eyes, peach cheeks, tiny limbs, and gentle squash/stretch motion.
+CheeseTama is a 3D character that should render with 2D illustration readability: a warm yellow cheese creature with a soft pudding body, glossy milk highlights, orange cheese holes, big sparkling eyes, peach cheeks, tiny limbs, and gentle squash/stretch motion.
 
 ## Core Silhouette
 
@@ -41,6 +41,7 @@ CheeseTama should match the provided 2.5D cartoon concept sheet: a warm yellow c
 CheeseTamaRoot
 |-- ModelRoot
 |   `-- VisualRoot
+|       |-- ToonOutline
 |       |-- Body
 |       |-- FaceAnchor
 |       |-- Left/Right Soft Arm
@@ -54,6 +55,13 @@ CheeseTamaRoot
 |       |-- Crown parts
 |       `-- VFXRoot
 ```
+
+## Rendering
+
+- Use URP Lit/Simple Lit based toon material profiles until dedicated Shader Graph assets are built.
+- Use warm rim/outline geometry to prevent the character from reading as a raw sphere primitive.
+- Keep the camera front-facing and stable so the 3D model reads like a clean 2D mascot illustration.
+- Prefer grouped 3D mesh replacement later: Body, FaceAnchor, CheeseMarks, Highlights, Shadow, VFXRoot.
 
 ## Expressions
 
@@ -78,5 +86,6 @@ CheeseTamaRoot
 ## Avoid
 
 - Cube body, hard edges, hard plastic toy, realistic cheese block, Minecraft-like pet.
+- Raw unstyled sphere primitive without toon material, outline, face rig, or highlights.
 - Tiny eyes, stiff centered expression, or generic low-poly mascot proportions.
 - Cream cap or milk belly patch motifs; the concept uses yellow cheese body, orange holes, and white highlights.

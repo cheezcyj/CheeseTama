@@ -7,6 +7,7 @@ namespace CheeseTama.Environment
         [SerializeField] private string currentThemeId = MilkroomThemeController.MorningThemeId;
         [SerializeField] private Light keyLight;
         [SerializeField] private Light fillLight;
+        [SerializeField] private Light rimLight;
         [SerializeField] private Camera targetCamera;
 
         private void Awake()
@@ -38,6 +39,13 @@ namespace CheeseTama.Environment
                 fillLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.55f : 0.72f;
             }
 
+            if (rimLight != null)
+            {
+                rimLight.color = Color.Lerp(palette.Celestial, new Color(1f, 0.82f, 0.38f), 0.35f);
+                rimLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.72f : 0.62f;
+                rimLight.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
+            }
+
             if (targetCamera != null)
             {
                 targetCamera.backgroundColor = palette.CameraBackground;
@@ -48,6 +56,7 @@ namespace CheeseTama.Environment
         {
             keyLight ??= GameObject.Find("Milkroom Key Light")?.GetComponent<Light>();
             fillLight ??= GameObject.Find("Milkroom Fill Light")?.GetComponent<Light>();
+            rimLight ??= GameObject.Find("Milkroom Rim Light")?.GetComponent<Light>();
             targetCamera ??= Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
         }
     }

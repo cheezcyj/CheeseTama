@@ -53,8 +53,9 @@
 - Move the Collection button to the top menu so it no longer competes with core care actions.
 - Move the Wait 1h time-skip button into the developer panel and keep the main care bar focused on player actions.
 - Improve the CheeseTama character silhouette, facial expression readability, status message visibility, and developer-panel placement.
-- Rebuild CheeseTama visuals toward the provided 2.5D cartoon cheese creature reference, including cheese holes, blush, limbs, shiny eyes, stage curls, and final-stage crown details.
+- Rebuild CheeseTama visuals toward the revised 3D toon-rendered cheese creature direction, including cheese holes, blush, limbs, shiny eyes, stage curls, toon material profiles, and event/cosmetic crown cues.
 - Update GAME_DESIGN with the current design direction, implemented systems, UI rules, character direction, and next-priority work.
 - Update Unity package manifest and ProjectVersion metadata to match the current Unity 6000.0.78f1 project setup.
 - Expand Unity-focused .gitignore and .gitattributes rules, add VS Code helper settings, track the package lock file, sync ProjectSettings assets, and mirror backup-folder scene files into the tracked repository.
-- Add a cozy 2.5D Milkroom background with window, shelves, bottles, rug, furniture, warm lighting, and improve CheeseTama proportions so the character reads rounder and less side-compressed.
+- Add a cozy 3D toon Milkroom with window, shelves, bottles, rug, furniture, warm lighting, and improve CheeseTama proportions so the character reads rounder and less side-compressed.
+- Add runtime toon material profiles, character outline geometry, Milkroom scene hierarchy grouping, rim light, side walls, and a blending table for stronger 3D room readability.

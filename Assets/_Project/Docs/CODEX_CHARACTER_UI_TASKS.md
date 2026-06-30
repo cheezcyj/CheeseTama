@@ -12,12 +12,14 @@
 - Reset requires typing `RESET`.
 - F12 Dev Panel is separated from the release-facing bottom bar.
 - Wait +1h is available from the F12 Dev Panel for testing time progression.
-- CheeseTama placeholder now follows the provided 2.5D concept: yellow pudding body, orange holes, glossy highlights, tiny limbs, and top curl.
+- CheeseTama placeholder now follows the revised 3D toon direction: yellow pudding body, orange holes, glossy highlights, tiny limbs, top curl, toon material profiles, and warm outline geometry.
 - Lv.33 crown parts are kept as celebration/cosmetic cues instead of always-on base-form parts.
 - Status messages are shown in a dedicated bottom-center message bar.
 - Dev Panel opens near the upper-right side so it does not cover the stat bar.
 - Milkroom background now uses BackgroundRoot, MidgroundRoot, PlayAreaRoot, ForegroundRoot, and ThemeVFXRoot.
 - Milkroom has controller scaffolding for morning, evening, night, and rainy palettes plus ambient VFX toggles.
+- Milkroom now has a `MilkroomSceneRoot` hierarchy with CameraRig, Lighting, Environment, Character, VFX, and UI groups.
+- Runtime renderers use URP Lit/Simple Lit toon material profiles instead of default whitebox materials.
 
 ## Next Character Work
 
@@ -37,6 +39,6 @@
 
 ## Next Milkroom Work
 
-- Replace procedural primitive props with imported 2.5D room art or layered sprites.
+- Replace procedural primitive props with imported 3D furniture/room models using the same toon material profiles.
 - Add a safe theme selection flow after unlock rules are finalized.
 - Add weather/time transitions without exposing hidden route requirements.

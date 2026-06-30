@@ -2,6 +2,7 @@ using CheeseTama.Data;
 using CheeseTama.Environment;
 using CheeseTama.Save;
 using CheeseTama.UI;
+using CheeseTama.Utilities;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
@@ -11,9 +12,6 @@ namespace CheeseTama.Core
 {
     public static class StarterSceneBuilder
     {
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-
         public static GameManager EnsureCoreSystems()
         {
             if (GameManager.Instance != null)
@@ -208,6 +206,7 @@ namespace CheeseTama.Core
 
             actionBarController.Configure(milkButton, blendButton, snackButton, playButton, cleanButton, sleepButton);
             BuildMilkroomSettings(canvas.transform, settingsButton, controller, visualController);
+            OrganizeMilkroomSceneHierarchy();
         }
 
         public static void BuildCollectionScene()
@@ -406,22 +405,90 @@ namespace CheeseTama.Core
 #endif
         }
 
+        private static void OrganizeMilkroomSceneHierarchy()
+        {
+            var sceneRoot = GameObject.Find("MilkroomSceneRoot");
+            if (sceneRoot == null)
+            {
+                sceneRoot = new GameObject("MilkroomSceneRoot");
+            }
+
+            var cameraRig = GetOrCreateSceneGroup(sceneRoot.transform, "CameraRig");
+            var lighting = GetOrCreateSceneGroup(sceneRoot.transform, "Lighting");
+            var environment = GetOrCreateSceneGroup(sceneRoot.transform, "Environment");
+            var character = GetOrCreateSceneGroup(sceneRoot.transform, "Character");
+            var vfx = GetOrCreateSceneGroup(sceneRoot.transform, "VFX");
+            var ui = GetOrCreateSceneGroup(sceneRoot.transform, "UI");
+
+            ReparentIfFound("Milkroom Camera", cameraRig);
+            ReparentIfFound("Milkroom Key Light", lighting);
+            ReparentIfFound("Milkroom Fill Light", lighting);
+            ReparentIfFound("Milkroom Rim Light", lighting);
+            ReparentIfFound("GlobalVolume", lighting);
+            ReparentIfFound("Milkroom Background", environment);
+            ReparentIfFound("CheeseTama Egg Placeholder", character);
+            ReparentIfFound("Milkroom Canvas", ui);
+            ReparentIfFound("EventSystem", ui);
+
+            var milkDrops = GetOrCreateSceneGroup(vfx, "MilkDrops");
+            var softSparkles = GetOrCreateSceneGroup(vfx, "SoftSparkles");
+            milkDrops.localPosition = Vector3.zero;
+            softSparkles.localPosition = Vector3.zero;
+        }
+
+        private static Transform GetOrCreateSceneGroup(Transform parent, string name)
+        {
+            var group = parent.Find(name);
+            if (group != null)
+            {
+                return group;
+            }
+
+            var groupObject = new GameObject(name);
+            groupObject.transform.SetParent(parent, false);
+            return groupObject.transform;
+        }
+
+        private static void ReparentIfFound(string objectName, Transform parent)
+        {
+            var target = GameObject.Find(objectName);
+            if (target == null || target.transform == parent || target.transform.IsChildOf(parent))
+            {
+                return;
+            }
+
+            target.transform.SetParent(parent, true);
+        }
+
         private static Camera EnsureCamera(string name)
         {
             var existing = Object.FindFirstObjectByType<Camera>();
             if (existing != null)
             {
+                ConfigureMilkroomCamera(existing, name);
                 return existing;
             }
 
             var cameraObject = new GameObject(name);
             var camera = cameraObject.AddComponent<Camera>();
+            ConfigureMilkroomCamera(camera, name);
+            return camera;
+        }
+
+        private static void ConfigureMilkroomCamera(Camera camera, string name)
+        {
+            camera.gameObject.name = name;
             camera.orthographic = true;
-            camera.orthographicSize = 5;
+            camera.orthographicSize = name == "Milkroom Camera" ? 5.35f : 5f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.96f, 0.92f, 0.84f);
-            cameraObject.transform.position = new Vector3(0, 0, -10);
-            return camera;
+            camera.transform.position = name == "Milkroom Camera" ? new Vector3(0f, 0.05f, -10f) : new Vector3(0f, 0f, -10f);
+            camera.transform.rotation = Quaternion.identity;
+
+            if (camera.gameObject.CompareTag("Untagged"))
+            {
+                camera.gameObject.tag = "MainCamera";
+            }
         }
 
         private static void EnsureLight()
@@ -459,6 +526,32 @@ namespace CheeseTama.Core
             fillLight.color = new Color(0.76f, 0.92f, 1f);
             fillLight.intensity = 0.45f;
             fillObject.transform.rotation = Quaternion.Euler(25, 145, 0);
+
+            var rimObject = GameObject.Find("Milkroom Rim Light");
+            if (rimObject == null)
+            {
+                rimObject = new GameObject("Milkroom Rim Light");
+            }
+
+            var rimLight = rimObject.GetComponent<Light>();
+            if (rimLight == null)
+            {
+                rimLight = rimObject.AddComponent<Light>();
+            }
+
+            rimLight.type = LightType.Directional;
+            rimLight.color = new Color(1f, 0.78f, 0.34f);
+            rimLight.intensity = 0.62f;
+            rimObject.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
+
+            var volumeObject = GameObject.Find("GlobalVolume");
+            if (volumeObject == null)
+            {
+                volumeObject = new GameObject("GlobalVolume");
+            }
+
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.86f, 0.74f, 0.56f);
         }
 
         private static void EnsureMilkroomBackground()
@@ -484,8 +577,13 @@ namespace CheeseTama.Core
             var themeVfxRoot = CreateLayerRoot(root, "ThemeVFXRoot");
 
             CreateDecorPart(backgroundRoot, "Back Wall", PrimitiveType.Cube, new Vector3(0f, 0.55f, 2.85f), new Vector3(10.8f, 5.8f, 0.08f), new Color(0.82f, 0.61f, 0.42f));
+            CreateDecorPart(backgroundRoot, "LeftWall", PrimitiveType.Cube, new Vector3(-5.32f, 0.1f, 2.12f), new Vector3(0.16f, 5.2f, 1.35f), new Color(0.76f, 0.53f, 0.34f));
+            CreateDecorPart(backgroundRoot, "RightWall", PrimitiveType.Cube, new Vector3(5.32f, 0.1f, 2.12f), new Vector3(0.16f, 5.2f, 1.35f), new Color(0.76f, 0.53f, 0.34f));
+            CreateDecorPart(backgroundRoot, "Ceiling Warm Beam", PrimitiveType.Cube, new Vector3(0f, 3.08f, 1.84f), new Vector3(10.8f, 0.18f, 0.18f), new Color(0.58f, 0.34f, 0.18f));
+            CreateDecorPart(backgroundRoot, "Back Wall Baseboard", PrimitiveType.Cube, new Vector3(0f, -1.47f, 1.58f), new Vector3(10.6f, 0.14f, 0.08f), new Color(0.54f, 0.31f, 0.16f));
             CreateDecorPart(backgroundRoot, "Warm Wall Wash", PrimitiveType.Sphere, new Vector3(0f, 1.45f, 2.45f), new Vector3(5.6f, 3.2f, 0.05f), new Color(1f, 0.82f, 0.48f));
             CreateDecorPart(midgroundRoot, "Floor Plane", PrimitiveType.Cube, new Vector3(0f, -2.62f, 1.72f), new Vector3(10.9f, 2.5f, 0.08f), new Color(0.58f, 0.34f, 0.18f));
+            CreateDecorPart(midgroundRoot, "Front Floor Lip", PrimitiveType.Cube, new Vector3(0f, -3.8f, 1.12f), new Vector3(10.9f, 0.16f, 0.2f), new Color(0.45f, 0.25f, 0.13f));
 
             for (var i = 0; i < 7; i += 1)
             {
@@ -503,6 +601,7 @@ namespace CheeseTama.Core
             CreateWindow(backgroundRoot);
             CreateLeftFurniture(midgroundRoot);
             CreateRightFurniture(midgroundRoot);
+            CreateBlendingTable(midgroundRoot);
             CreateShelfGroup(midgroundRoot);
             CreateHangingLights(backgroundRoot);
             CreateMilkroomForeground(foregroundRoot);
@@ -628,21 +727,40 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "Table Lamp Glow", PrimitiveType.Sphere, new Vector3(4.32f, -0.18f, 0.94f), new Vector3(0.42f, 0.34f, 0.05f), new Color(1f, 0.78f, 0.36f));
         }
 
+        private static void CreateBlendingTable(Transform root)
+        {
+            var tableRoot = new GameObject("BlendingTable").transform;
+            tableRoot.SetParent(root, false);
+            tableRoot.localPosition = Vector3.zero;
+
+            CreateDecorPart(tableRoot, "BlendingTable Top", PrimitiveType.Cube, new Vector3(-0.12f, -1.02f, 1.08f), new Vector3(1.18f, 0.16f, 0.16f), new Color(0.72f, 0.43f, 0.22f));
+            CreateDecorPart(tableRoot, "BlendingTable Cloth", PrimitiveType.Cube, new Vector3(-0.12f, -0.92f, 0.94f), new Vector3(1.28f, 0.08f, 0.08f), new Color(1f, 0.9f, 0.68f));
+            CreateDecorPart(tableRoot, "BlendingTable Leg L", PrimitiveType.Cube, new Vector3(-0.58f, -1.42f, 1.12f), new Vector3(0.08f, 0.72f, 0.08f), new Color(0.52f, 0.29f, 0.14f));
+            CreateDecorPart(tableRoot, "BlendingTable Leg R", PrimitiveType.Cube, new Vector3(0.34f, -1.42f, 1.12f), new Vector3(0.08f, 0.72f, 0.08f), new Color(0.52f, 0.29f, 0.14f));
+            CreateDecorPart(tableRoot, "Blending Bowl", PrimitiveType.Sphere, new Vector3(-0.26f, -0.72f, 0.9f), new Vector3(0.28f, 0.12f, 0.08f), new Color(0.84f, 0.94f, 0.98f));
+            CreateDecorPart(tableRoot, "Blending Spoon", PrimitiveType.Cube, new Vector3(0.14f, -0.66f, 0.86f), new Vector3(0.42f, 0.035f, 0.025f), new Color(0.86f, 0.64f, 0.36f));
+            CreateMilkBottle(tableRoot, "Blending Milk Bottle", new Vector3(0.42f, -0.6f, 0.88f), 0.34f);
+        }
+
         private static void CreateShelfGroup(Transform root)
         {
-            CreateDecorPart(root, "Left Shelf Back Rail", PrimitiveType.Cube, new Vector3(-1.98f, 0.1f, 1.42f), new Vector3(1.28f, 0.9f, 0.08f), new Color(0.55f, 0.32f, 0.17f));
-            CreateDecorPart(root, "Left Shelf Top", PrimitiveType.Cube, new Vector3(-1.98f, 0.48f, 1.16f), new Vector3(1.42f, 0.08f, 0.08f), new Color(0.7f, 0.43f, 0.22f));
-            CreateDecorPart(root, "Left Shelf Bottom", PrimitiveType.Cube, new Vector3(-1.98f, -0.16f, 1.16f), new Vector3(1.42f, 0.08f, 0.08f), new Color(0.7f, 0.43f, 0.22f));
+            var shelfRoot = new GameObject("MilkShelf").transform;
+            shelfRoot.SetParent(root, false);
+            shelfRoot.localPosition = Vector3.zero;
+
+            CreateDecorPart(shelfRoot, "Left Shelf Back Rail", PrimitiveType.Cube, new Vector3(-1.98f, 0.1f, 1.42f), new Vector3(1.28f, 0.9f, 0.08f), new Color(0.55f, 0.32f, 0.17f));
+            CreateDecorPart(shelfRoot, "Left Shelf Top", PrimitiveType.Cube, new Vector3(-1.98f, 0.48f, 1.16f), new Vector3(1.42f, 0.08f, 0.08f), new Color(0.7f, 0.43f, 0.22f));
+            CreateDecorPart(shelfRoot, "Left Shelf Bottom", PrimitiveType.Cube, new Vector3(-1.98f, -0.16f, 1.16f), new Vector3(1.42f, 0.08f, 0.08f), new Color(0.7f, 0.43f, 0.22f));
             for (var i = 0; i < 5; i += 1)
             {
-                CreateMilkBottle(root, $"Left Shelf Bottle {i + 1}", new Vector3(-2.48f + i * 0.25f, 0.68f, 1.04f), 0.3f);
-                CreateMilkBottle(root, $"Left Shelf Jar {i + 1}", new Vector3(-2.48f + i * 0.25f, 0.02f, 1.04f), 0.25f);
+                CreateMilkBottle(shelfRoot, $"Left Shelf Bottle {i + 1}", new Vector3(-2.48f + i * 0.25f, 0.68f, 1.04f), 0.3f);
+                CreateMilkBottle(shelfRoot, $"Left Shelf Jar {i + 1}", new Vector3(-2.48f + i * 0.25f, 0.02f, 1.04f), 0.25f);
             }
 
-            CreateDecorPart(root, "Right Wall Shelf", PrimitiveType.Cube, new Vector3(3.28f, 1.06f, 1.2f), new Vector3(1.48f, 0.09f, 0.08f), new Color(0.7f, 0.43f, 0.22f));
+            CreateDecorPart(shelfRoot, "Right Wall Shelf", PrimitiveType.Cube, new Vector3(3.28f, 1.06f, 1.2f), new Vector3(1.48f, 0.09f, 0.08f), new Color(0.7f, 0.43f, 0.22f));
             for (var i = 0; i < 5; i += 1)
             {
-                CreateMilkBottle(root, $"Right Shelf Bottle {i + 1}", new Vector3(2.72f + i * 0.28f, 1.32f, 1.04f), 0.28f);
+                CreateMilkBottle(shelfRoot, $"Right Shelf Bottle {i + 1}", new Vector3(2.72f + i * 0.28f, 1.32f, 1.04f), 0.28f);
             }
 
             CreateDecorPart(root, "Chalkboard", PrimitiveType.Cube, new Vector3(-2.88f, 1.48f, 1.12f), new Vector3(0.74f, 0.72f, 0.06f), new Color(0.18f, 0.28f, 0.21f));
@@ -742,8 +860,8 @@ namespace CheeseTama.Core
             var renderer = part.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
+                renderer.shadowCastingMode = ShouldCastDecorShadow(name) ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                renderer.receiveShadows = !name.Contains("Glow") && !name.Contains("Sparkle") && !name.Contains("Rain");
                 PaintDecorRenderer(renderer, color);
             }
 
@@ -775,11 +893,17 @@ namespace CheeseTama.Core
 
         private static void PaintDecorRenderer(Renderer renderer, Color color)
         {
-            var block = new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(block);
-            block.SetColor(BaseColorId, color);
-            block.SetColor(ColorId, color);
-            renderer.SetPropertyBlock(block);
+            ToonMaterialUtility.Apply(renderer, ToonMaterialUtility.InferProfile(renderer), color);
+        }
+
+        private static bool ShouldCastDecorShadow(string objectName)
+        {
+            return !objectName.Contains("Glow")
+                && !objectName.Contains("Window Sky")
+                && !objectName.Contains("Cloud")
+                && !objectName.Contains("Rain")
+                && !objectName.Contains("Star Speckle")
+                && !objectName.Contains("Vignette");
         }
 
         private static CheeseTamaVisualController EnsureCheeseTamaPlaceholder()
