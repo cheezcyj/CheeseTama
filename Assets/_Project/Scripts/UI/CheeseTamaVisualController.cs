@@ -572,6 +572,7 @@ namespace CheeseTama.UI
                 "hungry_peep" => new Color(1f, 0.55f, 0.22f),
                 "dusty_corner" => new Color(0.55f, 0.42f, 0.26f),
                 "sleepy_yawn" => new Color(0.62f, 0.58f, 1f),
+                "milk_drop_catch" => new Color(0.74f, 0.92f, 1f),
                 _ => new Color(0.62f, 0.95f, 0.82f)
             };
         }
@@ -583,6 +584,7 @@ namespace CheeseTama.UI
                 "sleepy_yawn" => new Vector3(0.24f, 0.12f, 0.05f),
                 "dusty_corner" => new Vector3(0.14f, 0.14f, 0.05f),
                 "happy_wiggle" => new Vector3(0.22f, 0.22f, 0.06f),
+                "milk_drop_catch" => new Vector3(0.16f, 0.22f, 0.05f),
                 _ => new Vector3(0.18f, 0.18f, 0.06f)
             };
         }

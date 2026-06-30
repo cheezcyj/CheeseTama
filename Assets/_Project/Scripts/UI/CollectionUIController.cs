@@ -188,6 +188,51 @@ namespace CheeseTama.UI
                 return "3 daily routines";
             }
 
+            if (id == "session_5m")
+            {
+                return "Stayed 5 minutes";
+            }
+
+            if (id == "session_10m")
+            {
+                return "Stayed 10 minutes";
+            }
+
+            if (id == "session_20m")
+            {
+                return "Stayed 20 minutes";
+            }
+
+            if (id == "session_30m")
+            {
+                return "Stayed 30 minutes";
+            }
+
+            if (id == "daily_presence_10m")
+            {
+                return "10 minutes in the milkroom today";
+            }
+
+            if (id == "daily_presence_30m")
+            {
+                return "30 minutes in the milkroom today";
+            }
+
+            if (id == "milk_drop_catch")
+            {
+                return "Caught milk drops";
+            }
+
+            if (id == "milk_drop_catch_5")
+            {
+                return "Caught milk drops 5 times";
+            }
+
+            if (id == "milk_drop_catch_10")
+            {
+                return "Caught milk drops 10 times";
+            }
+
             if (id == "quiet_hum")
             {
                 return "Quiet milkroom hum";
@@ -283,6 +328,16 @@ namespace CheeseTama.UI
             if (id == "daily_regular")
             {
                 return "Daily Regular";
+            }
+
+            if (id == "patient_guest")
+            {
+                return "Patient Milkroom Guest";
+            }
+
+            if (id == "drop_listener")
+            {
+                return "Drop Listener";
             }
 
             return string.IsNullOrWhiteSpace(id) ? "unknown" : id;

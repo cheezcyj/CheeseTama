@@ -17,6 +17,11 @@ namespace CheeseTama.Core
         private const string StarMilkId = "star_milk";
         private const string DailyRoutineCompleteEventId = "daily_routine_complete";
         private const string DailyRoutineThreeEventId = "daily_routine_3";
+        private const string SessionFiveMinuteEventId = "session_5m";
+        private const string SessionTenMinuteEventId = "session_10m";
+        private const string SessionTwentyMinuteEventId = "session_20m";
+        private const string SessionThirtyMinuteEventId = "session_30m";
+        private const string MilkDropCatchEventId = "milk_drop_catch";
 
         [SerializeField] private DataRegistry dataRegistry;
         [SerializeField] private SaveManager saveManager;
@@ -26,6 +31,7 @@ namespace CheeseTama.Core
         private readonly HiddenCollectionSystem hiddenCollectionSystem = new HiddenCollectionSystem();
         private readonly MilkGrowthSystem milkGrowthSystem = new MilkGrowthSystem();
         private readonly RandomEventSystem randomEventSystem = new RandomEventSystem();
+        private bool presenceSessionStarted;
 
         public static GameManager Instance { get; private set; }
         public DataRegistry DataRegistry => dataRegistry;
@@ -59,8 +65,10 @@ namespace CheeseTama.Core
 
             CurrentSave = saveManager.LoadOrCreate();
             var dailyCareChanged = EnsureDailyCareDate();
+            var sessionDateChanged = EnsureMilkroomSessionDate();
+            presenceSessionStarted = false;
             LastTimeProgression = timeProgressionSystem.ApplyOfflineProgress(CurrentTama, DateTimeOffset.Now);
-            if (LastTimeProgression.applied || dailyCareChanged)
+            if (LastTimeProgression.applied || dailyCareChanged || sessionDateChanged)
             {
                 saveManager.Save(CurrentSave);
             }
@@ -82,6 +90,7 @@ namespace CheeseTama.Core
             saveManager.DeleteSave();
             CurrentSave = saveManager.LoadOrCreate();
             LastTimeProgression = TimeProgressionResult.None();
+            presenceSessionStarted = false;
         }
 
         public void SaveGame()
@@ -105,6 +114,66 @@ namespace CheeseTama.Core
             LastTimeProgression = timeProgressionSystem.ApplyCareTicks(CurrentTama, hours);
             SaveGame();
             return LastTimeProgression;
+        }
+
+        public string TickMilkroomPresence(int seconds)
+        {
+            if (CurrentSave == null || seconds <= 0)
+            {
+                return string.Empty;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            EnsureMilkroomPresenceSession();
+
+            var safeSeconds = Math.Max(1, seconds);
+            var session = CurrentSave.milkroomSession;
+            var previousMinute = session.currentSessionSeconds / 60;
+            session.currentSessionSeconds += safeSeconds;
+            session.todaySeconds += safeSeconds;
+            session.totalSeconds += safeSeconds;
+            var currentMinute = session.currentSessionSeconds / 60;
+
+            var rewardMessage = GrantPresenceRewards(previousMinute, currentMinute);
+            if (!string.IsNullOrWhiteSpace(rewardMessage) || currentMinute > previousMinute)
+            {
+                RefreshDerivedCollectionRecords();
+                SaveGame();
+            }
+
+            return rewardMessage;
+        }
+
+        public string PlayMilkDropCatch()
+        {
+            if (CurrentSave == null)
+            {
+                return "No CheeseTama save data is loaded.";
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            EnsureMilkroomPresenceSession();
+
+            var session = CurrentSave.milkroomSession;
+            var stayBonus = Math.Min(3, session.currentSessionSeconds / 600);
+            var coinGain = 4 + stayBonus;
+            var dropGain = stayBonus >= 2 ? 2 : 1;
+
+            CurrentSave.economy.milkCoins += coinGain;
+            CurrentSave.economy.milkDrops += dropGain;
+            session.todayMilkDropCatches += 1;
+            session.totalMilkDropCatches += 1;
+
+            if (CurrentTama != null && CurrentTama.stats != null)
+            {
+                CurrentTama.stats.mood += 5;
+                CurrentTama.stats.affection += 2;
+                CurrentTama.stats.sleepiness += 2;
+                CurrentTama.stats.ClampAll();
+            }
+
+            AddUniqueRecord(CurrentSave.collections.events, MilkDropCatchEventId);
+            return $"Caught milk drops. +{coinGain} Milk Coins, +{dropGain} Milk Drops.";
         }
 
         public void RegisterMilkDiscovery(string milkId)
@@ -308,6 +377,7 @@ namespace CheeseTama.Core
             CurrentSave.EnsureRuntimeDefaults();
             var changed = false;
             changed |= EnsureDailyCareDate();
+            changed |= EnsureMilkroomSessionDate();
             foreach (var entry in CurrentSave.milkGrowth)
             {
                 if (entry == null || string.IsNullOrWhiteSpace(entry.milkId))
@@ -328,6 +398,7 @@ namespace CheeseTama.Core
 
             changed |= AddCareMilestoneRecords(CurrentSave.careHistory);
             changed |= AddDailyCareMilestoneRecords(CurrentSave.dailyCare);
+            changed |= AddPresenceMilestoneRecords(CurrentSave.milkroomSession);
 
             if (CurrentSave.unlocks.starMilkUnlocked)
             {
@@ -412,6 +483,16 @@ namespace CheeseTama.Core
                 changed |= hiddenCollectionSystem.Unlock(collections, "daily_regular", now);
             }
 
+            if (CurrentSave.milkroomSession != null && CurrentSave.milkroomSession.totalSeconds >= 1800)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "patient_guest", now);
+            }
+
+            if (CurrentSave.milkroomSession != null && CurrentSave.milkroomSession.totalMilkDropCatches >= 5)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "drop_listener", now);
+            }
+
             if (CurrentTama != null
                 && CurrentTama.isHatched
                 && CurrentTama.stats != null
@@ -468,6 +549,66 @@ namespace CheeseTama.Core
             return changed;
         }
 
+        private bool AddPresenceMilestoneRecords(MilkroomSessionSaveData session)
+        {
+            if (session == null)
+            {
+                return false;
+            }
+
+            var changed = false;
+            changed |= AddThresholdRecord(session.highestClaimedSessionMinute, 5, SessionFiveMinuteEventId);
+            changed |= AddThresholdRecord(session.highestClaimedSessionMinute, 10, SessionTenMinuteEventId);
+            changed |= AddThresholdRecord(session.highestClaimedSessionMinute, 20, SessionTwentyMinuteEventId);
+            changed |= AddThresholdRecord(session.highestClaimedSessionMinute, 30, SessionThirtyMinuteEventId);
+            changed |= AddThresholdRecord(session.todaySeconds, 600, "daily_presence_10m");
+            changed |= AddThresholdRecord(session.todaySeconds, 1800, "daily_presence_30m");
+            changed |= AddThresholdRecord(session.totalMilkDropCatches, 1, MilkDropCatchEventId);
+            changed |= AddThresholdRecord(session.totalMilkDropCatches, 5, "milk_drop_catch_5");
+            changed |= AddThresholdRecord(session.totalMilkDropCatches, 10, "milk_drop_catch_10");
+            return changed;
+        }
+
+        private string GrantPresenceRewards(int previousMinute, int currentMinute)
+        {
+            var message = string.Empty;
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 5, 5, 2, 0, "Stayed 5 min."));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 10, 10, 4, 0, "Stayed 10 min."));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 20, 20, 8, 1, "Stayed 20 min."));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 30, 33, 12, 2, "Stayed 30 min."));
+            return message;
+        }
+
+        private string TryGrantPresenceReward(
+            int previousMinute,
+            int currentMinute,
+            int thresholdMinute,
+            int milkCoins,
+            int milkDrops,
+            int collectionFragments,
+            string message)
+        {
+            var session = CurrentSave?.milkroomSession;
+            if (session == null
+                || previousMinute >= thresholdMinute
+                || currentMinute < thresholdMinute
+                || session.highestClaimedSessionMinute >= thresholdMinute)
+            {
+                return string.Empty;
+            }
+
+            CurrentSave.economy.milkCoins += milkCoins;
+            CurrentSave.economy.milkDrops += milkDrops;
+            CurrentSave.economy.collectionFragments += collectionFragments;
+            session.highestClaimedSessionMinute = thresholdMinute;
+            session.lastRewardAtIso = DateTimeOffset.Now.ToString("O");
+
+            var fragmentMessage = collectionFragments > 0
+                ? $", +{collectionFragments} Collection Fragment"
+                : string.Empty;
+            return $"{message} +{milkCoins} Milk Coins, +{milkDrops} Milk Drops{fragmentMessage}.";
+        }
+
         private bool EnsureDailyCareDate()
         {
             if (CurrentSave == null)
@@ -492,6 +633,49 @@ namespace CheeseTama.Core
             return true;
         }
 
+        private bool EnsureMilkroomSessionDate()
+        {
+            if (CurrentSave == null)
+            {
+                return false;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var session = CurrentSave.milkroomSession;
+            var todayKey = DateTimeOffset.Now.ToString("yyyy-MM-dd");
+            if (session.dateKey == todayKey)
+            {
+                return false;
+            }
+
+            session.dateKey = todayKey;
+            session.todaySeconds = 0;
+            session.currentSessionSeconds = 0;
+            session.sessionsToday = 0;
+            session.highestClaimedSessionMinute = 0;
+            session.todayMilkDropCatches = 0;
+            session.currentSessionStartedAtIso = string.Empty;
+            presenceSessionStarted = false;
+            return true;
+        }
+
+        private void EnsureMilkroomPresenceSession()
+        {
+            EnsureMilkroomSessionDate();
+            if (presenceSessionStarted || CurrentSave == null)
+            {
+                return;
+            }
+
+            var session = CurrentSave.milkroomSession;
+            session.currentSessionSeconds = 0;
+            session.highestClaimedSessionMinute = 0;
+            session.currentSessionStartedAtIso = DateTimeOffset.Now.ToString("O");
+            session.sessionsToday += 1;
+            session.totalSessions += 1;
+            presenceSessionStarted = true;
+        }
+
         private static bool IsDailyRoutineComplete(DailyCareSaveData daily)
         {
             return daily != null
@@ -499,6 +683,21 @@ namespace CheeseTama.Core
                 && daily.playSessions >= 1
                 && daily.cleanings >= 1
                 && daily.rests >= 1;
+        }
+
+        private static string CombineMessages(string primary, string secondary)
+        {
+            if (string.IsNullOrWhiteSpace(primary))
+            {
+                return secondary ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(secondary))
+            {
+                return primary;
+            }
+
+            return $"{primary} {secondary}";
         }
 
         private bool AddThresholdRecord(int value, int threshold, string eventId)

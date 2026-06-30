@@ -1,3 +1,4 @@
+using CheeseTama.Core;
 using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Growth;
 using CheeseTama.Save;
@@ -25,12 +26,15 @@ namespace CheeseTama.UI
         [SerializeField] private Text unlockText;
         [SerializeField] private Text careSummaryText;
         [SerializeField] private Text dailyRoutineText;
+        [SerializeField] private Text sessionText;
+        [SerializeField] private Text economyText;
         [SerializeField] private Text careTipText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
 
         private CheeseTamaModel current;
         private CheeseTamaSaveData currentSave;
+        private float presenceTickAccumulator;
 
         public void Configure(
             Text nameLabel,
@@ -50,6 +54,8 @@ namespace CheeseTama.UI
             Text unlockLabel,
             Text careSummaryLabel,
             Text dailyRoutineLabel,
+            Text sessionLabel,
+            Text economyLabel,
             Text careTipLabel,
             Text lastSavedLabel,
             Text messageLabel)
@@ -71,9 +77,37 @@ namespace CheeseTama.UI
             unlockText = unlockLabel;
             careSummaryText = careSummaryLabel;
             dailyRoutineText = dailyRoutineLabel;
+            sessionText = sessionLabel;
+            economyText = economyLabel;
             careTipText = careTipLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
+        }
+
+        private void Update()
+        {
+            if (currentSave == null || GameManager.Instance == null)
+            {
+                return;
+            }
+
+            presenceTickAccumulator += Time.unscaledDeltaTime;
+            if (presenceTickAccumulator < 1f)
+            {
+                return;
+            }
+
+            var seconds = Mathf.FloorToInt(presenceTickAccumulator);
+            presenceTickAccumulator -= seconds;
+            var rewardMessage = GameManager.Instance.TickMilkroomPresence(seconds);
+            currentSave = GameManager.Instance.CurrentSave;
+            current = currentSave?.cheeseTama;
+            Refresh();
+
+            if (!string.IsNullOrWhiteSpace(rewardMessage))
+            {
+                ShowMessage(rewardMessage);
+            }
         }
 
         public void Bind(CheeseTamaModel tama)
@@ -115,6 +149,8 @@ namespace CheeseTama.UI
             SetText(unlockText, FormatUnlocks(currentSave));
             SetText(careSummaryText, FormatCareSummary(currentSave));
             SetText(dailyRoutineText, FormatDailyRoutine(currentSave));
+            SetText(sessionText, FormatSession(currentSave));
+            SetText(economyText, FormatEconomy(currentSave));
             SetText(careTipText, FormatCareTip(currentSave, current));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
@@ -236,6 +272,28 @@ namespace CheeseTama.UI
             return $"Today: M {ClampGoal(daily.milkFeeds)}/1 P {ClampGoal(daily.playSessions)}/1 C {ClampGoal(daily.cleanings)}/1 R {ClampGoal(daily.rests)}/1";
         }
 
+        private static string FormatSession(CheeseTamaSaveData saveData)
+        {
+            var session = saveData?.milkroomSession;
+            if (session == null)
+            {
+                return "Session: 00:00 | Today 00:00";
+            }
+
+            return $"Session: {FormatDuration(session.currentSessionSeconds)} | Today {FormatDuration(session.todaySeconds)}";
+        }
+
+        private static string FormatEconomy(CheeseTamaSaveData saveData)
+        {
+            var economy = saveData?.economy;
+            if (economy == null)
+            {
+                return "Items: Coins 0 Drops 0 Frags 0";
+            }
+
+            return $"Items: Coins {economy.milkCoins} Drops {economy.milkDrops} Frags {economy.collectionFragments}";
+        }
+
         private static string FormatCareTip(CheeseTamaSaveData saveData, CheeseTamaModel tama)
         {
             if (tama == null || tama.stats == null)
@@ -291,6 +349,13 @@ namespace CheeseTama.UI
                 return $"Care Tip: {FormatNextDailyRoutineStep(saveData.dailyCare)}";
             }
 
+            if (saveData != null
+                && saveData.milkroomSession != null
+                && saveData.milkroomSession.currentSessionSeconds < 300)
+            {
+                return "Care Tip: Stay to 5 min for milk drops.";
+            }
+
             if (tama.stats.hunger >= 70
                 && tama.stats.mood >= 70
                 && tama.stats.cleanliness >= 70
@@ -301,6 +366,14 @@ namespace CheeseTama.UI
             }
 
             return "Care Tip: Keep the rhythm gentle.";
+        }
+
+        private static string FormatDuration(int seconds)
+        {
+            var safeSeconds = Mathf.Max(0, seconds);
+            var minutes = safeSeconds / 60;
+            var remainingSeconds = safeSeconds % 60;
+            return $"{minutes:00}:{remainingSeconds:00}";
         }
 
         private static int ClampGoal(int value)

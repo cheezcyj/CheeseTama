@@ -17,7 +17,8 @@ namespace CheeseTama.UI
         Reset,
         WaitHour,
         FeedStarMilk,
-        FeedSnack
+        FeedSnack,
+        CatchMilkDrops
     }
 
     [RequireComponent(typeof(Button))]
@@ -119,6 +120,14 @@ namespace CheeseTama.UI
                 var timeEvent = RegisterRandomEvent(manager);
                 PersistAfterInteraction(manager);
                 Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEvent.message), manager, false, timeEvent.eventId);
+                return;
+            }
+
+            if (action == MilkroomCareAction.CatchMilkDrops)
+            {
+                var message = manager.PlayMilkDropCatch();
+                PersistAfterInteraction(manager);
+                Refresh(message, manager, false, "milk_drop_catch");
                 return;
             }
 

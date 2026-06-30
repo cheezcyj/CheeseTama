@@ -15,6 +15,8 @@ namespace CheeseTama.Save
         public List<MilkGrowthSaveEntry> milkGrowth = new List<MilkGrowthSaveEntry>();
         public CareHistorySaveData careHistory = new CareHistorySaveData();
         public DailyCareSaveData dailyCare = new DailyCareSaveData();
+        public EconomySaveData economy = new EconomySaveData();
+        public MilkroomSessionSaveData milkroomSession = new MilkroomSessionSaveData();
         public CollectionSaveData collections = new CollectionSaveData();
 
         public void EnsureRuntimeDefaults()
@@ -25,6 +27,8 @@ namespace CheeseTama.Save
             milkGrowth ??= new List<MilkGrowthSaveEntry>();
             careHistory ??= new CareHistorySaveData();
             dailyCare ??= new DailyCareSaveData();
+            economy ??= new EconomySaveData();
+            milkroomSession ??= new MilkroomSessionSaveData();
             collections ??= new CollectionSaveData();
             collections.EnsureRuntimeDefaults();
         }
@@ -65,5 +69,31 @@ namespace CheeseTama.Save
         public int completedRoutineCount;
         public string lastCompletedDateKey = string.Empty;
         public string lastCompletedAtIso = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class EconomySaveData
+    {
+        public int milkCoins;
+        public int milkDrops;
+        public int starDrops;
+        public int affectionPoints;
+        public int collectionFragments;
+    }
+
+    [Serializable]
+    public sealed class MilkroomSessionSaveData
+    {
+        public string dateKey = string.Empty;
+        public int todaySeconds;
+        public int currentSessionSeconds;
+        public int totalSeconds;
+        public int sessionsToday;
+        public int totalSessions;
+        public int highestClaimedSessionMinute;
+        public int todayMilkDropCatches;
+        public int totalMilkDropCatches;
+        public string currentSessionStartedAtIso = string.Empty;
+        public string lastRewardAtIso = string.Empty;
     }
 }

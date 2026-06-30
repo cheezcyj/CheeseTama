@@ -86,7 +86,7 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 700));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 760));
             var panelTransform = panel.transform;
             RemoveChildIfExists(panelTransform, "Milk Growth Text");
 
@@ -107,9 +107,11 @@ namespace CheeseTama.Core
             var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -420), new Vector2(280, 24));
             var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "Care: 0 | Play 0 Clean 0 Rest 0", 14, TextAnchor.UpperLeft, new Vector2(16, -448), new Vector2(280, 24));
             var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "Today: M 0/1 P 0/1 C 0/1 R 0/1", 14, TextAnchor.UpperLeft, new Vector2(16, -476), new Vector2(280, 24));
-            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 14, TextAnchor.UpperLeft, new Vector2(16, -504), new Vector2(280, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -534), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -568), new Vector2(280, 84));
+            var sessionText = GetOrCreateText(panelTransform, "Session Text", "Session: 00:00 | Today 00:00", 14, TextAnchor.UpperLeft, new Vector2(16, -504), new Vector2(280, 24));
+            var economyText = GetOrCreateText(panelTransform, "Economy Text", "Items: Coins 0 Drops 0 Frags 0", 14, TextAnchor.UpperLeft, new Vector2(16, -532), new Vector2(280, 24));
+            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 14, TextAnchor.UpperLeft, new Vector2(16, -560), new Vector2(280, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -590), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -624), new Vector2(280, 88));
 
             controller.Configure(
                 nameText,
@@ -129,6 +131,8 @@ namespace CheeseTama.Core
                 unlockText,
                 careSummaryText,
                 dailyRoutineText,
+                sessionText,
+                economyText,
                 careTipText,
                 lastSavedText,
                 messageText);
@@ -136,6 +140,9 @@ namespace CheeseTama.Core
             controller.Bind(manager.CurrentSave);
             controller.ShowMessage("Ready for care.");
             visualController.Bind(manager.CurrentTama);
+
+            var catchDropsButton = GetOrCreateButton(canvas.transform, "Catch Drops Button", "Catch Drops", new Vector2(-700, 92));
+            ConfigureCareButton(catchDropsButton, MilkroomCareAction.CatchMilkDrops, controller, visualController);
 
             var snackButton = GetOrCreateButton(canvas.transform, "Snack Button", "Snack", new Vector2(-700, 36));
             ConfigureCareButton(snackButton, MilkroomCareAction.FeedSnack, controller, visualController);
@@ -223,10 +230,10 @@ namespace CheeseTama.Core
 
             EnsureTitle("Debug Canvas", "Debug", "Developer test surface");
 
-            var panel = GetOrCreatePanel(canvas.transform, "Debug State Panel", new Vector2(24, -180), new Vector2(420, 520));
+            var panel = GetOrCreatePanel(canvas.transform, "Debug State Panel", new Vector2(24, -180), new Vector2(500, 600));
             var panelTransform = panel.transform;
-            var stateText = GetOrCreateText(panelTransform, "Debug State Text", "Debug State", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(380, 360));
-            var messageText = GetOrCreateText(panelTransform, "Debug Message Text", "Pick a preset.", 14, TextAnchor.UpperLeft, new Vector2(16, -400), new Vector2(380, 80));
+            var stateText = GetOrCreateText(panelTransform, "Debug State Text", "Debug State", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(460, 430));
+            var messageText = GetOrCreateText(panelTransform, "Debug Message Text", "Pick a preset.", 14, TextAnchor.UpperLeft, new Vector2(16, -480), new Vector2(460, 80));
 
             controller.Configure(stateText, messageText);
             controller.Bind(manager.CurrentSave);
@@ -259,6 +266,9 @@ namespace CheeseTama.Core
 
             var forceEventButton = GetOrCreateButton(canvas.transform, "Force Event Button", "Force Event", new Vector2(70, 36));
             ConfigureDebugButton(forceEventButton, DebugAction.ForceEvent, controller, visualController);
+
+            var stayButton = GetOrCreateButton(canvas.transform, "Stay Five Minutes Button", "Stay +5m", new Vector2(350, 96));
+            ConfigureDebugButton(stayButton, DebugAction.AddSessionFiveMinutes, controller, visualController);
 
             var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(210, 36));
             ConfigureNavigationButton(milkroomButton, SceneNames.Milkroom, true);

@@ -53,6 +53,8 @@ namespace CheeseTama.UI
             builder.AppendLine(FormatUnlocks());
             builder.AppendLine(FormatCareHistory());
             builder.AppendLine(FormatDailyRoutine());
+            builder.AppendLine(FormatSession());
+            builder.AppendLine(FormatEconomy());
             builder.AppendLine(FormatHiddenRecords());
             SetText(stateText, builder.ToString());
         }
@@ -141,9 +143,39 @@ namespace CheeseTama.UI
             return $"Today: M {ClampGoal(daily.milkFeeds)}/1 P {ClampGoal(daily.playSessions)}/1 C {ClampGoal(daily.cleanings)}/1 R {ClampGoal(daily.rests)}/1, Done {daily.completedRoutineCount}";
         }
 
+        private string FormatSession()
+        {
+            var session = currentSave?.milkroomSession;
+            if (session == null)
+            {
+                return "Session: 00:00, Today 00:00, Catches 0";
+            }
+
+            return $"Session: {FormatDuration(session.currentSessionSeconds)}, Today {FormatDuration(session.todaySeconds)}, Catches {session.totalMilkDropCatches}";
+        }
+
+        private string FormatEconomy()
+        {
+            var economy = currentSave?.economy;
+            if (economy == null)
+            {
+                return "Items: Coins 0, Drops 0, Frags 0";
+            }
+
+            return $"Items: Coins {economy.milkCoins}, Drops {economy.milkDrops}, Frags {economy.collectionFragments}";
+        }
+
         private static int ClampGoal(int value)
         {
             return value > 0 ? 1 : 0;
+        }
+
+        private static string FormatDuration(int seconds)
+        {
+            var safeSeconds = Mathf.Max(0, seconds);
+            var minutes = safeSeconds / 60;
+            var remainingSeconds = safeSeconds % 60;
+            return $"{minutes:00}:{remainingSeconds:00}";
         }
 
         private static string FormatFormName(string form)

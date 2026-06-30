@@ -42,3 +42,4 @@
 - Track cumulative care history with collection milestones and hidden care records.
 - Add a daily care routine with Milkroom progress, collection milestones, and a hidden regular-care record.
 - Use edit-mode-safe object cleanup for generated visual parts and duplicate core objects.
+- Add Milkroom stay-time tracking with 5/10/20/30 minute rewards, early economy values, and a Catch Drops prototype.

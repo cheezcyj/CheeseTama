@@ -18,7 +18,8 @@ namespace CheeseTama.UI
         HatchNow,
         UnlockStarMilk,
         ResetSave,
-        ForceEvent
+        ForceEvent,
+        AddSessionFiveMinutes
     }
 
     [RequireComponent(typeof(Button))]
@@ -148,6 +149,8 @@ namespace CheeseTama.UI
                     var eventResult = ForceCareEvent(manager);
                     eventId = eventResult.eventId;
                     return eventResult.message;
+                case DebugAction.AddSessionFiveMinutes:
+                    return manager.TickMilkroomPresence(300);
                 default:
                     return "No debug action was selected.";
             }
