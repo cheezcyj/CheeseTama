@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace CheeseTama.Utilities
 {
@@ -111,9 +112,17 @@ namespace CheeseTama.Utilities
 
         private static Shader FindLitShader()
         {
-            return Shader.Find("Universal Render Pipeline/Lit")
-                ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                ?? Shader.Find("Standard")
+            if (GraphicsSettings.currentRenderPipeline != null)
+            {
+                return Shader.Find("Universal Render Pipeline/Lit")
+                    ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                    ?? Shader.Find("Standard")
+                    ?? Shader.Find("Sprites/Default");
+            }
+
+            return Shader.Find("Standard")
+                ?? Shader.Find("Legacy Shaders/Diffuse")
+                ?? Shader.Find("Universal Render Pipeline/Lit")
                 ?? Shader.Find("Sprites/Default");
         }
 

@@ -2,7 +2,7 @@
 
 ## Goal
 
-The Milkroom is a 3D room staged with a front-facing camera and toon-rendered 2D readability: soft milk-white light, warm wood, visible milk bottles, a central rug, and gentle seasonal/time-of-day variation.
+The Milkroom is a full 3D stylized toon diorama: soft milk-white light, warm wood, visible milk bottles, a central rug, and a fixed Game View camera composition.
 
 ## Runtime Scene Structure
 
@@ -16,21 +16,28 @@ MilkroomSceneRoot
 `-- UI
 ```
 
-## Environment Layer Structure
+## Environment Group Structure
 
 ```text
 Milkroom Background
-|-- BackgroundRoot
-|-- MidgroundRoot
-|-- PlayAreaRoot
-|-- ForegroundRoot
+|-- RoomShell
+|-- WindowSet
+|-- FridgeSet
+|-- MilkShelfSet
+|-- BlendingTableSet
+|-- ChalkboardSet
+|-- Rug
+|-- CozyChair
+|-- Lamps
+|-- Props
 `-- ThemeVFXRoot
 ```
 
-- `BackgroundRoot`: wall, window, curtains, hanging lights.
-- `MidgroundRoot`: floor, furniture, fridge, shelves, bottles, chalkboard.
-- `PlayAreaRoot`: central rug and CheeseTama anchor.
-- `ForegroundRoot`: soft milk drops and edge accents.
+- `RoomShell`: 3D back wall, side walls, floor, baseboards, ceiling beam.
+- `WindowSet`: 3D window glass, frame, curtains, warm morning glow.
+- `FridgeSet`, `MilkShelfSet`, `BlendingTableSet`, `ChalkboardSet`: grouped functional props.
+- `Rug`: central CheeseTama anchor and soft rug geometry.
+- `Props`: plants, memos, loose milk bottles, foreground milk drops.
 - `ThemeVFXRoot`: rain streaks, night stars, evening light beams.
 
 ## Base Props
@@ -54,6 +61,7 @@ Milkroom Background
 - Empty default Unity room.
 - Cold gray placeholder look.
 - Single flat background plane pretending to be a room.
+- Forced URP material that renders magenta when URP is not assigned.
 - Horror or dungeon lighting.
 - Realistic food props that make CheeseTama read as edible.
 - Hidden late-game theme labels or conditions in the public UI.

@@ -2,7 +2,7 @@
 
 ## Goal
 
-CheeseTama is a 3D character that should render with 2D illustration readability: a warm yellow cheese creature with a soft pudding body, glossy milk highlights, orange cheese holes, big sparkling eyes, peach cheeks, tiny limbs, and gentle squash/stretch motion.
+CheeseTama is a full 3D stylized toon character: a warm yellow cheese creature with a soft pudding body, glossy milk highlights, orange cheese marks, big sparkling eyes, peach cheeks, tiny limbs, and gentle squash/stretch motion.
 
 ## Core Silhouette
 
@@ -58,7 +58,7 @@ CheeseTamaRoot
 
 ## Rendering
 
-- Use URP Lit/Simple Lit based toon material profiles until dedicated Shader Graph assets are built.
+- Use active-pipeline-safe toon material profiles until dedicated Shader Graph assets are built. Do not force URP shaders when no URP pipeline asset is assigned.
 - Use warm rim/outline geometry to prevent the character from reading as a raw sphere primitive.
 - Keep the camera front-facing and stable so the 3D model reads like a clean 2D mascot illustration.
 - Prefer grouped 3D mesh replacement later: Body, FaceAnchor, CheeseMarks, Highlights, Shadow, VFXRoot.

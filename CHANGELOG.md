@@ -59,3 +59,6 @@
 - Expand Unity-focused .gitignore and .gitattributes rules, add VS Code helper settings, track the package lock file, sync ProjectSettings assets, and mirror backup-folder scene files into the tracked repository.
 - Add a cozy 3D toon Milkroom with window, shelves, bottles, rug, furniture, warm lighting, and improve CheeseTama proportions so the character reads rounder and less side-compressed.
 - Add runtime toon material profiles, character outline geometry, Milkroom scene hierarchy grouping, rim light, side walls, and a blending table for stronger 3D room readability.
+- Rework the Milkroom toward the v2.0 full 3D toon diorama direction with RoomShell, WindowSet, FridgeSet, MilkShelfSet, BlendingTableSet, ChalkboardSet, Rug, CozyChair, Lamps, and Props groups.
+- Fix pink/magenta rendering by selecting shaders from the active render pipeline instead of forcing URP shaders when the project has no custom render pipeline assigned.
+- Move Collection back into the bottom action bar per the v2.0 UI instruction, while keeping Save/Load/Reset out of the care bar.

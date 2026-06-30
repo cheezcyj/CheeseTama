@@ -6,8 +6,8 @@
 - Hatched CheeseTama supports idle, happy, hungry, sleepy, upset, surprised, sad, sick, and sparkle expression states.
 - Idle breathing and softer squash/stretch reactions are handled in code.
 - Base CheeseTama now limits visible cheese holes to the 2-5 range from the visual guide; 6-7 hole layouts are reserved for later variants.
-- Milkroom bottom bar now focuses on six direct care actions only.
-- Collection is moved to the top menu beside Settings.
+- Milkroom bottom bar now follows the v2.0 instruction: 우유, 조합, 간식, 놀이, 청소, 수면, 도감.
+- Collection is no longer duplicated in the top menu.
 - Save, Load, and Reset are moved into Settings > Data Management.
 - Reset requires typing `RESET`.
 - F12 Dev Panel is separated from the release-facing bottom bar.
@@ -16,10 +16,10 @@
 - Lv.33 crown parts are kept as celebration/cosmetic cues instead of always-on base-form parts.
 - Status messages are shown in a dedicated bottom-center message bar.
 - Dev Panel opens near the upper-right side so it does not cover the stat bar.
-- Milkroom background now uses BackgroundRoot, MidgroundRoot, PlayAreaRoot, ForegroundRoot, and ThemeVFXRoot.
-- Milkroom has controller scaffolding for morning, evening, night, and rainy palettes plus ambient VFX toggles.
+- Milkroom background now uses full 3D diorama groups: RoomShell, WindowSet, FridgeSet, MilkShelfSet, BlendingTableSet, ChalkboardSet, Rug, CozyChair, Lamps, Props, and ThemeVFXRoot.
+- Milkroom currently targets the warm morning theme first; additional themes remain expansion work.
 - Milkroom now has a `MilkroomSceneRoot` hierarchy with CameraRig, Lighting, Environment, Character, VFX, and UI groups.
-- Runtime renderers use URP Lit/Simple Lit toon material profiles instead of default whitebox materials.
+- Runtime renderers use active-pipeline-safe toon material profiles so Built-in projects do not render URP materials as magenta.
 
 ## Next Character Work
 

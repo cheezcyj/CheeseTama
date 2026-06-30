@@ -35,7 +35,7 @@ The first public impression should stay simple and cozy: a cute CheeseTama egg g
 
 ## Character Art Direction
 
-CheeseTama is a 3D character rendered for 2D illustration readability: stable front-facing camera, warm toon material, simple silhouette, rim/outline support, and soft squash/stretch motion.
+CheeseTama is a full 3D stylized toon character in a fixed-camera diorama scene: warm toon material, simple silhouette, rim/outline support, and soft squash/stretch motion.
 
 ### Visual Identity
 
@@ -73,7 +73,6 @@ The Milkroom UI must separate direct care actions from system/navigation tools.
 - Level and progress.
 - Session time and daily stay time.
 - Early economy counts.
-- Collection button.
 - Settings button.
 
 ### Main View
@@ -97,10 +96,10 @@ Shows the five core condition values:
 Only direct care actions belong here:
 
 ```text
-Milk / Blend / Snack / Play / Clean / Sleep
+우유 / 조합 / 간식 / 놀이 / 청소 / 수면 / 도감
 ```
 
-Do not put Save, Load, Reset, Debug, Wait +1h, or Collection in the bottom care bar.
+Do not put Save, Load, Reset, Debug, or Wait +1h in the bottom care bar.
 
 ### Settings
 

@@ -7,13 +7,13 @@ The Milkroom first screen must separate direct care actions from system controls
 Bottom action bar:
 
 ```text
-Milk / Blend / Snack / Play / Clean / Sleep
+우유 / 조합 / 간식 / 놀이 / 청소 / 수면 / 도감
 ```
 
 Top menu:
 
 ```text
-Collection / Settings
+Settings
 ```
 
 System controls:
@@ -58,7 +58,7 @@ DevPanel
 
 - Do not expose hidden late-game slots, counts, categories, or conditions.
 - Keep save/load/reset away from the bottom action bar.
-- Keep Collection in the top menu, not in the bottom care action bar.
+- Keep Collection as the seventh bottom action button per the v2.0 visual/UI direction.
 - Reset must require an explicit confirmation input.
 - Keep the message bar large and clear near the bottom center.
 - Open the F12 Dev Panel away from the stat bar.
