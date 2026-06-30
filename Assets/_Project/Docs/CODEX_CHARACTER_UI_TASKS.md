@@ -11,7 +11,7 @@
 - Reset requires typing `RESET`.
 - F12 Dev Panel is separated from the release-facing bottom bar.
 - Wait +1h is available from the F12 Dev Panel for testing time progression.
-- CheeseTama placeholder now uses cream cap, belly patch, visible face, and hatched side stubs.
+- CheeseTama placeholder now follows the provided 2.5D concept: yellow pudding body, orange holes, glossy highlights, tiny limbs, top curl, and Lv.33 crown.
 - Status messages are shown in a dedicated bottom-center message bar.
 - Dev Panel opens near the upper-right side so it does not cover the stat bar.
 

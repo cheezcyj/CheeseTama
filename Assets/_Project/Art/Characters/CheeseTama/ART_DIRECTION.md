@@ -2,37 +2,56 @@
 
 ## Goal
 
-CheeseTama should read as a soft 2.5D cheese pudding creature, not a raw Unity primitive.
-The first impression must be round, warm, gentle, and slightly bouncy.
+CheeseTama should match the provided 2.5D cartoon concept sheet: a warm yellow cheese creature with a soft pudding body, glossy milk highlights, orange cheese holes, big sparkling eyes, peach cheeks, tiny limbs, and gentle squash/stretch motion.
 
-## Shape
+## Core Silhouette
 
-- Body: rounded blob between egg, jelly, and cheese pudding.
-- Proportion: wider after hatching, taller while still an egg.
-- Surface: smooth, soft, and milk-glossy.
-- Face: large simple eyes, small mouth, cheeks, and minimal cheese holes.
-- Signature details: cream cap, milk belly patch, soft side jelly stubs after hatching.
+- Lv.1: taller cheese egg, pale yellow, glossy, small cheese spots.
+- Lv.10: hatchling with visible face and small body.
+- Lv.15: soft CheeseTama with a small curled top.
+- Lv.20: wider grown body with arms and feet.
+- Lv.28: mature body with more cheese holes and stronger pudding shape.
+- Lv.33: final form may show a small crown.
+
+## Shape Details
+
+- Body: rounded blob between cheese pudding and jelly.
+- Surface: smooth, glossy, and soft, never rough realistic cheese.
+- Face: large dark brown eyes with white sparkle dots.
+- Mouth: small cute "w" smile or small open mouth for surprise/hunger.
+- Cheeks: peach-pink oval blush.
+- Holes: orange oval patches, asymmetric like the concept art.
+- Limbs: tiny soft arms and oval feet, secondary to the body silhouette.
+- Top curl: appears from the soft/grown stage.
 - Shadow: soft oval under the body.
 
-## Color
+## Palette
 
 - Body: butter yellow and cream yellow.
+- Holes: warm orange.
 - Highlight: milk white.
 - Face: deep coffee brown.
-- Cheeks: warm peach.
+- Cheeks: peach pink.
+- Crown: honey gold.
 - Shadow: soft warm brown.
 
-## Required Rig
+## Runtime Rig
 
 ```text
 CheeseTamaRoot
-├─ ModelRoot
-│  └─ VisualRoot
-│     ├─ Body
-│     ├─ FaceAnchor
-│     ├─ Highlight
-│     ├─ SoftShadow
-│     └─ VFXRoot
+|-- ModelRoot
+|   `-- VisualRoot
+|       |-- Body
+|       |-- FaceAnchor
+|       |-- Left/Right Soft Arm
+|       |-- Left/Right Little Foot
+|       |-- Top Curl
+|       |-- Cheese Hole 1..7
+|       |-- Cheese Speckle 1..6
+|       |-- Large/Small Milk Highlight
+|       |-- SoftShadow
+|       |-- Crown parts
+|       `-- VFXRoot
 ```
 
 ## Expressions
@@ -51,10 +70,9 @@ CheeseTamaRoot
 - Care reactions should be a small squash/stretch pop.
 - Hatch reactions can be larger, but should still feel soft.
 - Avoid extreme hops that make the character feel like a ball.
-- Even the egg state should show enough face and gloss to feel alive.
 
 ## Avoid
 
-- Cube, hard edge, plastic toy, realistic cheese block, Minecraft-like pet.
-- Tiny eyes or a stiff centered expression.
-- Rough cheese texture on the base form.
+- Cube body, hard edges, hard plastic toy, realistic cheese block, Minecraft-like pet.
+- Tiny eyes, stiff centered expression, or generic low-poly mascot proportions.
+- Cream cap or milk belly patch motifs; the concept uses yellow cheese body, orange holes, and white highlights.
