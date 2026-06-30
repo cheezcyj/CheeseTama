@@ -294,18 +294,18 @@ namespace CheeseTama.Core
         {
             var settingsModal = GetOrCreatePanel(canvasTransform, "Settings Modal", new Vector2(1320, -116), new Vector2(560, 620));
             var settingsTransform = settingsModal.transform;
-            GetOrCreateText(settingsTransform, "Settings Title Text", "Settings", 22, TextAnchor.UpperLeft, new Vector2(24, -22), new Vector2(280, 34));
-            GetOrCreateText(settingsTransform, "Settings Data Title Text", "Data Management", 18, TextAnchor.UpperLeft, new Vector2(24, -96), new Vector2(300, 30));
-            GetOrCreateText(settingsTransform, "Settings Sound Title Text", "Sound", 16, TextAnchor.UpperLeft, new Vector2(24, -244), new Vector2(220, 26));
-            GetOrCreateText(settingsTransform, "Settings Display Title Text", "Display", 16, TextAnchor.UpperLeft, new Vector2(24, -294), new Vector2(220, 26));
-            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "Controls", 16, TextAnchor.UpperLeft, new Vector2(24, -344), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Title Text", "Settings", 22, TextAnchor.UpperLeft, new Vector2(28, -24), new Vector2(280, 34));
+            GetOrCreateText(settingsTransform, "Settings Data Title Text", "Data Management", 18, TextAnchor.UpperLeft, new Vector2(28, -92), new Vector2(300, 30));
+            GetOrCreateText(settingsTransform, "Settings Sound Title Text", "Sound", 16, TextAnchor.UpperLeft, new Vector2(28, -294), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Display Title Text", "Display", 16, TextAnchor.UpperLeft, new Vector2(28, -344), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "Controls", 16, TextAnchor.UpperLeft, new Vector2(28, -394), new Vector2(220, 26));
 
-            var closeSettingsButton = GetOrCreateButton(settingsTransform, "Close Settings Button", "Close", new Vector2(196, 552));
-            var manualSaveButton = GetOrCreateButton(settingsTransform, "Manual Save Button", "Save", new Vector2(-150, 410));
-            var manualLoadButton = GetOrCreateButton(settingsTransform, "Manual Load Button", "Load", new Vector2(0, 410));
-            var openResetButton = GetOrCreateButton(settingsTransform, "Open Reset Button", "Reset", new Vector2(150, 410));
+            var closeSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Close Settings Button", "Close", new Vector2(424, -20), new Vector2(108, 40));
+            var manualSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Save Button", "Save", new Vector2(28, -190), new Vector2(120, 42));
+            var manualLoadButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Load Button", "Load", new Vector2(166, -190), new Vector2(120, 42));
+            var openResetButton = GetOrCreateTopLeftButton(settingsTransform, "Open Reset Button", "Reset", new Vector2(304, -190), new Vector2(120, 42));
             ApplyDangerButtonStyle(openResetButton);
-            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "Auto-save runs after care actions.", 13, TextAnchor.UpperLeft, new Vector2(24, -176), new Vector2(500, 46));
+            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "Auto-save runs after care actions. Manual tools are below.", 13, TextAnchor.UpperLeft, new Vector2(28, -134), new Vector2(500, 42));
 
             var confirmRoot = GetOrCreatePanel(canvasTransform, "Confirm Reset Dialog", new Vector2(640, -300), new Vector2(640, 360));
             var confirmTransform = confirmRoot.transform;
@@ -319,9 +319,9 @@ namespace CheeseTama.Core
                 new Vector2(24, -82),
                 new Vector2(580, 70));
             var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "Type RESET", new Vector2(24, -176), new Vector2(360, 48));
-            var confirmResetButton = GetOrCreateButton(confirmTransform, "Confirm Reset Button", "Reset", new Vector2(120, 44));
+            var confirmResetButton = GetOrCreateTopLeftButton(confirmTransform, "Confirm Reset Button", "Reset", new Vector2(344, -284), new Vector2(120, 42));
             ApplyDangerButtonStyle(confirmResetButton);
-            var cancelResetButton = GetOrCreateButton(confirmTransform, "Cancel Reset Button", "Cancel", new Vector2(280, 44));
+            var cancelResetButton = GetOrCreateTopLeftButton(confirmTransform, "Cancel Reset Button", "Cancel", new Vector2(480, -284), new Vector2(120, 42));
 
             var confirmResetDialog = confirmRoot.GetComponent<ConfirmResetDialog>();
             if (confirmResetDialog == null)
@@ -364,7 +364,7 @@ namespace CheeseTama.Core
             var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1276, -746), new Vector2(300, 164));
             var devPanelTransform = devPanel.transform;
             GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "Dev Panel", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
-            var debugSceneButton = GetOrCreateButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(0, 26));
+            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(18, -82), new Vector2(150, 42));
             ConfigureNavigationButton(debugSceneButton, SceneNames.Debug, true);
 
             var devPanelController = canvasTransform.GetComponent<DevPanelController>();
@@ -703,6 +703,7 @@ namespace CheeseTama.Core
             label.fontSize = fontSize;
             label.alignment = alignment;
             label.color = new Color(0.22f, 0.17f, 0.12f);
+            label.raycastTarget = false;
         }
 
         private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
@@ -731,6 +732,54 @@ namespace CheeseTama.Core
             }
 
             return CreateButton(parent, name, label, anchoredPosition);
+        }
+
+        private static Button CreateTopLeftButton(
+            Transform parent,
+            string name,
+            string label,
+            Vector2 anchoredPosition,
+            Vector2 size)
+        {
+            var buttonObject = new GameObject(name);
+            buttonObject.transform.SetParent(parent, false);
+
+            buttonObject.AddComponent<RectTransform>();
+            var image = buttonObject.AddComponent<Image>();
+            var button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            ConfigureTopLeftButton(button, label, anchoredPosition, size);
+            return button;
+        }
+
+        private static Button GetOrCreateTopLeftButton(
+            Transform parent,
+            string name,
+            string label,
+            Vector2 anchoredPosition,
+            Vector2 size)
+        {
+            var existing = parent.Find(name);
+            if (existing != null && existing.TryGetComponent(out Button existingButton))
+            {
+                ConfigureTopLeftButton(existingButton, label, anchoredPosition, size);
+                return existingButton;
+            }
+
+            return CreateTopLeftButton(parent, name, label, anchoredPosition, size);
+        }
+
+        private static void ConfigureTopLeftButton(Button button, string label, Vector2 anchoredPosition, Vector2 size)
+        {
+            var rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = size;
+
+            ConfigureButtonVisuals(button, label, size);
         }
 
         private static void ConfigureCareButton(
@@ -786,6 +835,11 @@ namespace CheeseTama.Core
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = new Vector2(136, 44);
 
+            ConfigureButtonVisuals(button, label, rect.sizeDelta);
+        }
+
+        private static void ConfigureButtonVisuals(Button button, string label, Vector2 size)
+        {
             if (!button.TryGetComponent(out Image image))
             {
                 image = button.gameObject.AddComponent<Image>();
@@ -806,7 +860,7 @@ namespace CheeseTama.Core
             var labelTransform = button.transform.Find("Label");
             if (labelTransform == null)
             {
-                var createdLabel = CreateText(button.transform, "Label", label, 16, TextAnchor.MiddleCenter, Vector2.zero, rect.sizeDelta, true);
+                var createdLabel = CreateText(button.transform, "Label", label, 16, TextAnchor.MiddleCenter, Vector2.zero, size, true);
                 ConfigureButtonLabel(createdLabel);
                 return;
             }
@@ -816,7 +870,7 @@ namespace CheeseTama.Core
                 labelText = labelTransform.gameObject.AddComponent<Text>();
             }
 
-            ConfigureText(labelText, label, 16, TextAnchor.MiddleCenter, Vector2.zero, rect.sizeDelta, true);
+            ConfigureText(labelText, label, 16, TextAnchor.MiddleCenter, Vector2.zero, size, true);
             ConfigureButtonLabel(labelText);
         }
 
