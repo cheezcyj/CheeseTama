@@ -37,3 +37,4 @@
 - Add visible CheeseTama event reactions with a brief floating event cue.
 - Unlock and display hidden collection records from hatch, Star Milk, events, and balanced care.
 - Add a Cheese Snack care action with collection event records and a hidden first-snack record.
+- Add Milkroom care tips that recommend the next action from current stats and unlocks.

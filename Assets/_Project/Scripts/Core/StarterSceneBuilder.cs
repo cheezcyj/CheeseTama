@@ -105,8 +105,9 @@ namespace CheeseTama.Core
             var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "Basic Milk: Lv. 0 (0 pts)", 16, TextAnchor.UpperLeft, new Vector2(16, -364), new Vector2(280, 24));
             var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "Star Milk: locked", 16, TextAnchor.UpperLeft, new Vector2(16, -392), new Vector2(280, 24));
             var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -420), new Vector2(280, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -450), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -486), new Vector2(280, 72));
+            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 14, TextAnchor.UpperLeft, new Vector2(16, -450), new Vector2(280, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -478), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -514), new Vector2(280, 64));
 
             controller.Configure(
                 nameText,
@@ -124,6 +125,7 @@ namespace CheeseTama.Core
                 basicMilkGrowthText,
                 starMilkGrowthText,
                 unlockText,
+                careTipText,
                 lastSavedText,
                 messageText);
             manager.RefreshDerivedCollectionRecords();

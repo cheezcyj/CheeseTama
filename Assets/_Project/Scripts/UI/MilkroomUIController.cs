@@ -23,6 +23,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text basicMilkGrowthText;
         [SerializeField] private Text starMilkGrowthText;
         [SerializeField] private Text unlockText;
+        [SerializeField] private Text careTipText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
 
@@ -45,6 +46,7 @@ namespace CheeseTama.UI
             Text basicMilkGrowthLabel,
             Text starMilkGrowthLabel,
             Text unlockLabel,
+            Text careTipLabel,
             Text lastSavedLabel,
             Text messageLabel)
         {
@@ -63,6 +65,7 @@ namespace CheeseTama.UI
             basicMilkGrowthText = basicMilkGrowthLabel;
             starMilkGrowthText = starMilkGrowthLabel;
             unlockText = unlockLabel;
+            careTipText = careTipLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
         }
@@ -104,6 +107,7 @@ namespace CheeseTama.UI
             SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "Basic Milk"));
             SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
             SetText(unlockText, FormatUnlocks(currentSave));
+            SetText(careTipText, FormatCareTip(currentSave, current));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
 
@@ -200,6 +204,66 @@ namespace CheeseTama.UI
                 ? "Star Milk unlocked"
                 : "Star Milk locked";
             return $"Unlocks: {starMilkState}";
+        }
+
+        private static string FormatCareTip(CheeseTamaSaveData saveData, CheeseTamaModel tama)
+        {
+            if (tama == null || tama.stats == null)
+            {
+                return "Care Tip: Load CheeseTama data.";
+            }
+
+            if (tama.stats.health < 35)
+            {
+                return "Care Tip: Rest and clean first.";
+            }
+
+            if (tama.stats.hunger < 30)
+            {
+                return "Care Tip: Feed Milk or Snack.";
+            }
+
+            if (tama.stats.cleanliness < 35)
+            {
+                return "Care Tip: Clean the milkroom.";
+            }
+
+            if (tama.stats.sleepiness > 75)
+            {
+                return "Care Tip: Rest under warm light.";
+            }
+
+            if (tama.stats.mood < 45)
+            {
+                return "Care Tip: Play or offer a snack.";
+            }
+
+            if (!tama.isHatched)
+            {
+                var hatchProgress = HatchingSystem.GetHatchProgressPercent(tama);
+                return hatchProgress >= 75
+                    ? "Care Tip: Keep caring; hatch is close."
+                    : "Care Tip: Feed Milk to grow.";
+            }
+
+            if (saveData != null
+                && saveData.unlocks != null
+                && saveData.unlocks.starMilkUnlocked
+                && FindMilkGrowthEntry(saveData, "star_milk") == null)
+            {
+                return "Care Tip: Try Star Milk.";
+            }
+
+            if (tama.stats.hunger >= 70
+                && tama.stats.mood >= 70
+                && tama.stats.cleanliness >= 70
+                && tama.stats.sleepiness <= 35
+                && tama.stats.health >= 80)
+            {
+                return "Care Tip: Cozy and balanced.";
+            }
+
+            return "Care Tip: Keep the rhythm gentle.";
         }
 
         private static string FormatCondition(CheeseTamaModel tama)
