@@ -1,128 +1,105 @@
 # CheeseTama: The Milkroom
 
-작은 치즈타마 알을 돌보고, 우유와 간식을 챙겨주며, 말랑한 친구로 부화시켜 가는 감성 캐주얼 육성 게임 프로토타입입니다.
+CheeseTama는 우유로 자라는 작은 치즈 생명체를 돌보는 PC 우선 감성 육성 게임 프로토타입입니다. 플레이어는 Milkroom에 머물며 치즈타마의 상태를 살피고, 우유와 간식, 놀이, 청소, 휴식으로 성장과 도감 기록을 천천히 쌓아 갑니다.
 
-현재 저장소는 최종 게임이 아니라 Unity에서 핵심 루프를 빠르게 확인하기 위한 초기 개발 버전입니다.
+현재 저장소는 최종 게임이 아니라 Unity에서 핵심 루프를 빠르게 검증하기 위한 개발 버전입니다.
 
 ## 현재 상태
 
-- Unity 6 기반 프로토타입
-- PC 우선 감성 육성 게임
-- 저장/불러오기/초기화 가능한 로컬 세이브
-- Milkroom, Collection, Debug 씬 자동 생성
-- 체류 시간과 간단한 재화 보상이 연결된 Milkroom 세션 루프
+- Unity 6 `6000.0.78f1` 기반 프로젝트
 - MIT License
+- Boot, Milkroom, Collection, Debug 씬 구성
+- 로컬 JSON 저장/불러오기/초기화
+- Milkroom 체류 시간, 일일 루틴, 초기 재화, 도감 기록 프로토타입
+- 제공된 2.5D 치즈타마 콘셉트를 따라 만든 절차형 캐릭터 비주얼
+- Unity 프로젝트 설정, 패키지 잠금 파일, Git 설정 파일 추적 반영
 
-## 현재 구현된 기능
+## 구현된 주요 기능
 
 ### Milkroom
 
-- 치즈타마 상태 표시
-  - 레벨
-  - 형태
-  - 컨디션
-  - 포만감
-  - 기분
-  - 청결도
-  - 졸림
-  - 건강
-  - 애정도
-  - 부화 진행도
-  - 우유 성장도
-- 케어 버튼
-  - `Feed Milk`
-  - `Star Milk`
-  - `Snack`
-  - `Play`
-  - `Clean`
-  - `Rest`
-  - `Wait 1h`
-  - `Save`
-  - `Reload`
-  - `Reset`
-- `Basic Milk` 성장도 기록
-- `Star Milk` 해금 및 성장도 기록
+- 치즈타마 상태 표시: 레벨, 형태, 배고픔, 기분, 청결, 졸림, 건강, 애정, 성숙도, 부화 진행도
+- 상단 메뉴: `Collection`, `Settings`
+- 하단 케어 버튼: `Milk`, `Blend`, `Snack`, `Play`, `Clean`, `Sleep`
+- 상태 메시지 전용 Message Bar
+- Basic Milk 성장 기록
+- Basic Milk Lv. 2 이후 Star Milk 해금 및 성장 기록
 - 치즈 간식 케어 액션
-- 시간 경과에 따른 상태 변화
-- Milkroom 체류 시간 표시
+- 케어 행동 후 자동 저장
+- 오프라인/체류 시간 진행에 따른 상태 변화
 - 5/10/20/30분 체류 보상
-- 밀크코인, 우유방울, 도감 조각 재화 표시
-- `Catch Drops` 우유방울 받기 프로토타입
-- 케어 후 랜덤 이벤트 발생
+- Milk Coins, Milk Drops, Collection Fragments 초기 재화
+- `Catch Drops` 우유방울 획득 프로토타입
+- 케어 행동 기반 랜덤 이벤트와 이벤트 반응
 
-### 치즈타마 비주얼
+### CheeseTama 비주얼
 
-- 알 상태 표시
-- 부화 후 `Soft CheeseTama` 형태 표시
-- 케어 반응
-  - 살짝 튀어오름
-  - 색 반응
-  - 부화 축하 반응
-- 컨디션별 색상 변화
-- 부화 후 컨디션별 표정 변화
-  - cheerful
-  - sleepy
-  - hungry
-  - messy
-  - unwell
-- 이벤트 발생 시 별도 색 반응과 작은 이벤트 표시
+- Lv.1 알 상태와 부화 후 CheeseTama 형태 표시
+- 노란 치즈 푸딩 몸체, 치즈 구멍, 볼터치, 큰 눈, 작은 팔다리, 성장 단계별 실루엣
+- Lv.33 최종형 왕관 디테일
+- 상태별 표정 변화: 기본, 행복, 배고픔, 졸림, 지저분함, 아픔, 놀람
+- 케어 행동 시 부드러운 튀어오름, 스쿼시/스트레치, 색상 반응
 
 ### Collection
 
-- 우유 기록
-- 성장 기록
-- 이벤트 기록
-- 진화 기록
-- 숨겨진 도감 기록
-- 누락된 우유 성장 기록 자동 보정
+- 발견된 기록만 표시하는 도감 화면
+- 우유 기록, 성장 기록, 이벤트 기록, 진화 기록
+- 숨겨진 도감은 실제 해금 전까지 이름/조건/카운트 노출 금지
+- Basic Milk와 Star Milk 성장 기록 분리 및 누락 보정
 
-### Debug
+### Settings
 
-빠른 테스트를 위한 개발용 씬입니다.
+- Settings는 상단 메뉴에서 열림
+- Data Management:
+  - `Save`
+  - `Load`
+  - `Reset`
+- Reset은 `RESET`을 정확히 입력해야 버튼이 활성화됨
+- Save/Load/Reset 버튼은 본문 텍스트와 겹치지 않도록 배치
 
-- 배고픔 상태 강제 적용
-- 졸림 상태 강제 적용
-- 지저분함 상태 강제 적용
-- 아픔 상태 강제 적용
-- 기분 좋은 상태 강제 적용
-- 즉시 부화
-- Star Milk 해금
-- 이벤트 강제 발생
-- 체류 시간 `Stay +5m` 테스트
-- 저장 데이터 초기화
+### Debug / 개발자 패널
+
+- Debug 씬에서 빠른 상태 조작과 이벤트 테스트 가능
+- Milkroom에서는 `F12`로 개발자 패널 열기
+- 개발자 패널 기능:
+  - `Wait +1h`
+  - `Debug Scene`
+- 개발자 패널은 상태 수치 영역을 가리지 않도록 배치
 
 ## Unity에서 실행하기
 
-1. Unity Hub에서 프로젝트 폴더를 엽니다.
+1. Unity Hub에서 `C:\Users\user\Desktop\CheeseTama` 폴더를 엽니다.
 2. Unity 상단 메뉴에서 `Assets > Refresh`를 누릅니다.
-3. 컴파일이 끝나고 Console에 빨간 오류가 없는지 확인합니다.
+3. 컴파일이 끝나고 Console에 빨간 컴파일 에러가 없는지 확인합니다.
 4. Unity 상단 메뉴에서 `CheeseTama > Build Starter Scenes`를 누릅니다.
 5. `Assets/_Project/Scenes/Milkroom.unity`를 엽니다.
 6. Play 버튼을 누릅니다.
 
 ## 빠른 확인 루트
 
-### 기본 케어 확인
+### 기본 케어 루프
 
 1. `Milkroom` 씬에서 Play
-2. `Feed Milk`, `Snack`, `Play`, `Clean`, `Rest` 버튼 클릭
-3. 왼쪽 상태 패널의 수치 변화 확인
-4. 치즈타마의 움직임과 색 반응 확인
+2. `Milk`, `Blend`, `Snack`, `Play`, `Clean`, `Sleep` 클릭
+3. 상태 수치, Message Bar, 치즈타마 반응 확인
+4. 상단 `Collection`을 열어 기록 반영 확인
 
-### 부화 확인
+### 설정/저장 확인
 
-1. `Debug` 씬으로 이동
-2. `Hatch` 버튼 클릭
-3. `Soft CheeseTama` 형태와 얼굴 표시 확인
-4. `Hungry`, `Sleepy`, `Messy`, `Unwell`, `Cheerful` 버튼으로 표정 확인
+1. 상단 `Settings` 클릭
+2. `Save`, `Load` 버튼 클릭 후 메시지 확인
+3. `Reset` 클릭
+4. 입력칸에 `RESET` 입력 전에는 Reset 버튼이 잠겨 있는지 확인
+5. `RESET` 입력 후 초기화 동작 확인
 
-### 도감 확인
+### 개발자 테스트
 
-1. `Milkroom` 또는 `Debug`에서 케어 행동 진행
-2. `Collection` 씬으로 이동
-3. Milk Records, Event Records, Evolution Records, Hidden Records 확인
+1. Milkroom에서 `F12` 입력
+2. 개발자 패널이 상태 수치를 가리지 않는지 확인
+3. `Wait +1h`로 시간 경과 테스트
+4. `Debug Scene`으로 이동해 부화, 상태 프리셋, 이벤트 테스트
 
-## 개발용 빌드 검사
+## 개발 빌드 검사
 
 Unity가 `.csproj`를 생성한 뒤에는 터미널에서 C# 컴파일 검사를 실행할 수 있습니다.
 
@@ -131,36 +108,44 @@ dotnet restore CheeseTama.csproj
 dotnet build CheeseTama.csproj --no-restore
 ```
 
-현재 개발 환경에서는 .NET SDK 10으로 빌드 검사를 사용합니다.
+현재 개발 환경에서는 .NET SDK 10 계열로 검사를 진행했습니다.
 
 ## 프로젝트 구조
 
 ```text
 Assets/_Project/
-  Art/                  아트 리소스 자리
+  Art/                  아트 방향 문서와 임시 리소스
   Audio/                오디오 리소스 자리
-  Data/                 샘플 데이터와 ScriptableObject 자리
+  Data/                 샘플 JSON, ScriptableObject 자리
+  Docs/                 Codex 작업 지시/참고 문서
   Prefabs/              프리팹 자리
   Scenes/               Boot, Milkroom, Collection, Debug
   Scripts/
-    Collections/        도감 저장 및 숨겨진 도감 로직
-    Core/               GameManager, 씬 빌더, 런타임 부트스트랩
+    Collections/        도감 저장/해금 로직
+    Core/               GameManager, 런타임 부트스트랩, 씬 빌더
     Data/               데이터 정의
-    Gameplay/           케어, 성장, 이벤트, 상태, 해금 로직
-    Save/               로컬 저장 로직
-    UI/                 Milkroom, Collection, Debug UI와 비주얼 컨트롤러
+    Gameplay/           케어, 성장, 이벤트, 상태 진행
+    Save/               로컬 저장/불러오기
+    UI/                 Milkroom, Collection, Debug, Settings UI
 ```
+
+## 작업 폴더 안내
+
+- Unity에서 확인하는 백업/작업 폴더: `C:\Users\user\Desktop\CheeseTama`
+- GitHub 추적 저장소 폴더: `C:\Users\user\Documents\GitHub\CheeseTama`
+- 의미 있는 변경 후에는 작업 폴더 내용을 추적 저장소에 반영하고 한국어 커밋 메시지로 푸시합니다.
 
 ## 아직 개발 중인 것
 
-- 최종 아트 에셋
-- 사운드와 음악
-- 정식 밸런싱
-- 밀크룸 꾸미기
-- 실제 아이템 인벤토리
-- 정식 튜토리얼
+- 최종 캐릭터 아트/모델 에셋
+- 정식 Blend 패널과 레시피 UX
+- 케어 버튼 및 상단 메뉴 아이콘
+- Collection 카드형 UI 개선
+- Sound, Display, Controls 설정 탭
+- 첫 세션 튜토리얼
+- 사운드/VFX/연출 폴리싱
 - 배포용 빌드 설정
 
-## 라이선스
+## License
 
-이 프로젝트는 MIT License를 사용합니다. 자세한 내용은 `LICENSE` 파일을 확인하세요.
+This project uses the MIT License. See `LICENSE` for details.
