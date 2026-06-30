@@ -63,6 +63,8 @@ CheeseTama is a full 3D stylized toon character in a fixed-camera diorama scene:
 
 Until final art assets exist, the runtime visual controller may build the character procedurally with grouped primitive shapes, but it must not read as a raw primitive. Toon material profiles, outline geometry, face parts, cheese marks, glossy highlights, soft shadow, and motion are required.
 
+The current procedural pass should target the supplied 3D toon references: a soft, glossy, warm-yellow rounded CheeseTama with large eyes, peach blush, tiny arms/feet, shallow cheese holes, and a non-geometric body mesh. The Milkroom should read as a cozy wooden room, not a flat backdrop: arched window, curtains, shelves, milk bottles, plants, rug texture, refrigerator, chair, warm lamp, and small lived-in props are required even before final authored assets arrive.
+
 ## Milkroom UI Layout
 
 The Milkroom UI must separate direct care actions from system/navigation tools.

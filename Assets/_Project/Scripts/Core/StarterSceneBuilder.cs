@@ -856,6 +856,12 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "RightWall Baseboard", PrimitiveType.Cube, new Vector3(4.36f, -1.75f, 1.35f), new Vector3(0.12f, 0.16f, 2.9f), new Color(0.46f, 0.27f, 0.14f));
             CreateDecorPart(root, "Ceiling Wood Beam", PrimitiveType.Cube, new Vector3(0f, 2.68f, 1.64f), new Vector3(8.85f, 0.22f, 0.22f), new Color(0.48f, 0.29f, 0.16f));
             CreateDecorPart(root, "Warm Morning Wall Light", PrimitiveType.Sphere, new Vector3(-0.25f, 1.0f, 2.72f), new Vector3(4.8f, 2.5f, 0.12f), new Color(1f, 0.76f, 0.42f));
+            CreateDecorPart(root, "Left Ceiling Brace A", PrimitiveType.Cube, new Vector3(-4.06f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, -36f), new Color(0.55f, 0.33f, 0.17f));
+            CreateDecorPart(root, "Left Ceiling Brace B", PrimitiveType.Cube, new Vector3(-3.62f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, 36f), new Color(0.55f, 0.33f, 0.17f));
+            CreateDecorPart(root, "Right Ceiling Brace A", PrimitiveType.Cube, new Vector3(3.62f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, -36f), new Color(0.55f, 0.33f, 0.17f));
+            CreateDecorPart(root, "Right Ceiling Brace B", PrimitiveType.Cube, new Vector3(4.06f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, 36f), new Color(0.55f, 0.33f, 0.17f));
+            CreateDecorPart(root, "Window Sunbeam Floor A", PrimitiveType.Cube, new Vector3(-0.28f, -2.04f, 0.24f), new Vector3(2.1f, 0.025f, 0.18f), Quaternion.Euler(0f, 28f, 0f), new Color(1f, 0.78f, 0.38f));
+            CreateDecorPart(root, "Window Sunbeam Floor B", PrimitiveType.Cube, new Vector3(0.78f, -2.035f, -0.18f), new Vector3(1.65f, 0.025f, 0.14f), Quaternion.Euler(0f, 28f, 0f), new Color(1f, 0.72f, 0.32f));
 
             for (var i = 0; i < 7; i += 1)
             {
@@ -868,6 +874,14 @@ namespace CheeseTama.Core
                 var x = -4f + i;
                 CreateDecorPart(root, $"Floor Width Plank {i + 1}", PrimitiveType.Cube, new Vector3(x, -2.11f, 1.04f), new Vector3(0.03f, 0.03f, 3.35f), new Color(0.47f, 0.28f, 0.15f));
             }
+
+            for (var i = 0; i < 18; i += 1)
+            {
+                var x = -4.1f + (i % 9) * 1.02f;
+                var y = -1.12f + (i / 9) * 2.15f + (i % 3) * 0.08f;
+                var scale = 0.035f + (i % 4) * 0.009f;
+                CreateDecorPart(root, $"Warm Plaster Speckle {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 2.72f), new Vector3(scale, scale * 0.65f, 0.015f), new Color(0.86f, 0.68f, 0.46f));
+            }
         }
 
         private static void CreateDioramaWindowSet(Transform root)
@@ -878,29 +892,56 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "Window Cloud Right", PrimitiveType.Sphere, new Vector3(-0.62f, 0.98f, 2.68f), new Vector3(0.42f, 0.14f, 0.05f), new Color(0.94f, 0.98f, 1f));
 
             var frameColor = new Color(0.96f, 0.83f, 0.58f);
+            CreateDecorPart(root, "Window Arch Glow", PrimitiveType.Sphere, new Vector3(-0.75f, 1.92f, 2.72f), new Vector3(1.38f, 0.5f, 0.07f), new Color(0.95f, 0.83f, 0.56f));
+            CreateDecorPart(root, "Window Arch Frame", PrimitiveType.Sphere, new Vector3(-0.75f, 1.91f, 2.57f), new Vector3(1.48f, 0.55f, 0.12f), new Color(0.68f, 0.39f, 0.18f));
+            CreateDecorPart(root, "Window Arch Inner Cut", PrimitiveType.Sphere, new Vector3(-0.75f, 1.86f, 2.49f), new Vector3(1.22f, 0.38f, 0.12f), new Color(0.58f, 0.78f, 0.92f));
             CreateDecorPart(root, "WindowFrame Top", PrimitiveType.Cube, new Vector3(-0.75f, 1.92f, 2.62f), new Vector3(2.62f, 0.11f, 0.18f), frameColor);
             CreateDecorPart(root, "WindowFrame Bottom", PrimitiveType.Cube, new Vector3(-0.75f, 0.38f, 2.62f), new Vector3(2.62f, 0.13f, 0.18f), frameColor);
             CreateDecorPart(root, "WindowFrame Left", PrimitiveType.Cube, new Vector3(-2.06f, 1.15f, 2.62f), new Vector3(0.13f, 1.62f, 0.18f), frameColor);
             CreateDecorPart(root, "WindowFrame Right", PrimitiveType.Cube, new Vector3(0.56f, 1.15f, 2.62f), new Vector3(0.13f, 1.62f, 0.18f), frameColor);
             CreateDecorPart(root, "WindowFrame Vertical", PrimitiveType.Cube, new Vector3(-0.75f, 1.15f, 2.56f), new Vector3(0.09f, 1.5f, 0.14f), frameColor);
             CreateDecorPart(root, "WindowFrame Horizontal", PrimitiveType.Cube, new Vector3(-0.75f, 1.15f, 2.55f), new Vector3(2.42f, 0.09f, 0.14f), frameColor);
+            CreateDecorPart(root, "Window Handle Left", PrimitiveType.Sphere, new Vector3(-0.88f, 1.08f, 2.42f), new Vector3(0.035f, 0.055f, 0.025f), new Color(0.82f, 0.56f, 0.24f));
+            CreateDecorPart(root, "Window Handle Right", PrimitiveType.Sphere, new Vector3(-0.62f, 1.08f, 2.42f), new Vector3(0.035f, 0.055f, 0.025f), new Color(0.82f, 0.56f, 0.24f));
 
+            CreateDecorPart(root, "Curtain Rod", PrimitiveType.Cylinder, new Vector3(-0.75f, 2.12f, 2.42f), new Vector3(0.035f, 1.92f, 0.035f), Quaternion.Euler(0f, 0f, 90f), new Color(0.64f, 0.38f, 0.19f));
+            CreateDecorPart(root, "Curtain Rod Knob L", PrimitiveType.Sphere, new Vector3(-2.55f, 2.12f, 2.42f), new Vector3(0.12f, 0.12f, 0.08f), new Color(0.72f, 0.45f, 0.24f));
+            CreateDecorPart(root, "Curtain Rod Knob R", PrimitiveType.Sphere, new Vector3(1.05f, 2.12f, 2.42f), new Vector3(0.12f, 0.12f, 0.08f), new Color(0.72f, 0.45f, 0.24f));
             CreateDecorPart(root, "Curtains Left", PrimitiveType.Cube, new Vector3(-2.38f, 1.12f, 2.46f), new Vector3(0.42f, 1.78f, 0.16f), new Color(0.98f, 0.82f, 0.64f));
             CreateDecorPart(root, "Curtains Right", PrimitiveType.Cube, new Vector3(0.88f, 1.12f, 2.46f), new Vector3(0.42f, 1.78f, 0.16f), new Color(0.98f, 0.82f, 0.64f));
+            for (var i = 0; i < 4; i += 1)
+            {
+                var leftX = -2.55f + i * 0.13f;
+                var rightX = 0.74f + i * 0.13f;
+                var y = 1.18f - (i % 2) * 0.04f;
+                CreateDecorPart(root, $"Curtain Left Fold {i + 1}", PrimitiveType.Cube, new Vector3(leftX, y, 2.28f), new Vector3(0.038f, 1.64f, 0.07f), new Color(1f, 0.9f, 0.72f));
+                CreateDecorPart(root, $"Curtain Right Fold {i + 1}", PrimitiveType.Cube, new Vector3(rightX, y, 2.28f), new Vector3(0.038f, 1.64f, 0.07f), new Color(1f, 0.9f, 0.72f));
+            }
             CreateDecorPart(root, "Curtains Left Tie", PrimitiveType.Cube, new Vector3(-2.24f, 0.85f, 2.3f), new Vector3(0.36f, 0.09f, 0.09f), new Color(0.78f, 0.48f, 0.24f));
             CreateDecorPart(root, "Curtains Right Tie", PrimitiveType.Cube, new Vector3(0.74f, 0.85f, 2.3f), new Vector3(0.36f, 0.09f, 0.09f), new Color(0.78f, 0.48f, 0.24f));
+            CreateDecorPart(root, "Window Sill", PrimitiveType.Cube, new Vector3(-0.75f, 0.25f, 2.42f), new Vector3(2.75f, 0.13f, 0.24f), new Color(0.7f, 0.43f, 0.22f));
+            CreateDecorPart(root, "Window Tiny Plant Pot", PrimitiveType.Cube, new Vector3(0.18f, 0.56f, 2.28f), new Vector3(0.22f, 0.16f, 0.08f), new Color(0.62f, 0.34f, 0.18f));
+            CreateDecorPart(root, "Window Tiny Plant Leaf A", PrimitiveType.Sphere, new Vector3(0.08f, 0.75f, 2.22f), new Vector3(0.13f, 0.08f, 0.035f), new Color(0.34f, 0.62f, 0.34f));
+            CreateDecorPart(root, "Window Tiny Plant Leaf B", PrimitiveType.Sphere, new Vector3(0.25f, 0.76f, 2.22f), new Vector3(0.13f, 0.08f, 0.035f), new Color(0.38f, 0.68f, 0.38f));
         }
 
         private static void CreateDioramaFridgeSet(Transform root)
         {
             CreateDecorPart(root, "Fridge Body Rounded", PrimitiveType.Cube, new Vector3(-3.35f, -0.55f, 1.72f), new Vector3(0.9f, 1.65f, 0.62f), new Color(0.94f, 0.9f, 0.78f));
             CreateDecorPart(root, "Fridge Top Round", PrimitiveType.Sphere, new Vector3(-3.35f, 0.32f, 1.72f), new Vector3(0.46f, 0.18f, 0.32f), new Color(0.98f, 0.95f, 0.84f));
+            CreateDecorPart(root, "Fridge Top Left Corner", PrimitiveType.Sphere, new Vector3(-3.78f, 0.27f, 1.44f), new Vector3(0.12f, 0.18f, 0.12f), new Color(0.98f, 0.95f, 0.84f));
+            CreateDecorPart(root, "Fridge Top Right Corner", PrimitiveType.Sphere, new Vector3(-2.92f, 0.27f, 1.44f), new Vector3(0.12f, 0.18f, 0.12f), new Color(0.98f, 0.95f, 0.84f));
+            CreateDecorPart(root, "Fridge Lower Left Corner", PrimitiveType.Sphere, new Vector3(-3.78f, -1.34f, 1.44f), new Vector3(0.12f, 0.12f, 0.1f), new Color(0.9f, 0.84f, 0.72f));
+            CreateDecorPart(root, "Fridge Lower Right Corner", PrimitiveType.Sphere, new Vector3(-2.92f, -1.34f, 1.44f), new Vector3(0.12f, 0.12f, 0.1f), new Color(0.9f, 0.84f, 0.72f));
+            CreateDecorPart(root, "Fridge Soft Shine", PrimitiveType.Cube, new Vector3(-3.66f, -0.2f, 1.26f), new Vector3(0.055f, 1.02f, 0.035f), new Color(1f, 0.98f, 0.88f));
             CreateDecorPart(root, "Fridge Door Split", PrimitiveType.Cube, new Vector3(-3.35f, -0.32f, 1.36f), new Vector3(0.76f, 0.035f, 0.06f), new Color(0.74f, 0.58f, 0.4f));
-            CreateDecorPart(root, "Fridge Handle", PrimitiveType.Cube, new Vector3(-2.94f, -0.36f, 1.32f), new Vector3(0.055f, 0.52f, 0.06f), new Color(0.64f, 0.4f, 0.22f));
+            CreateDecorPart(root, "Fridge Handle", PrimitiveType.Cylinder, new Vector3(-2.94f, -0.36f, 1.3f), new Vector3(0.04f, 0.28f, 0.04f), new Color(0.68f, 0.43f, 0.22f));
             CreateDecorPart(root, "Fridge Face Eye L", PrimitiveType.Sphere, new Vector3(-3.48f, -0.7f, 1.29f), new Vector3(0.048f, 0.048f, 0.032f), new Color(0.24f, 0.14f, 0.08f));
             CreateDecorPart(root, "Fridge Face Eye R", PrimitiveType.Sphere, new Vector3(-3.22f, -0.7f, 1.29f), new Vector3(0.048f, 0.048f, 0.032f), new Color(0.24f, 0.14f, 0.08f));
             CreateDecorPart(root, "Fridge Smile", PrimitiveType.Cube, new Vector3(-3.35f, -0.84f, 1.26f), new Vector3(0.16f, 0.025f, 0.025f), new Color(0.24f, 0.14f, 0.08f));
             CreateDecorPart(root, "Fridge Milk Memo", PrimitiveType.Cube, new Vector3(-3.12f, 0.02f, 1.27f), new Vector3(0.22f, 0.18f, 0.035f), new Color(1f, 0.76f, 0.34f));
+            CreateDecorPart(root, "Fridge Star Magnet", PrimitiveType.Sphere, new Vector3(-3.5f, 0.05f, 1.26f), new Vector3(0.08f, 0.08f, 0.025f), new Color(1f, 0.76f, 0.22f));
+            CreateDecorPart(root, "Fridge Blue Memo", PrimitiveType.Cube, new Vector3(-3.56f, -0.18f, 1.25f), new Vector3(0.18f, 0.14f, 0.03f), new Color(0.64f, 0.82f, 0.92f));
         }
 
         private static void CreateDioramaMilkShelfSet(Transform root)
@@ -909,6 +950,10 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "MilkShelf Top", PrimitiveType.Cube, new Vector3(1.75f, 0.56f, 2.08f), new Vector3(1.82f, 0.09f, 0.2f), new Color(0.68f, 0.42f, 0.22f));
             CreateDecorPart(root, "MilkShelf Middle", PrimitiveType.Cube, new Vector3(1.75f, 0.05f, 2.08f), new Vector3(1.82f, 0.09f, 0.2f), new Color(0.68f, 0.42f, 0.22f));
             CreateDecorPart(root, "MilkShelf Bottom", PrimitiveType.Cube, new Vector3(1.75f, -0.48f, 2.08f), new Vector3(1.82f, 0.09f, 0.2f), new Color(0.68f, 0.42f, 0.22f));
+            CreateDecorPart(root, "MilkShelf Left Upright", PrimitiveType.Cube, new Vector3(0.9f, 0.06f, 1.98f), new Vector3(0.08f, 1.28f, 0.12f), new Color(0.58f, 0.34f, 0.17f));
+            CreateDecorPart(root, "MilkShelf Right Upright", PrimitiveType.Cube, new Vector3(2.6f, 0.06f, 1.98f), new Vector3(0.08f, 1.28f, 0.12f), new Color(0.58f, 0.34f, 0.17f));
+            CreateDecorPart(root, "MilkShelf Bracket L", PrimitiveType.Cube, new Vector3(1.0f, -0.22f, 1.96f), new Vector3(0.1f, 0.5f, 0.08f), Quaternion.Euler(0f, 0f, -35f), new Color(0.52f, 0.3f, 0.15f));
+            CreateDecorPart(root, "MilkShelf Bracket R", PrimitiveType.Cube, new Vector3(2.5f, -0.22f, 1.96f), new Vector3(0.1f, 0.5f, 0.08f), Quaternion.Euler(0f, 0f, 35f), new Color(0.52f, 0.3f, 0.15f));
 
             for (var i = 0; i < 4; i += 1)
             {
@@ -919,17 +964,37 @@ namespace CheeseTama.Core
             {
                 CreateMilkBottle(root, $"MilkShelf Bottle Lower {i + 1}", new Vector3(1.32f + i * 0.42f, 0.3f, 1.94f), 0.28f);
             }
+
+            CreateCheeseBlock(root, "Shelf Cheese Sample", new Vector3(2.44f, -0.2f, 1.88f), 0.22f);
+            CreateDecorPart(root, "Shelf Vine Stem", PrimitiveType.Cube, new Vector3(2.66f, 0.9f, 1.98f), new Vector3(0.035f, 0.62f, 0.035f), Quaternion.Euler(0f, 0f, -12f), new Color(0.25f, 0.46f, 0.22f));
+            for (var i = 0; i < 5; i += 1)
+            {
+                var y = 1.14f - i * 0.15f;
+                var x = 2.62f + (i % 2 == 0 ? -0.08f : 0.08f);
+                CreateDecorPart(root, $"Shelf Vine Leaf {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 1.9f), new Vector3(0.1f, 0.055f, 0.028f), new Color(0.34f, 0.63f, 0.34f));
+            }
         }
 
         private static void CreateDioramaBlendingTableSet(Transform root)
         {
             CreateDecorPart(root, "BlendingTable Top", PrimitiveType.Cube, new Vector3(2.9f, -1.15f, 1.0f), new Vector3(1.25f, 0.18f, 0.58f), new Color(0.66f, 0.39f, 0.2f));
             CreateDecorPart(root, "BlendingTable Cloth", PrimitiveType.Cube, new Vector3(2.9f, -1.03f, 0.7f), new Vector3(1.36f, 0.09f, 0.12f), new Color(1f, 0.88f, 0.64f));
+            CreateDecorPart(root, "BlendingTable Body", PrimitiveType.Cube, new Vector3(2.9f, -1.42f, 1.06f), new Vector3(1.18f, 0.62f, 0.42f), new Color(0.58f, 0.33f, 0.16f));
             CreateDecorPart(root, "BlendingTable Leg L", PrimitiveType.Cube, new Vector3(2.42f, -1.62f, 1.02f), new Vector3(0.09f, 0.76f, 0.09f), new Color(0.48f, 0.27f, 0.13f));
             CreateDecorPart(root, "BlendingTable Leg R", PrimitiveType.Cube, new Vector3(3.38f, -1.62f, 1.02f), new Vector3(0.09f, 0.76f, 0.09f), new Color(0.48f, 0.27f, 0.13f));
+            for (var i = 0; i < 3; i += 1)
+            {
+                var x = 2.5f + i * 0.4f;
+                CreateDecorPart(root, $"Blending Drawer {i + 1}", PrimitiveType.Cube, new Vector3(x, -1.4f, 0.78f), new Vector3(0.32f, 0.22f, 0.045f), new Color(0.7f, 0.43f, 0.22f));
+                CreateDecorPart(root, $"Blending Drawer Pull {i + 1}", PrimitiveType.Sphere, new Vector3(x, -1.4f, 0.73f), new Vector3(0.04f, 0.04f, 0.022f), new Color(0.98f, 0.7f, 0.28f));
+            }
+
             CreateDecorPart(root, "Blending Bowl", PrimitiveType.Sphere, new Vector3(2.72f, -0.92f, 0.66f), new Vector3(0.28f, 0.12f, 0.12f), new Color(0.82f, 0.94f, 0.98f));
             CreateDecorPart(root, "Blending Spoon", PrimitiveType.Cube, new Vector3(3.1f, -0.86f, 0.62f), new Vector3(0.45f, 0.035f, 0.03f), new Color(0.82f, 0.6f, 0.34f));
             CreateMilkBottle(root, "Blending Milk Bottle", new Vector3(3.32f, -0.78f, 0.58f), 0.34f);
+            CreateDecorPart(root, "Blender Base", PrimitiveType.Cube, new Vector3(3.55f, -0.86f, 0.66f), new Vector3(0.24f, 0.18f, 0.12f), new Color(0.9f, 0.78f, 0.58f));
+            CreateDecorPart(root, "Blender Jar", PrimitiveType.Capsule, new Vector3(3.55f, -0.62f, 0.64f), new Vector3(0.14f, 0.2f, 0.08f), new Color(0.78f, 0.9f, 0.98f));
+            CreateDecorPart(root, "Blender Milk Fill", PrimitiveType.Sphere, new Vector3(3.55f, -0.68f, 0.58f), new Vector3(0.12f, 0.06f, 0.03f), new Color(0.98f, 0.94f, 0.78f));
         }
 
         private static void CreateDioramaChalkboardSet(Transform root)
@@ -940,6 +1005,10 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "Chalkboard Frame Left", PrimitiveType.Cube, new Vector3(-3.06f, 1.15f, 2.47f), new Vector3(0.08f, 0.82f, 0.06f), new Color(0.58f, 0.34f, 0.17f));
             CreateDecorPart(root, "Chalkboard Frame Right", PrimitiveType.Cube, new Vector3(-1.98f, 1.15f, 2.47f), new Vector3(0.08f, 0.82f, 0.06f), new Color(0.58f, 0.34f, 0.17f));
             CreateWorldLabel(root, "Chalkboard Text", "Milk\nis\nMagic", new Vector3(-2.52f, 1.16f, 2.39f), 0.075f, new Color(1f, 0.9f, 0.62f));
+            CreateDecorPart(root, "Chalkboard Hanger L", PrimitiveType.Cube, new Vector3(-2.82f, 1.78f, 2.44f), new Vector3(0.03f, 0.42f, 0.03f), Quaternion.Euler(0f, 0f, -34f), new Color(0.64f, 0.42f, 0.2f));
+            CreateDecorPart(root, "Chalkboard Hanger R", PrimitiveType.Cube, new Vector3(-2.22f, 1.78f, 2.44f), new Vector3(0.03f, 0.42f, 0.03f), Quaternion.Euler(0f, 0f, 34f), new Color(0.64f, 0.42f, 0.2f));
+            CreateDecorPart(root, "Chalkboard Cheese Doodle", PrimitiveType.Sphere, new Vector3(-2.86f, 0.88f, 2.38f), new Vector3(0.08f, 0.06f, 0.018f), new Color(1f, 0.78f, 0.28f));
+            CreateDecorPart(root, "Chalkboard Star Doodle", PrimitiveType.Sphere, new Vector3(-2.18f, 1.42f, 2.38f), new Vector3(0.045f, 0.045f, 0.016f), new Color(1f, 0.92f, 0.5f));
         }
 
         private static void CreateDioramaRug(Transform root)
@@ -950,23 +1019,57 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "Rug Paw Toe L", PrimitiveType.Sphere, new Vector3(-0.34f, -1.9f, 0.42f), new Vector3(0.13f, 0.035f, 0.06f), new Color(0.82f, 0.66f, 0.46f));
             CreateDecorPart(root, "Rug Paw Toe C", PrimitiveType.Sphere, new Vector3(0f, -1.86f, 0.42f), new Vector3(0.13f, 0.035f, 0.06f), new Color(0.82f, 0.66f, 0.46f));
             CreateDecorPart(root, "Rug Paw Toe R", PrimitiveType.Sphere, new Vector3(0.34f, -1.9f, 0.42f), new Vector3(0.13f, 0.035f, 0.06f), new Color(0.82f, 0.66f, 0.46f));
+            for (var i = 0; i < 24; i += 1)
+            {
+                var angle = i / 24f * Mathf.PI * 2f;
+                var x = Mathf.Cos(angle) * 1.78f;
+                var z = 0.58f + Mathf.Sin(angle) * 0.72f;
+                var width = 0.18f + (i % 3) * 0.018f;
+                CreateDecorPart(root, $"Rug Tuft Rim {i + 1}", PrimitiveType.Sphere, new Vector3(x, -1.93f, z), new Vector3(width, 0.06f, 0.1f), Quaternion.Euler(0f, -angle * Mathf.Rad2Deg, 0f), new Color(0.96f, 0.86f, 0.66f));
+            }
+
+            for (var i = 0; i < 8; i += 1)
+            {
+                var x = -1.0f + i * 0.28f;
+                CreateDecorPart(root, $"Rug Soft Stitch {i + 1}", PrimitiveType.Cube, new Vector3(x, -1.88f, 0.05f + (i % 2) * 0.08f), new Vector3(0.12f, 0.018f, 0.025f), Quaternion.Euler(0f, 18f, 0f), new Color(0.88f, 0.74f, 0.54f));
+            }
         }
 
         private static void CreateDioramaCozyChair(Transform root)
         {
             CreateDecorPart(root, "CozyChair Back", PrimitiveType.Cube, new Vector3(-3.55f, -1.1f, 0.42f), new Vector3(0.92f, 0.8f, 0.34f), new Color(0.58f, 0.4f, 0.28f));
             CreateDecorPart(root, "CozyChair Seat", PrimitiveType.Cube, new Vector3(-3.55f, -1.62f, 0.12f), new Vector3(1.02f, 0.26f, 0.58f), new Color(0.72f, 0.52f, 0.36f));
+            CreateDecorPart(root, "CozyChair Back Cushion", PrimitiveType.Sphere, new Vector3(-3.55f, -1.04f, 0.18f), new Vector3(0.78f, 0.42f, 0.12f), new Color(0.9f, 0.78f, 0.62f));
+            CreateDecorPart(root, "CozyChair Seat Cushion", PrimitiveType.Sphere, new Vector3(-3.55f, -1.56f, -0.08f), new Vector3(0.86f, 0.18f, 0.26f), new Color(0.92f, 0.8f, 0.64f));
             CreateDecorPart(root, "CozyChair Arm L", PrimitiveType.Cube, new Vector3(-4.12f, -1.38f, 0.22f), new Vector3(0.16f, 0.52f, 0.48f), new Color(0.5f, 0.31f, 0.18f));
             CreateDecorPart(root, "CozyChair Arm R", PrimitiveType.Cube, new Vector3(-2.98f, -1.38f, 0.22f), new Vector3(0.16f, 0.52f, 0.48f), new Color(0.5f, 0.31f, 0.18f));
+            CreateDecorPart(root, "CozyChair Arm L Round", PrimitiveType.Cylinder, new Vector3(-4.12f, -1.08f, 0.03f), new Vector3(0.08f, 0.34f, 0.08f), Quaternion.Euler(90f, 0f, 0f), new Color(0.64f, 0.42f, 0.23f));
+            CreateDecorPart(root, "CozyChair Arm R Round", PrimitiveType.Cylinder, new Vector3(-2.98f, -1.08f, 0.03f), new Vector3(0.08f, 0.34f, 0.08f), Quaternion.Euler(90f, 0f, 0f), new Color(0.64f, 0.42f, 0.23f));
             CreateDecorPart(root, "CozyChair Butter Cushion", PrimitiveType.Cube, new Vector3(-3.55f, -1.22f, -0.04f), new Vector3(0.46f, 0.32f, 0.12f), new Color(1f, 0.72f, 0.28f));
+            CreateDecorPart(root, "Butter Cushion Hole A", PrimitiveType.Sphere, new Vector3(-3.67f, -1.2f, -0.12f), new Vector3(0.05f, 0.045f, 0.018f), new Color(0.85f, 0.48f, 0.1f));
+            CreateDecorPart(root, "Butter Cushion Hole B", PrimitiveType.Sphere, new Vector3(-3.45f, -1.26f, -0.12f), new Vector3(0.04f, 0.04f, 0.018f), new Color(0.85f, 0.48f, 0.1f));
+            CreateDecorPart(root, "CozyChair Leg L", PrimitiveType.Cube, new Vector3(-3.96f, -1.88f, 0.2f), new Vector3(0.12f, 0.42f, 0.12f), new Color(0.48f, 0.28f, 0.14f));
+            CreateDecorPart(root, "CozyChair Leg R", PrimitiveType.Cube, new Vector3(-3.14f, -1.88f, 0.2f), new Vector3(0.12f, 0.42f, 0.12f), new Color(0.48f, 0.28f, 0.14f));
         }
 
         private static void CreateDioramaLamps(Transform root)
         {
             CreateDecorPart(root, "Pendant Cord", PrimitiveType.Cube, new Vector3(0.2f, 2.55f, 1.55f), new Vector3(0.035f, 0.58f, 0.035f), new Color(0.34f, 0.2f, 0.1f));
+            for (var i = 0; i < 4; i += 1)
+            {
+                CreateDecorPart(root, $"Pendant Chain Link {i + 1}", PrimitiveType.Cube, new Vector3(0.2f, 2.74f - i * 0.13f, 1.48f), new Vector3(0.05f, 0.07f, 0.025f), Quaternion.Euler(0f, 0f, i % 2 == 0 ? 45f : -45f), new Color(0.36f, 0.22f, 0.12f));
+            }
+
             CreateDecorPart(root, "Pendant Warm Shade", PrimitiveType.Sphere, new Vector3(0.2f, 2.16f, 1.55f), new Vector3(0.36f, 0.2f, 0.24f), new Color(1f, 0.74f, 0.32f));
+            for (var i = 0; i < 5; i += 1)
+            {
+                CreateDecorPart(root, $"Pendant Shade Scallop {i + 1}", PrimitiveType.Sphere, new Vector3(-0.08f + i * 0.14f, 2.04f, 1.36f), new Vector3(0.08f, 0.05f, 0.035f), new Color(1f, 0.86f, 0.46f));
+            }
+
+            CreateDecorPart(root, "Pendant Bulb", PrimitiveType.Sphere, new Vector3(0.2f, 1.98f, 1.42f), new Vector3(0.12f, 0.16f, 0.08f), new Color(1f, 0.96f, 0.72f));
             CreateDecorPart(root, "Pendant Warm Glow", PrimitiveType.Sphere, new Vector3(0.2f, 1.94f, 1.48f), new Vector3(0.54f, 0.22f, 0.28f), new Color(1f, 0.8f, 0.42f));
             CreateStarLamp(root, "Left Star Lamp", new Vector3(-3.86f, 1.68f, 2.34f), 0.24f);
+            CreateStarLamp(root, "Window Hanging Star", new Vector3(-0.28f, 1.7f, 2.32f), 0.14f);
         }
 
         private static void CreateDioramaProps(Transform root)
@@ -974,11 +1077,27 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "Plant Pot", PrimitiveType.Cube, new Vector3(0.84f, -1.68f, 2.12f), new Vector3(0.34f, 0.24f, 0.28f), new Color(0.56f, 0.31f, 0.17f));
             CreateDecorPart(root, "Plant Leaf L", PrimitiveType.Sphere, new Vector3(0.68f, -1.38f, 2.04f), new Vector3(0.2f, 0.12f, 0.08f), new Color(0.32f, 0.58f, 0.32f));
             CreateDecorPart(root, "Plant Leaf R", PrimitiveType.Sphere, new Vector3(1.0f, -1.36f, 2.04f), new Vector3(0.2f, 0.12f, 0.08f), new Color(0.36f, 0.64f, 0.36f));
+            CreateDecorPart(root, "Plant Leaf Tall A", PrimitiveType.Sphere, new Vector3(0.82f, -1.18f, 2.02f), new Vector3(0.12f, 0.24f, 0.06f), Quaternion.Euler(0f, 0f, -18f), new Color(0.28f, 0.55f, 0.28f));
+            CreateDecorPart(root, "Plant Leaf Tall B", PrimitiveType.Sphere, new Vector3(0.98f, -1.18f, 2f), new Vector3(0.12f, 0.22f, 0.06f), Quaternion.Euler(0f, 0f, 22f), new Color(0.38f, 0.68f, 0.38f));
+            CreateDecorPart(root, "Left Plant Pot", PrimitiveType.Cube, new Vector3(-4.18f, -1.64f, 1.68f), new Vector3(0.36f, 0.22f, 0.18f), new Color(0.58f, 0.33f, 0.18f));
+            for (var i = 0; i < 6; i += 1)
+            {
+                var angle = -45f + i * 18f;
+                var x = -4.18f + Mathf.Cos(angle * Mathf.Deg2Rad) * 0.18f;
+                var y = -1.34f + i % 3 * 0.08f;
+                CreateDecorPart(root, $"Left Plant Leaf {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 1.58f), new Vector3(0.22f, 0.1f, 0.05f), Quaternion.Euler(0f, 0f, angle), new Color(0.3f, 0.56f + i * 0.015f, 0.3f));
+            }
+
             CreateDecorPart(root, "Wall Memo A", PrimitiveType.Cube, new Vector3(3.75f, 0.78f, 2.52f), new Vector3(0.28f, 0.22f, 0.035f), new Color(1f, 0.86f, 0.52f));
             CreateDecorPart(root, "Wall Memo B", PrimitiveType.Cube, new Vector3(3.42f, 0.42f, 2.52f), new Vector3(0.22f, 0.18f, 0.035f), new Color(0.78f, 0.92f, 1f));
+            CreateDecorPart(root, "Wall Memo Pin A", PrimitiveType.Sphere, new Vector3(3.75f, 0.88f, 2.47f), new Vector3(0.025f, 0.025f, 0.012f), new Color(0.72f, 0.36f, 0.16f));
+            CreateDecorPart(root, "Wall Memo Pin B", PrimitiveType.Sphere, new Vector3(3.42f, 0.5f, 2.47f), new Vector3(0.025f, 0.025f, 0.012f), new Color(0.72f, 0.36f, 0.16f));
             CreateMilkBottle(root, "Loose Milk Bottle", new Vector3(-0.96f, -1.66f, 0.12f), 0.3f);
+            CreateCheeseBlock(root, "Foreground Cheese Cube", new Vector3(1.6f, -1.74f, -0.28f), 0.24f);
             CreateDecorPart(root, "Foreground Soft Milk Drop L", PrimitiveType.Sphere, new Vector3(-1.8f, -2.02f, -0.68f), new Vector3(0.22f, 0.045f, 0.08f), new Color(0.92f, 0.86f, 0.74f));
+            CreateDecorPart(root, "Foreground Soft Milk Drop L Small", PrimitiveType.Sphere, new Vector3(-2.14f, -2f, -0.62f), new Vector3(0.11f, 0.03f, 0.04f), new Color(0.94f, 0.9f, 0.78f));
             CreateDecorPart(root, "Foreground Soft Milk Drop R", PrimitiveType.Sphere, new Vector3(2.1f, -2.02f, -0.62f), new Vector3(0.26f, 0.05f, 0.09f), new Color(0.92f, 0.86f, 0.74f));
+            CreateDecorPart(root, "Foreground Soft Milk Drop R Small", PrimitiveType.Sphere, new Vector3(2.48f, -2f, -0.58f), new Vector3(0.12f, 0.03f, 0.04f), new Color(0.94f, 0.9f, 0.78f));
         }
 
         private static void CreateRug(Transform root)
@@ -1132,9 +1251,15 @@ namespace CheeseTama.Core
             bottleRoot.SetParent(root, false);
             bottleRoot.localPosition = position;
 
-            CreateDecorPart(bottleRoot, "Bottle Body", PrimitiveType.Capsule, new Vector3(0f, 0f, 0f), new Vector3(size * 0.22f, size * 0.46f, size * 0.08f), new Color(0.84f, 0.94f, 0.98f));
-            CreateDecorPart(bottleRoot, "Bottle Cap", PrimitiveType.Cube, new Vector3(0f, size * 0.31f, -0.02f), new Vector3(size * 0.16f, size * 0.08f, size * 0.05f), new Color(0.47f, 0.72f, 0.9f));
-            CreateDecorPart(bottleRoot, "Bottle Label", PrimitiveType.Cube, new Vector3(0f, -size * 0.02f, -0.05f), new Vector3(size * 0.18f, size * 0.12f, size * 0.025f), new Color(1f, 0.86f, 0.56f));
+            CreateDecorPart(bottleRoot, "Bottle Body", PrimitiveType.Capsule, new Vector3(0f, 0f, 0f), new Vector3(size * 0.24f, size * 0.48f, size * 0.09f), new Color(0.84f, 0.94f, 0.98f));
+            CreateDecorPart(bottleRoot, "Bottle Milk Fill", PrimitiveType.Capsule, new Vector3(0f, -size * 0.08f, -size * 0.012f), new Vector3(size * 0.2f, size * 0.34f, size * 0.07f), new Color(0.98f, 0.95f, 0.78f));
+            CreateDecorPart(bottleRoot, "Bottle Neck", PrimitiveType.Cylinder, new Vector3(0f, size * 0.31f, -0.005f), new Vector3(size * 0.08f, size * 0.11f, size * 0.08f), new Color(0.86f, 0.95f, 1f));
+            CreateDecorPart(bottleRoot, "Bottle Cap", PrimitiveType.Cube, new Vector3(0f, size * 0.43f, -0.02f), new Vector3(size * 0.18f, size * 0.07f, size * 0.055f), new Color(0.47f, 0.72f, 0.9f));
+            CreateDecorPart(bottleRoot, "Bottle Label", PrimitiveType.Cube, new Vector3(0f, -size * 0.03f, -0.062f), new Vector3(size * 0.2f, size * 0.13f, size * 0.025f), new Color(1f, 0.86f, 0.56f));
+            CreateDecorPart(bottleRoot, "Bottle Shine", PrimitiveType.Cube, new Vector3(-size * 0.08f, size * 0.08f, -size * 0.085f), new Vector3(size * 0.025f, size * 0.2f, size * 0.012f), new Color(1f, 1f, 0.94f));
+            CreateWorldLabel(bottleRoot, "Bottle Milk Text", "MILK", new Vector3(0f, -size * 0.03f, -size * 0.09f), size * 0.08f, new Color(0.28f, 0.56f, 0.76f));
+            CreateDecorPart(bottleRoot, "Bottle Face Eye L", PrimitiveType.Sphere, new Vector3(-size * 0.05f, -size * 0.13f, -size * 0.09f), new Vector3(size * 0.018f, size * 0.018f, size * 0.008f), new Color(0.24f, 0.16f, 0.1f));
+            CreateDecorPart(bottleRoot, "Bottle Face Eye R", PrimitiveType.Sphere, new Vector3(size * 0.05f, -size * 0.13f, -size * 0.09f), new Vector3(size * 0.018f, size * 0.018f, size * 0.008f), new Color(0.24f, 0.16f, 0.1f));
         }
 
         private static void CreateCheeseBlock(Transform root, string name, Vector3 position, float size)
@@ -1163,12 +1288,17 @@ namespace CheeseTama.Core
 
         private static Transform CreateDecorPart(Transform parent, string name, PrimitiveType primitive, Vector3 localPosition, Vector3 localScale, Color color)
         {
+            return CreateDecorPart(parent, name, primitive, localPosition, localScale, Quaternion.identity, color);
+        }
+
+        private static Transform CreateDecorPart(Transform parent, string name, PrimitiveType primitive, Vector3 localPosition, Vector3 localScale, Quaternion localRotation, Color color)
+        {
             var part = GameObject.CreatePrimitive(primitive);
             part.name = name;
             part.transform.SetParent(parent, false);
             part.transform.localPosition = localPosition;
             part.transform.localScale = localScale;
-            part.transform.localRotation = Quaternion.identity;
+            part.transform.localRotation = localRotation;
 
             var collider = part.GetComponent<Collider>();
             if (collider != null)

@@ -88,6 +88,8 @@ namespace CheeseTama.UI
         private readonly Renderer[] cheeseHoleRenderers = new Renderer[7];
         private readonly Transform[] cheeseSpeckles = new Transform[6];
         private readonly Renderer[] cheeseSpeckleRenderers = new Renderer[6];
+        private static Mesh bodyBlobMesh;
+        private static Mesh bodyOutlineBlobMesh;
 
         private CheeseTamaModel current;
         private Vector3 restingLocalPosition;
@@ -280,6 +282,8 @@ namespace CheeseTama.UI
             topCurlOutline = GetOrCreatePrimitiveChild(outlineRoot, "Top Curl Toon Outline", PrimitiveType.Sphere);
 
             body = GetOrCreatePrimitiveChild(visualRoot, "Body", PrimitiveType.Sphere);
+            ApplyBlobMesh(bodyOutline, true);
+            ApplyBlobMesh(body, false);
             leftArm = GetOrCreatePrimitiveChild(visualRoot, "Left Soft Arm", PrimitiveType.Sphere);
             rightArm = GetOrCreatePrimitiveChild(visualRoot, "Right Soft Arm", PrimitiveType.Sphere);
             leftFoot = GetOrCreatePrimitiveChild(visualRoot, "Left Little Foot", PrimitiveType.Sphere);
@@ -411,6 +415,94 @@ namespace CheeseTama.UI
             return feature.transform;
         }
 
+        private static void ApplyBlobMesh(Transform target, bool outline)
+        {
+            if (target == null || !target.TryGetComponent<MeshFilter>(out var meshFilter))
+            {
+                return;
+            }
+
+            if (outline)
+            {
+                bodyOutlineBlobMesh ??= CreateCheeseTamaBlobMesh("M_CheeseTama_BodyOutline_Runtime", 1.04f);
+                meshFilter.sharedMesh = bodyOutlineBlobMesh;
+                return;
+            }
+
+            bodyBlobMesh ??= CreateCheeseTamaBlobMesh("M_CheeseTama_Body_Runtime", 1f);
+            meshFilter.sharedMesh = bodyBlobMesh;
+        }
+
+        private static Mesh CreateCheeseTamaBlobMesh(string name, float inflate)
+        {
+            const int latitude = 28;
+            const int longitude = 44;
+            var vertices = new Vector3[(latitude + 1) * (longitude + 1)];
+            var uv = new Vector2[vertices.Length];
+            var triangles = new int[latitude * longitude * 6];
+
+            var vertexIndex = 0;
+            for (var lat = 0; lat <= latitude; lat += 1)
+            {
+                var v = lat / (float)latitude;
+                var theta = v * Mathf.PI;
+                var yUnit = Mathf.Cos(theta);
+                var ring = Mathf.Sin(theta);
+                var height01 = (yUnit + 1f) * 0.5f;
+                var lowerBelly = 1f + Mathf.Exp(-Mathf.Pow((height01 - 0.27f) / 0.32f, 2f)) * 0.18f;
+                var crownTaper = Mathf.Lerp(0.92f, 1.04f, Mathf.SmoothStep(0f, 1f, height01));
+                var frontRoundness = 1f + Mathf.Exp(-Mathf.Pow((height01 - 0.44f) / 0.5f, 2f)) * 0.08f;
+
+                var y = yUnit * 0.5f;
+                if (y < -0.34f)
+                {
+                    y = Mathf.Lerp(y, -0.39f, Mathf.InverseLerp(-0.34f, -0.5f, y) * 0.55f);
+                }
+
+                for (var lon = 0; lon <= longitude; lon += 1)
+                {
+                    var u = lon / (float)longitude;
+                    var phi = u * Mathf.PI * 2f;
+                    var ripple = 1f + Mathf.Sin(phi * 3.0f + height01 * 5.2f) * 0.018f;
+                    var x = Mathf.Cos(phi) * ring * 0.5f * lowerBelly * crownTaper * ripple;
+                    var z = Mathf.Sin(phi) * ring * 0.5f * (0.9f + frontRoundness * 0.09f);
+
+                    vertices[vertexIndex] = new Vector3(x, y, z) * inflate;
+                    uv[vertexIndex] = new Vector2(u, v);
+                    vertexIndex += 1;
+                }
+            }
+
+            var triangleIndex = 0;
+            for (var lat = 0; lat < latitude; lat += 1)
+            {
+                for (var lon = 0; lon < longitude; lon += 1)
+                {
+                    var current = lat * (longitude + 1) + lon;
+                    var next = current + longitude + 1;
+
+                    triangles[triangleIndex++] = current;
+                    triangles[triangleIndex++] = current + 1;
+                    triangles[triangleIndex++] = next;
+                    triangles[triangleIndex++] = current + 1;
+                    triangles[triangleIndex++] = next + 1;
+                    triangles[triangleIndex++] = next;
+                }
+            }
+
+            var mesh = new Mesh
+            {
+                name = name,
+                vertices = vertices,
+                uv = uv,
+                triangles = triangles,
+                hideFlags = HideFlags.DontSave
+            };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
         private void UpdateRig(CharacterStage stage, Color bodyColor)
         {
             UpdateBodyShape(stage);
@@ -423,26 +515,27 @@ namespace CheeseTama.UI
             var isEgg = stage == CharacterStage.Egg;
             var hasCurl = stage >= CharacterStage.Soft;
             var hasCrown = stage == CharacterStage.Final && isReacting && reactionFlash >= HatchReactionFlash;
-            var bodyHeight = isEgg ? 1.12f : stage >= CharacterStage.Mature ? 1.03f : 0.98f;
-            var bodyWidth = isEgg ? 1.08f : stage >= CharacterStage.Mature ? 1.3f : 1.18f;
+            var bodyHeight = isEgg ? 1.16f : stage >= CharacterStage.Mature ? 1.06f : 1.0f;
+            var bodyWidth = isEgg ? 1.02f : stage >= CharacterStage.Mature ? 1.28f : 1.18f;
+            var bodyDepth = isEgg ? 0.96f : stage >= CharacterStage.Mature ? 1.02f : 0.98f;
 
-            ConfigurePart(bodyOutline, new Vector3(0f, isEgg ? -0.04f : -0.06f, 0.08f), new Vector3(bodyWidth + 0.08f, bodyHeight + 0.08f, (isEgg ? 0.9f : 0.92f) + 0.04f), Quaternion.identity, true);
-            ConfigurePart(leftArmOutline, new Vector3(-0.88f, -0.08f, -0.02f), new Vector3(0.28f, 0.32f, 0.2f), Quaternion.Euler(0f, 0f, 18f), !isEgg);
-            ConfigurePart(rightArmOutline, new Vector3(0.88f, -0.08f, -0.02f), new Vector3(0.28f, 0.32f, 0.2f), Quaternion.Euler(0f, 0f, -18f), !isEgg);
-            ConfigurePart(leftFootOutline, new Vector3(-0.44f, -0.78f, -0.08f), new Vector3(0.34f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, -5f), !isEgg);
-            ConfigurePart(rightFootOutline, new Vector3(0.44f, -0.78f, -0.08f), new Vector3(0.34f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, 5f), !isEgg);
-            ConfigurePart(topCurlOutline, new Vector3(0.18f, 0.73f, -0.01f), new Vector3(0.21f, 0.36f, 0.15f), Quaternion.Euler(0f, 0f, -25f), hasCurl);
+            ConfigurePart(bodyOutline, new Vector3(0f, isEgg ? -0.04f : -0.08f, 0.08f), new Vector3(bodyWidth + 0.08f, bodyHeight + 0.08f, bodyDepth + 0.05f), Quaternion.identity, true);
+            ConfigurePart(leftArmOutline, new Vector3(-0.74f, -0.12f, -0.2f), new Vector3(0.3f, 0.34f, 0.22f), Quaternion.Euler(0f, 0f, 18f), !isEgg);
+            ConfigurePart(rightArmOutline, new Vector3(0.74f, -0.12f, -0.2f), new Vector3(0.3f, 0.34f, 0.22f), Quaternion.Euler(0f, 0f, -18f), !isEgg);
+            ConfigurePart(leftFootOutline, new Vector3(-0.38f, -0.77f, -0.28f), new Vector3(0.36f, 0.18f, 0.2f), Quaternion.Euler(0f, 0f, -4f), !isEgg);
+            ConfigurePart(rightFootOutline, new Vector3(0.38f, -0.77f, -0.28f), new Vector3(0.36f, 0.18f, 0.2f), Quaternion.Euler(0f, 0f, 4f), !isEgg);
+            ConfigurePart(topCurlOutline, new Vector3(0.17f, 0.73f, -0.08f), new Vector3(0.22f, 0.38f, 0.16f), Quaternion.Euler(0f, 0f, -25f), hasCurl);
 
-            ConfigurePart(body, new Vector3(0f, isEgg ? -0.04f : -0.06f, 0f), new Vector3(bodyWidth, bodyHeight, isEgg ? 0.9f : 0.92f), Quaternion.identity, true);
-            ConfigurePart(leftArm, new Vector3(-0.86f, -0.08f, -0.1f), new Vector3(0.24f, 0.28f, 0.19f), Quaternion.Euler(0f, 0f, 18f), !isEgg);
-            ConfigurePart(rightArm, new Vector3(0.86f, -0.08f, -0.1f), new Vector3(0.24f, 0.28f, 0.19f), Quaternion.Euler(0f, 0f, -18f), !isEgg);
-            ConfigurePart(leftFoot, new Vector3(-0.44f, -0.76f, -0.16f), new Vector3(0.3f, 0.13f, 0.17f), Quaternion.Euler(0f, 0f, -5f), !isEgg);
-            ConfigurePart(rightFoot, new Vector3(0.44f, -0.76f, -0.16f), new Vector3(0.3f, 0.13f, 0.17f), Quaternion.Euler(0f, 0f, 5f), !isEgg);
-            ConfigurePart(topCurl, new Vector3(0.17f, 0.72f, -0.08f), new Vector3(0.17f, 0.32f, 0.13f), Quaternion.Euler(0f, 0f, -25f), hasCurl);
-            ConfigurePart(topCurlTip, new Vector3(0.27f, 0.9f, -0.09f), new Vector3(0.12f, 0.085f, 0.1f), Quaternion.identity, hasCurl);
-            ConfigurePart(largeHighlight, new Vector3(-0.4f, isEgg ? 0.38f : 0.28f, -0.72f), new Vector3(0.34f, 0.12f, 0.035f), Quaternion.Euler(0f, 0f, -20f), true);
-            ConfigurePart(smallHighlight, new Vector3(-0.58f, isEgg ? 0.12f : 0.02f, -0.73f), new Vector3(0.15f, 0.07f, 0.03f), Quaternion.Euler(0f, 0f, -18f), true);
-            ConfigurePart(softShadow, new Vector3(0f, -0.83f, 0.18f), new Vector3(isEgg ? 1.24f : 1.48f, 0.035f, 0.56f), Quaternion.identity, true);
+            ConfigurePart(body, new Vector3(0f, isEgg ? -0.04f : -0.08f, 0f), new Vector3(bodyWidth, bodyHeight, bodyDepth), Quaternion.identity, true);
+            ConfigurePart(leftArm, new Vector3(-0.72f, -0.12f, -0.28f), new Vector3(0.25f, 0.29f, 0.2f), Quaternion.Euler(0f, 0f, 18f), !isEgg);
+            ConfigurePart(rightArm, new Vector3(0.72f, -0.12f, -0.28f), new Vector3(0.25f, 0.29f, 0.2f), Quaternion.Euler(0f, 0f, -18f), !isEgg);
+            ConfigurePart(leftFoot, new Vector3(-0.38f, -0.75f, -0.36f), new Vector3(0.31f, 0.14f, 0.18f), Quaternion.Euler(0f, 0f, -4f), !isEgg);
+            ConfigurePart(rightFoot, new Vector3(0.38f, -0.75f, -0.36f), new Vector3(0.31f, 0.14f, 0.18f), Quaternion.Euler(0f, 0f, 4f), !isEgg);
+            ConfigurePart(topCurl, new Vector3(0.16f, 0.72f, -0.16f), new Vector3(0.18f, 0.34f, 0.14f), Quaternion.Euler(0f, 0f, -25f), hasCurl);
+            ConfigurePart(topCurlTip, new Vector3(0.27f, 0.91f, -0.17f), new Vector3(0.13f, 0.09f, 0.1f), Quaternion.identity, hasCurl);
+            ConfigurePart(largeHighlight, new Vector3(-0.39f, isEgg ? 0.42f : 0.32f, -0.78f), new Vector3(0.36f, 0.14f, 0.036f), Quaternion.Euler(0f, 0f, -20f), true);
+            ConfigurePart(smallHighlight, new Vector3(-0.58f, isEgg ? 0.18f : 0.06f, -0.79f), new Vector3(0.15f, 0.075f, 0.03f), Quaternion.Euler(0f, 0f, -18f), true);
+            ConfigurePart(softShadow, new Vector3(0f, -0.84f, 0.2f), new Vector3(isEgg ? 1.2f : 1.5f, 0.035f, 0.62f), Quaternion.identity, true);
 
             ConfigurePart(crownBand, new Vector3(0.05f, 0.95f, -0.08f), new Vector3(0.48f, 0.08f, 0.08f), Quaternion.Euler(0f, 0f, -5f), hasCrown);
             ConfigurePart(crownPointA, new Vector3(-0.16f, 1.08f, -0.08f), new Vector3(0.08f, 0.12f, 0.08f), Quaternion.identity, hasCrown);
@@ -457,31 +550,31 @@ namespace CheeseTama.UI
             var isEgg = stage == CharacterStage.Egg;
             if (IsEmmentalCheeseTama(current))
             {
-                SetSpot(cheeseHoles[0], new Vector3(-0.58f, 0.22f, -0.74f), new Vector3(0.18f, 0.22f, 0.026f), Quaternion.identity, true);
-                SetSpot(cheeseHoles[1], new Vector3(0.42f, 0.44f, -0.72f), new Vector3(0.17f, 0.15f, 0.026f), Quaternion.Euler(0f, 0f, -12f), true);
-                SetSpot(cheeseHoles[2], new Vector3(0.66f, -0.08f, -0.71f), new Vector3(0.12f, 0.17f, 0.024f), Quaternion.identity, true);
-                SetSpot(cheeseHoles[3], new Vector3(-0.12f, 0.62f, -0.69f), new Vector3(0.09f, 0.07f, 0.022f), Quaternion.identity, true);
-                SetSpot(cheeseHoles[4], new Vector3(0.18f, -0.48f, -0.68f), new Vector3(0.1f, 0.08f, 0.022f), Quaternion.identity, true);
-                SetSpot(cheeseHoles[5], new Vector3(-0.68f, -0.24f, -0.7f), new Vector3(0.1f, 0.12f, 0.022f), Quaternion.identity, true);
-                SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.28f, -0.68f), new Vector3(0.055f, 0.045f, 0.02f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[0], new Vector3(-0.56f, 0.28f, -0.82f), new Vector3(0.18f, 0.24f, 0.028f), Quaternion.Euler(0f, 0f, 8f), true);
+                SetSpot(cheeseHoles[1], new Vector3(0.42f, 0.48f, -0.8f), new Vector3(0.18f, 0.16f, 0.028f), Quaternion.Euler(0f, 0f, -12f), true);
+                SetSpot(cheeseHoles[2], new Vector3(0.62f, -0.08f, -0.8f), new Vector3(0.13f, 0.18f, 0.026f), Quaternion.Euler(0f, 0f, 6f), true);
+                SetSpot(cheeseHoles[3], new Vector3(-0.12f, 0.63f, -0.78f), new Vector3(0.1f, 0.075f, 0.024f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[4], new Vector3(0.18f, -0.44f, -0.76f), new Vector3(0.105f, 0.085f, 0.024f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[5], new Vector3(-0.66f, -0.2f, -0.78f), new Vector3(0.105f, 0.13f, 0.024f), Quaternion.Euler(0f, 0f, -8f), true);
+                SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.28f, -0.79f), new Vector3(0.06f, 0.048f, 0.022f), Quaternion.identity, true);
             }
             else
             {
-                SetSpot(cheeseHoles[0], new Vector3(-0.6f, 0.18f, -0.74f), new Vector3(0.16f, 0.2f, 0.026f), Quaternion.identity, true);
-                SetSpot(cheeseHoles[1], new Vector3(0.5f, 0.4f, -0.71f), new Vector3(0.15f, 0.12f, 0.026f), Quaternion.Euler(0f, 0f, -15f), true);
-                SetSpot(cheeseHoles[2], new Vector3(0.68f, -0.1f, -0.71f), new Vector3(0.1f, 0.14f, 0.024f), Quaternion.identity, stage >= CharacterStage.Soft);
-                SetSpot(cheeseHoles[3], new Vector3(-0.18f, 0.58f, -0.68f), new Vector3(0.07f, 0.05f, 0.022f), Quaternion.identity, false);
-                SetSpot(cheeseHoles[4], new Vector3(0.2f, -0.5f, -0.66f), new Vector3(0.08f, 0.06f, 0.022f), Quaternion.identity, false);
-                SetSpot(cheeseHoles[5], new Vector3(-0.7f, -0.28f, -0.69f), new Vector3(0.09f, 0.11f, 0.022f), Quaternion.identity, false);
-                SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.42f, -0.68f), new Vector3(0.045f, 0.035f, 0.02f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[0], new Vector3(-0.58f, 0.24f, -0.82f), new Vector3(0.16f, 0.21f, 0.028f), Quaternion.Euler(0f, 0f, 8f), true);
+                SetSpot(cheeseHoles[1], new Vector3(0.48f, 0.43f, -0.8f), new Vector3(0.16f, 0.13f, 0.028f), Quaternion.Euler(0f, 0f, -15f), true);
+                SetSpot(cheeseHoles[2], new Vector3(0.62f, -0.08f, -0.79f), new Vector3(0.105f, 0.15f, 0.026f), Quaternion.Euler(0f, 0f, 4f), stage >= CharacterStage.Soft);
+                SetSpot(cheeseHoles[3], new Vector3(-0.16f, 0.58f, -0.78f), new Vector3(0.075f, 0.055f, 0.024f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[4], new Vector3(0.2f, -0.48f, -0.76f), new Vector3(0.085f, 0.065f, 0.024f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[5], new Vector3(-0.68f, -0.24f, -0.78f), new Vector3(0.09f, 0.12f, 0.024f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.42f, -0.78f), new Vector3(0.05f, 0.038f, 0.022f), Quaternion.identity, false);
             }
 
-            SetSpot(cheeseSpeckles[0], new Vector3(-0.36f, -0.34f, -0.74f), new Vector3(0.035f, 0.02f, 0.018f), Quaternion.identity, true);
-            SetSpot(cheeseSpeckles[1], new Vector3(-0.08f, -0.46f, -0.74f), new Vector3(0.028f, 0.02f, 0.018f), Quaternion.identity, true);
-            SetSpot(cheeseSpeckles[2], new Vector3(0.34f, 0.18f, -0.74f), new Vector3(0.03f, 0.02f, 0.018f), Quaternion.identity, true);
-            SetSpot(cheeseSpeckles[3], new Vector3(-0.05f, 0.63f, -0.69f), new Vector3(0.025f, 0.02f, 0.018f), Quaternion.identity, !isEgg);
-            SetSpot(cheeseSpeckles[4], new Vector3(0.5f, -0.34f, -0.67f), new Vector3(0.03f, 0.02f, 0.018f), Quaternion.identity, stage >= CharacterStage.Grown);
-            SetSpot(cheeseSpeckles[5], new Vector3(-0.46f, 0.5f, -0.67f), new Vector3(0.03f, 0.02f, 0.018f), Quaternion.identity, true);
+            SetSpot(cheeseSpeckles[0], new Vector3(-0.34f, -0.3f, -0.82f), new Vector3(0.038f, 0.022f, 0.018f), Quaternion.Euler(0f, 0f, -10f), true);
+            SetSpot(cheeseSpeckles[1], new Vector3(-0.08f, -0.43f, -0.81f), new Vector3(0.03f, 0.02f, 0.018f), Quaternion.identity, true);
+            SetSpot(cheeseSpeckles[2], new Vector3(0.34f, 0.2f, -0.82f), new Vector3(0.032f, 0.022f, 0.018f), Quaternion.identity, true);
+            SetSpot(cheeseSpeckles[3], new Vector3(-0.04f, 0.62f, -0.79f), new Vector3(0.026f, 0.02f, 0.018f), Quaternion.identity, !isEgg);
+            SetSpot(cheeseSpeckles[4], new Vector3(0.48f, -0.3f, -0.78f), new Vector3(0.034f, 0.022f, 0.018f), Quaternion.identity, stage >= CharacterStage.Grown);
+            SetSpot(cheeseSpeckles[5], new Vector3(-0.46f, 0.5f, -0.79f), new Vector3(0.032f, 0.02f, 0.018f), Quaternion.identity, true);
         }
 
         private void UpdateFace(CharacterStage stage, FaceExpression expression)
@@ -500,41 +593,41 @@ namespace CheeseTama.UI
             var mouthColor = new Color(0.24f, 0.12f, 0.06f);
             var cheekColor = new Color(1f, 0.48f, 0.34f);
 
-            SetFeature(leftEye, new Vector3(-0.29f, 0.13f, -0.78f), new Vector3(0.17f, 0.22f, 0.04f), Quaternion.identity, true, eyeColor);
-            SetFeature(rightEye, new Vector3(0.29f, 0.13f, -0.78f), new Vector3(0.17f, 0.22f, 0.04f), Quaternion.identity, true, eyeColor);
-            SetFeature(leftEyeSparkle, new Vector3(-0.34f, 0.2f, -0.81f), new Vector3(0.045f, 0.055f, 0.018f), Quaternion.identity, true, Color.white);
-            SetFeature(rightEyeSparkle, new Vector3(0.24f, 0.2f, -0.81f), new Vector3(0.045f, 0.055f, 0.018f), Quaternion.identity, true, Color.white);
+            SetFeature(leftEye, new Vector3(-0.32f, 0.12f, -0.86f), new Vector3(0.19f, 0.25f, 0.046f), Quaternion.identity, true, eyeColor);
+            SetFeature(rightEye, new Vector3(0.32f, 0.12f, -0.86f), new Vector3(0.19f, 0.25f, 0.046f), Quaternion.identity, true, eyeColor);
+            SetFeature(leftEyeSparkle, new Vector3(-0.38f, 0.21f, -0.9f), new Vector3(0.052f, 0.064f, 0.018f), Quaternion.identity, true, Color.white);
+            SetFeature(rightEyeSparkle, new Vector3(0.26f, 0.21f, -0.9f), new Vector3(0.052f, 0.064f, 0.018f), Quaternion.identity, true, Color.white);
             SetMouthSmile(mouthColor);
             SetFeature(mouthOpen, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
-            SetFeature(leftCheek, new Vector3(-0.5f, -0.1f, -0.76f), new Vector3(0.19f, 0.09f, 0.026f), Quaternion.identity, true, cheekColor);
-            SetFeature(rightCheek, new Vector3(0.5f, -0.1f, -0.76f), new Vector3(0.19f, 0.09f, 0.026f), Quaternion.identity, true, cheekColor);
+            SetFeature(leftCheek, new Vector3(-0.53f, -0.11f, -0.84f), new Vector3(0.22f, 0.105f, 0.028f), Quaternion.identity, true, cheekColor);
+            SetFeature(rightCheek, new Vector3(0.53f, -0.11f, -0.84f), new Vector3(0.22f, 0.105f, 0.028f), Quaternion.identity, true, cheekColor);
 
             if (expression == FaceExpression.Happy)
             {
-                SetFeature(leftEye, new Vector3(-0.29f, 0.16f, -0.78f), new Vector3(0.18f, 0.22f, 0.04f), Quaternion.identity, true, eyeColor);
-                SetFeature(rightEye, new Vector3(0.29f, 0.16f, -0.78f), new Vector3(0.18f, 0.22f, 0.04f), Quaternion.identity, true, eyeColor);
+                SetFeature(leftEye, new Vector3(-0.32f, 0.15f, -0.86f), new Vector3(0.2f, 0.25f, 0.046f), Quaternion.identity, true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.32f, 0.15f, -0.86f), new Vector3(0.2f, 0.25f, 0.046f), Quaternion.identity, true, eyeColor);
                 SetMouthSmile(mouthColor, 0.12f, 0.17f);
-                SetFeature(leftCheek, new Vector3(-0.51f, -0.08f, -0.76f), new Vector3(0.22f, 0.1f, 0.026f), Quaternion.identity, true, cheekColor);
-                SetFeature(rightCheek, new Vector3(0.51f, -0.08f, -0.76f), new Vector3(0.22f, 0.1f, 0.026f), Quaternion.identity, true, cheekColor);
+                SetFeature(leftCheek, new Vector3(-0.54f, -0.08f, -0.84f), new Vector3(0.25f, 0.115f, 0.028f), Quaternion.identity, true, cheekColor);
+                SetFeature(rightCheek, new Vector3(0.54f, -0.08f, -0.84f), new Vector3(0.25f, 0.115f, 0.028f), Quaternion.identity, true, cheekColor);
                 return;
             }
 
             if (expression == FaceExpression.Sparkle)
             {
-                SetFeature(leftEye, new Vector3(-0.29f, 0.17f, -0.78f), new Vector3(0.2f, 0.24f, 0.04f), Quaternion.identity, true, eyeColor);
-                SetFeature(rightEye, new Vector3(0.29f, 0.17f, -0.78f), new Vector3(0.2f, 0.24f, 0.04f), Quaternion.identity, true, eyeColor);
-                SetFeature(leftEyeSparkle, new Vector3(-0.35f, 0.25f, -0.81f), new Vector3(0.07f, 0.08f, 0.018f), Quaternion.identity, true, Color.white);
-                SetFeature(rightEyeSparkle, new Vector3(0.23f, 0.25f, -0.81f), new Vector3(0.07f, 0.08f, 0.018f), Quaternion.identity, true, Color.white);
+                SetFeature(leftEye, new Vector3(-0.32f, 0.17f, -0.86f), new Vector3(0.22f, 0.27f, 0.046f), Quaternion.identity, true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.32f, 0.17f, -0.86f), new Vector3(0.22f, 0.27f, 0.046f), Quaternion.identity, true, eyeColor);
+                SetFeature(leftEyeSparkle, new Vector3(-0.39f, 0.27f, -0.9f), new Vector3(0.075f, 0.09f, 0.018f), Quaternion.identity, true, Color.white);
+                SetFeature(rightEyeSparkle, new Vector3(0.25f, 0.27f, -0.9f), new Vector3(0.075f, 0.09f, 0.018f), Quaternion.identity, true, Color.white);
                 SetMouthSmile(mouthColor, -0.12f, 0.18f);
-                SetFeature(leftCheek, new Vector3(-0.52f, -0.08f, -0.76f), new Vector3(0.24f, 0.11f, 0.026f), Quaternion.identity, true, cheekColor);
-                SetFeature(rightCheek, new Vector3(0.52f, -0.08f, -0.76f), new Vector3(0.24f, 0.11f, 0.026f), Quaternion.identity, true, cheekColor);
+                SetFeature(leftCheek, new Vector3(-0.54f, -0.08f, -0.84f), new Vector3(0.27f, 0.12f, 0.028f), Quaternion.identity, true, cheekColor);
+                SetFeature(rightCheek, new Vector3(0.54f, -0.08f, -0.84f), new Vector3(0.27f, 0.12f, 0.028f), Quaternion.identity, true, cheekColor);
                 return;
             }
 
             if (expression == FaceExpression.Sleepy)
             {
-                SetFeature(leftEye, new Vector3(-0.29f, 0.1f, -0.78f), new Vector3(0.18f, 0.045f, 0.04f), Quaternion.identity, true, eyeColor);
-                SetFeature(rightEye, new Vector3(0.29f, 0.1f, -0.78f), new Vector3(0.18f, 0.045f, 0.04f), Quaternion.identity, true, eyeColor);
+                SetFeature(leftEye, new Vector3(-0.32f, 0.1f, -0.86f), new Vector3(0.19f, 0.05f, 0.046f), Quaternion.identity, true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.32f, 0.1f, -0.86f), new Vector3(0.19f, 0.05f, 0.046f), Quaternion.identity, true, eyeColor);
                 SetFeature(leftEyeSparkle, Vector3.zero, Vector3.one, Quaternion.identity, false, Color.white);
                 SetFeature(rightEyeSparkle, Vector3.zero, Vector3.one, Quaternion.identity, false, Color.white);
                 SetMouthSmile(mouthColor, 0.08f, 0.1f);
@@ -545,48 +638,48 @@ namespace CheeseTama.UI
             {
                 SetFeature(mouthLeft, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
                 SetFeature(mouthRight, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
-                SetFeature(mouthOpen, new Vector3(0f, -0.18f, -0.8f), new Vector3(0.08f, 0.09f, 0.025f), Quaternion.identity, true, mouthColor);
+                SetFeature(mouthOpen, new Vector3(0f, -0.18f, -0.88f), new Vector3(0.085f, 0.095f, 0.025f), Quaternion.identity, true, mouthColor);
                 return;
             }
 
             if (expression == FaceExpression.Surprised)
             {
-                SetFeature(leftEye, new Vector3(-0.29f, 0.18f, -0.78f), new Vector3(0.2f, 0.24f, 0.04f), Quaternion.identity, true, eyeColor);
-                SetFeature(rightEye, new Vector3(0.29f, 0.18f, -0.78f), new Vector3(0.2f, 0.24f, 0.04f), Quaternion.identity, true, eyeColor);
+                SetFeature(leftEye, new Vector3(-0.32f, 0.18f, -0.86f), new Vector3(0.22f, 0.27f, 0.046f), Quaternion.identity, true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.32f, 0.18f, -0.86f), new Vector3(0.22f, 0.27f, 0.046f), Quaternion.identity, true, eyeColor);
                 SetFeature(mouthLeft, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
                 SetFeature(mouthRight, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
-                SetFeature(mouthOpen, new Vector3(0f, -0.18f, -0.8f), new Vector3(0.1f, 0.11f, 0.025f), Quaternion.identity, true, mouthColor);
+                SetFeature(mouthOpen, new Vector3(0f, -0.18f, -0.88f), new Vector3(0.11f, 0.12f, 0.025f), Quaternion.identity, true, mouthColor);
                 return;
             }
 
             if (expression == FaceExpression.Sad)
             {
                 var sadCheek = Color.Lerp(cheekColor, Color.white, 0.35f);
-                SetFeature(leftEye, new Vector3(-0.29f, 0.1f, -0.78f), new Vector3(0.14f, 0.16f, 0.04f), Quaternion.Euler(0f, 0f, -8f), true, eyeColor);
-                SetFeature(rightEye, new Vector3(0.29f, 0.1f, -0.78f), new Vector3(0.14f, 0.16f, 0.04f), Quaternion.Euler(0f, 0f, 8f), true, eyeColor);
+                SetFeature(leftEye, new Vector3(-0.32f, 0.1f, -0.86f), new Vector3(0.15f, 0.17f, 0.046f), Quaternion.Euler(0f, 0f, -8f), true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.32f, 0.1f, -0.86f), new Vector3(0.15f, 0.17f, 0.046f), Quaternion.Euler(0f, 0f, 8f), true, eyeColor);
                 SetFeature(leftEyeSparkle, Vector3.zero, Vector3.one, Quaternion.identity, false, Color.white);
                 SetFeature(rightEyeSparkle, Vector3.zero, Vector3.one, Quaternion.identity, false, Color.white);
-                SetFeature(mouthLeft, new Vector3(-0.055f, -0.22f, -0.8f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 16f), true, mouthColor);
-                SetFeature(mouthRight, new Vector3(0.055f, -0.22f, -0.8f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -16f), true, mouthColor);
-                SetFeature(leftCheek, new Vector3(-0.5f, -0.12f, -0.76f), new Vector3(0.16f, 0.07f, 0.026f), Quaternion.identity, true, sadCheek);
-                SetFeature(rightCheek, new Vector3(0.5f, -0.12f, -0.76f), new Vector3(0.16f, 0.07f, 0.026f), Quaternion.identity, true, sadCheek);
+                SetFeature(mouthLeft, new Vector3(-0.055f, -0.22f, -0.88f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 16f), true, mouthColor);
+                SetFeature(mouthRight, new Vector3(0.055f, -0.22f, -0.88f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -16f), true, mouthColor);
+                SetFeature(leftCheek, new Vector3(-0.53f, -0.12f, -0.84f), new Vector3(0.18f, 0.08f, 0.028f), Quaternion.identity, true, sadCheek);
+                SetFeature(rightCheek, new Vector3(0.53f, -0.12f, -0.84f), new Vector3(0.18f, 0.08f, 0.028f), Quaternion.identity, true, sadCheek);
                 return;
             }
 
             if (expression == FaceExpression.Upset || expression == FaceExpression.Sick)
             {
                 var eyeTint = expression == FaceExpression.Sick ? new Color(0.1f, 0.14f, 0.2f) : eyeColor;
-                SetFeature(leftEye, new Vector3(-0.29f, 0.1f, -0.78f), new Vector3(0.14f, 0.12f, 0.04f), Quaternion.Euler(0f, 0f, -12f), true, eyeTint);
-                SetFeature(rightEye, new Vector3(0.29f, 0.1f, -0.78f), new Vector3(0.14f, 0.12f, 0.04f), Quaternion.Euler(0f, 0f, 12f), true, eyeTint);
-                SetFeature(mouthLeft, new Vector3(-0.055f, -0.2f, -0.8f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 14f), true, mouthColor);
-                SetFeature(mouthRight, new Vector3(0.055f, -0.2f, -0.8f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -14f), true, mouthColor);
+                SetFeature(leftEye, new Vector3(-0.32f, 0.1f, -0.86f), new Vector3(0.15f, 0.13f, 0.046f), Quaternion.Euler(0f, 0f, -12f), true, eyeTint);
+                SetFeature(rightEye, new Vector3(0.32f, 0.1f, -0.86f), new Vector3(0.15f, 0.13f, 0.046f), Quaternion.Euler(0f, 0f, 12f), true, eyeTint);
+                SetFeature(mouthLeft, new Vector3(-0.055f, -0.2f, -0.88f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 14f), true, mouthColor);
+                SetFeature(mouthRight, new Vector3(0.055f, -0.2f, -0.88f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -14f), true, mouthColor);
             }
         }
 
         private void SetMouthSmile(Color color, float y = -0.16f, float width = 0.13f)
         {
-            SetFeature(mouthLeft, new Vector3(-0.055f, y, -0.8f), new Vector3(width, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -18f), true, color);
-            SetFeature(mouthRight, new Vector3(0.055f, y, -0.8f), new Vector3(width, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 18f), true, color);
+            SetFeature(mouthLeft, new Vector3(-0.055f, y, -0.88f), new Vector3(width, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -18f), true, color);
+            SetFeature(mouthRight, new Vector3(0.055f, y, -0.88f), new Vector3(width, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 18f), true, color);
         }
 
         private void PaintBody(Color bodyColor, CharacterStage stage)

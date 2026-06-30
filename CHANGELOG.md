@@ -67,3 +67,4 @@
 - Hide late-game collection category/count text until special records are actually unlocked.
 - Limit base CheeseTama visible holes to 0-3 small marks and reserve the exact 7-hole constellation layout for Emmental CheeseTama.
 - Rename internal Milkroom grouping helpers from layer terminology to group terminology and attach a GlobalVolume component when the render-pipeline type is available.
+- Rework the procedural CheeseTama body into a custom soft blob mesh, enlarge the glossy face treatment, and add denser Milkroom diorama details such as arched window framing, curtain folds, rug tufts, rounded fridge accents, shelf props, plants, and bottle labels.
