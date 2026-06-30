@@ -24,6 +24,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text starMilkGrowthText;
         [SerializeField] private Text unlockText;
         [SerializeField] private Text careSummaryText;
+        [SerializeField] private Text dailyRoutineText;
         [SerializeField] private Text careTipText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
@@ -48,6 +49,7 @@ namespace CheeseTama.UI
             Text starMilkGrowthLabel,
             Text unlockLabel,
             Text careSummaryLabel,
+            Text dailyRoutineLabel,
             Text careTipLabel,
             Text lastSavedLabel,
             Text messageLabel)
@@ -68,6 +70,7 @@ namespace CheeseTama.UI
             starMilkGrowthText = starMilkGrowthLabel;
             unlockText = unlockLabel;
             careSummaryText = careSummaryLabel;
+            dailyRoutineText = dailyRoutineLabel;
             careTipText = careTipLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
@@ -111,6 +114,7 @@ namespace CheeseTama.UI
             SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
             SetText(unlockText, FormatUnlocks(currentSave));
             SetText(careSummaryText, FormatCareSummary(currentSave));
+            SetText(dailyRoutineText, FormatDailyRoutine(currentSave));
             SetText(careTipText, FormatCareTip(currentSave, current));
             SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
         }
@@ -221,6 +225,17 @@ namespace CheeseTama.UI
             return $"Care: {history.totalCareActions} | Play {history.playSessions} Clean {history.cleanings} Rest {history.rests}";
         }
 
+        private static string FormatDailyRoutine(CheeseTamaSaveData saveData)
+        {
+            var daily = saveData?.dailyCare;
+            if (daily == null)
+            {
+                return "Today: M 0/1 P 0/1 C 0/1 R 0/1";
+            }
+
+            return $"Today: M {ClampGoal(daily.milkFeeds)}/1 P {ClampGoal(daily.playSessions)}/1 C {ClampGoal(daily.cleanings)}/1 R {ClampGoal(daily.rests)}/1";
+        }
+
         private static string FormatCareTip(CheeseTamaSaveData saveData, CheeseTamaModel tama)
         {
             if (tama == null || tama.stats == null)
@@ -269,6 +284,13 @@ namespace CheeseTama.UI
                 return "Care Tip: Try Star Milk.";
             }
 
+            if (saveData != null
+                && saveData.dailyCare != null
+                && !IsDailyRoutineComplete(saveData.dailyCare))
+            {
+                return $"Care Tip: {FormatNextDailyRoutineStep(saveData.dailyCare)}";
+            }
+
             if (tama.stats.hunger >= 70
                 && tama.stats.mood >= 70
                 && tama.stats.cleanliness >= 70
@@ -279,6 +301,45 @@ namespace CheeseTama.UI
             }
 
             return "Care Tip: Keep the rhythm gentle.";
+        }
+
+        private static int ClampGoal(int value)
+        {
+            return value > 0 ? 1 : 0;
+        }
+
+        private static bool IsDailyRoutineComplete(DailyCareSaveData daily)
+        {
+            return daily != null
+                && daily.milkFeeds >= 1
+                && daily.playSessions >= 1
+                && daily.cleanings >= 1
+                && daily.rests >= 1;
+        }
+
+        private static string FormatNextDailyRoutineStep(DailyCareSaveData daily)
+        {
+            if (daily.milkFeeds < 1)
+            {
+                return "Add milk to today's routine.";
+            }
+
+            if (daily.playSessions < 1)
+            {
+                return "Play once for today's routine.";
+            }
+
+            if (daily.cleanings < 1)
+            {
+                return "Clean once for today's routine.";
+            }
+
+            if (daily.rests < 1)
+            {
+                return "Rest once for today's routine.";
+            }
+
+            return "Today's routine is complete.";
         }
 
         private static string FormatCondition(CheeseTamaModel tama)

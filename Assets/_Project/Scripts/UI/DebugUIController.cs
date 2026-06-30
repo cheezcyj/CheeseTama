@@ -52,6 +52,7 @@ namespace CheeseTama.UI
             builder.AppendLine(FormatStarMilkLine());
             builder.AppendLine(FormatUnlocks());
             builder.AppendLine(FormatCareHistory());
+            builder.AppendLine(FormatDailyRoutine());
             builder.AppendLine(FormatHiddenRecords());
             SetText(stateText, builder.ToString());
         }
@@ -127,6 +128,22 @@ namespace CheeseTama.UI
             }
 
             return $"Care: {history.totalCareActions} actions, Wait {history.waitHours}h";
+        }
+
+        private string FormatDailyRoutine()
+        {
+            var daily = currentSave?.dailyCare;
+            if (daily == null)
+            {
+                return "Today: M 0/1 P 0/1 C 0/1 R 0/1";
+            }
+
+            return $"Today: M {ClampGoal(daily.milkFeeds)}/1 P {ClampGoal(daily.playSessions)}/1 C {ClampGoal(daily.cleanings)}/1 R {ClampGoal(daily.rests)}/1, Done {daily.completedRoutineCount}";
+        }
+
+        private static int ClampGoal(int value)
+        {
+            return value > 0 ? 1 : 0;
         }
 
         private static string FormatFormName(string form)

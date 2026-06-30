@@ -15,6 +15,8 @@ namespace CheeseTama.Core
     {
         private const string BasicMilkId = "basic_milk";
         private const string StarMilkId = "star_milk";
+        private const string DailyRoutineCompleteEventId = "daily_routine_complete";
+        private const string DailyRoutineThreeEventId = "daily_routine_3";
 
         [SerializeField] private DataRegistry dataRegistry;
         [SerializeField] private SaveManager saveManager;
@@ -56,8 +58,9 @@ namespace CheeseTama.Core
             }
 
             CurrentSave = saveManager.LoadOrCreate();
+            var dailyCareChanged = EnsureDailyCareDate();
             LastTimeProgression = timeProgressionSystem.ApplyOfflineProgress(CurrentTama, DateTimeOffset.Now);
-            if (LastTimeProgression.applied)
+            if (LastTimeProgression.applied || dailyCareChanged)
             {
                 saveManager.Save(CurrentSave);
             }
@@ -252,6 +255,49 @@ namespace CheeseTama.Core
             }
         }
 
+        public bool RegisterDailyCareAction(string actionId)
+        {
+            if (CurrentSave == null || string.IsNullOrWhiteSpace(actionId))
+            {
+                return false;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            EnsureDailyCareDate();
+            var daily = CurrentSave.dailyCare;
+
+            switch (actionId)
+            {
+                case "feed_milk":
+                case "feed_star_milk":
+                    daily.milkFeeds += 1;
+                    break;
+                case "feed_snack":
+                    daily.snacksFed += 1;
+                    break;
+                case "play":
+                    daily.playSessions += 1;
+                    break;
+                case "clean":
+                    daily.cleanings += 1;
+                    break;
+                case "rest":
+                    daily.rests += 1;
+                    break;
+            }
+
+            if (!IsDailyRoutineComplete(daily) || daily.lastCompletedDateKey == daily.dateKey)
+            {
+                return false;
+            }
+
+            daily.completedRoutineCount += 1;
+            daily.lastCompletedDateKey = daily.dateKey;
+            daily.lastCompletedAtIso = DateTimeOffset.Now.ToString("O");
+            AddUniqueRecord(CurrentSave.collections.events, DailyRoutineCompleteEventId);
+            return true;
+        }
+
         public void RefreshDerivedCollectionRecords()
         {
             if (CurrentSave == null)
@@ -261,6 +307,7 @@ namespace CheeseTama.Core
 
             CurrentSave.EnsureRuntimeDefaults();
             var changed = false;
+            changed |= EnsureDailyCareDate();
             foreach (var entry in CurrentSave.milkGrowth)
             {
                 if (entry == null || string.IsNullOrWhiteSpace(entry.milkId))
@@ -280,6 +327,7 @@ namespace CheeseTama.Core
             }
 
             changed |= AddCareMilestoneRecords(CurrentSave.careHistory);
+            changed |= AddDailyCareMilestoneRecords(CurrentSave.dailyCare);
 
             if (CurrentSave.unlocks.starMilkUnlocked)
             {
@@ -359,6 +407,11 @@ namespace CheeseTama.Core
                 changed |= hiddenCollectionSystem.Unlock(collections, "playful_friend", now);
             }
 
+            if (CurrentSave.dailyCare != null && CurrentSave.dailyCare.completedRoutineCount >= 3)
+            {
+                changed |= hiddenCollectionSystem.Unlock(collections, "daily_regular", now);
+            }
+
             if (CurrentTama != null
                 && CurrentTama.isHatched
                 && CurrentTama.stats != null
@@ -392,6 +445,60 @@ namespace CheeseTama.Core
             changed |= AddThresholdRecord(history.rests, 3, "rests_3");
             changed |= AddThresholdRecord(history.waitHours, 3, "wait_hours_3");
             return changed;
+        }
+
+        private bool AddDailyCareMilestoneRecords(DailyCareSaveData daily)
+        {
+            if (daily == null)
+            {
+                return false;
+            }
+
+            var changed = false;
+            if (daily.completedRoutineCount >= 1)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.events, DailyRoutineCompleteEventId);
+            }
+
+            if (daily.completedRoutineCount >= 3)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.events, DailyRoutineThreeEventId);
+            }
+
+            return changed;
+        }
+
+        private bool EnsureDailyCareDate()
+        {
+            if (CurrentSave == null)
+            {
+                return false;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var daily = CurrentSave.dailyCare;
+            var todayKey = DateTimeOffset.Now.ToString("yyyy-MM-dd");
+            if (daily.dateKey == todayKey)
+            {
+                return false;
+            }
+
+            daily.dateKey = todayKey;
+            daily.milkFeeds = 0;
+            daily.snacksFed = 0;
+            daily.playSessions = 0;
+            daily.cleanings = 0;
+            daily.rests = 0;
+            return true;
+        }
+
+        private static bool IsDailyRoutineComplete(DailyCareSaveData daily)
+        {
+            return daily != null
+                && daily.milkFeeds >= 1
+                && daily.playSessions >= 1
+                && daily.cleanings >= 1
+                && daily.rests >= 1;
         }
 
         private bool AddThresholdRecord(int value, int threshold, string eventId)

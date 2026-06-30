@@ -129,11 +129,15 @@ namespace CheeseTama.UI
             }
 
             var careResult = RunCareAction(manager);
-            RegisterCareHistory(manager, careResult);
+            var routineMessage = RegisterCareHistory(manager, careResult);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult);
             var eventResult = careResult.hatched ? CareEventResult.None() : RegisterRandomEvent(manager);
             PersistCareResult(manager, careResult);
-            Refresh(CombineMessages(CombineMessages(careResult.message, discoveryMessage), eventResult.message), manager, careResult.hatched, eventResult.eventId);
+            Refresh(
+                CombineMessages(CombineMessages(CombineMessages(careResult.message, routineMessage), discoveryMessage), eventResult.message),
+                manager,
+                careResult.hatched,
+                eventResult.eventId);
         }
 
         private CareActionResult RunCareAction(GameManager manager)
@@ -150,18 +154,23 @@ namespace CheeseTama.UI
             };
         }
 
-        private void RegisterCareHistory(GameManager manager, CareActionResult result)
+        private string RegisterCareHistory(GameManager manager, CareActionResult result)
         {
             if (!result.success)
             {
-                return;
+                return string.Empty;
             }
 
             var actionId = GetCareActionId();
             if (!string.IsNullOrWhiteSpace(actionId))
             {
                 manager.RegisterCareAction(actionId);
+                return manager.RegisterDailyCareAction(actionId)
+                    ? "Today's care routine complete."
+                    : string.Empty;
             }
+
+            return string.Empty;
         }
 
         private string GetCareActionId()

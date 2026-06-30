@@ -14,6 +14,7 @@ namespace CheeseTama.Save
         public UnlockSaveData unlocks = new UnlockSaveData();
         public List<MilkGrowthSaveEntry> milkGrowth = new List<MilkGrowthSaveEntry>();
         public CareHistorySaveData careHistory = new CareHistorySaveData();
+        public DailyCareSaveData dailyCare = new DailyCareSaveData();
         public CollectionSaveData collections = new CollectionSaveData();
 
         public void EnsureRuntimeDefaults()
@@ -23,6 +24,7 @@ namespace CheeseTama.Save
             unlocks ??= new UnlockSaveData();
             milkGrowth ??= new List<MilkGrowthSaveEntry>();
             careHistory ??= new CareHistorySaveData();
+            dailyCare ??= new DailyCareSaveData();
             collections ??= new CollectionSaveData();
             collections.EnsureRuntimeDefaults();
         }
@@ -49,5 +51,19 @@ namespace CheeseTama.Save
         public int waitHours;
         public string lastCareActionId = string.Empty;
         public string lastCareActionAtIso = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class DailyCareSaveData
+    {
+        public string dateKey = string.Empty;
+        public int milkFeeds;
+        public int snacksFed;
+        public int playSessions;
+        public int cleanings;
+        public int rests;
+        public int completedRoutineCount;
+        public string lastCompletedDateKey = string.Empty;
+        public string lastCompletedAtIso = string.Empty;
     }
 }

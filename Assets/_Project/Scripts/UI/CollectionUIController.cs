@@ -178,6 +178,16 @@ namespace CheeseTama.UI
                 return "Waited 3 hours";
             }
 
+            if (id == "daily_routine_complete")
+            {
+                return "Daily routine complete";
+            }
+
+            if (id == "daily_routine_3")
+            {
+                return "3 daily routines";
+            }
+
             if (id == "quiet_hum")
             {
                 return "Quiet milkroom hum";
@@ -268,6 +278,11 @@ namespace CheeseTama.UI
             if (id == "warm_balance")
             {
                 return "Warm Balance";
+            }
+
+            if (id == "daily_regular")
+            {
+                return "Daily Regular";
             }
 
             return string.IsNullOrWhiteSpace(id) ? "unknown" : id;

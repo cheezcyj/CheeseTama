@@ -86,7 +86,7 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 650));
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 700));
             var panelTransform = panel.transform;
             RemoveChildIfExists(panelTransform, "Milk Growth Text");
 
@@ -106,9 +106,10 @@ namespace CheeseTama.Core
             var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "Star Milk: locked", 16, TextAnchor.UpperLeft, new Vector2(16, -392), new Vector2(280, 24));
             var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -420), new Vector2(280, 24));
             var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "Care: 0 | Play 0 Clean 0 Rest 0", 14, TextAnchor.UpperLeft, new Vector2(16, -448), new Vector2(280, 24));
-            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 14, TextAnchor.UpperLeft, new Vector2(16, -476), new Vector2(280, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -506), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -540), new Vector2(280, 78));
+            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "Today: M 0/1 P 0/1 C 0/1 R 0/1", 14, TextAnchor.UpperLeft, new Vector2(16, -476), new Vector2(280, 24));
+            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 14, TextAnchor.UpperLeft, new Vector2(16, -504), new Vector2(280, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -534), new Vector2(280, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -568), new Vector2(280, 84));
 
             controller.Configure(
                 nameText,
@@ -127,6 +128,7 @@ namespace CheeseTama.Core
                 starMilkGrowthText,
                 unlockText,
                 careSummaryText,
+                dailyRoutineText,
                 careTipText,
                 lastSavedText,
                 messageText);
