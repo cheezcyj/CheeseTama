@@ -18,7 +18,8 @@ namespace CheeseTama.UI
         WaitHour,
         FeedStarMilk,
         FeedSnack,
-        CatchMilkDrops
+        CatchMilkDrops,
+        Blend
     }
 
     [RequireComponent(typeof(Button))]
@@ -128,6 +129,14 @@ namespace CheeseTama.UI
                 var message = manager.PlayMilkDropCatch();
                 PersistAfterInteraction(manager);
                 Refresh(message, manager, false, "milk_drop_catch");
+                return;
+            }
+
+            if (action == MilkroomCareAction.Blend)
+            {
+                manager.RegisterCareAction("blend");
+                PersistAfterInteraction(manager);
+                Refresh("The blending table is warming up.", manager, false, "happy_wiggle");
                 return;
             }
 

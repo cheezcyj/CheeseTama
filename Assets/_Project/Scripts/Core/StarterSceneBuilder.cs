@@ -86,32 +86,51 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<MilkroomUIController>();
             }
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -24), new Vector2(320, 760));
+            RemoveMilkroomPrototypeButtons(canvas.transform);
+
+            var topBar = GetOrCreatePanel(canvas.transform, "Top Status Bar", new Vector2(24, -18), new Vector2(1872, 78));
+            var topBarTransform = topBar.transform;
+            var nameText = GetOrCreateText(topBarTransform, "Name Text", "CheeseTama", 22, TextAnchor.MiddleLeft, new Vector2(22, -14), new Vector2(250, 34));
+            var levelText = GetOrCreateText(topBarTransform, "Level Text", "Lv. 1 (0%)", 18, TextAnchor.MiddleLeft, new Vector2(300, -14), new Vector2(230, 34));
+            var sessionText = GetOrCreateText(topBarTransform, "Session Text", "Session: 00:00 | Today 00:00", 15, TextAnchor.MiddleLeft, new Vector2(560, -14), new Vector2(390, 34));
+            var economyText = GetOrCreateText(topBarTransform, "Economy Text", "Items: Coins 0 Drops 0 Frags 0", 15, TextAnchor.MiddleLeft, new Vector2(980, -14), new Vector2(520, 34));
+            var settingsButton = GetOrCreateButton(topBarTransform, "Settings Button", "Settings", new Vector2(790, 17));
+
+            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -116), new Vector2(350, 620));
             var panelTransform = panel.transform;
             RemoveChildIfExists(panelTransform, "Milk Growth Text");
+            RemoveChildIfExists(panelTransform, "Name Text");
+            RemoveChildIfExists(panelTransform, "Level Text");
+            RemoveChildIfExists(panelTransform, "Hunger Text");
+            RemoveChildIfExists(panelTransform, "Mood Text");
+            RemoveChildIfExists(panelTransform, "Cleanliness Text");
+            RemoveChildIfExists(panelTransform, "Sleepiness Text");
+            RemoveChildIfExists(panelTransform, "Health Text");
+            RemoveChildIfExists(panelTransform, "Session Text");
+            RemoveChildIfExists(panelTransform, "Economy Text");
 
-            var nameText = GetOrCreateText(panelTransform, "Name Text", "CheeseTama", 22, TextAnchor.UpperLeft, new Vector2(16, -14), new Vector2(260, 30));
-            var levelText = GetOrCreateText(panelTransform, "Level Text", "Lv. 1 (0%)", 18, TextAnchor.UpperLeft, new Vector2(16, -48), new Vector2(260, 26));
-            var formText = GetOrCreateText(panelTransform, "Form Text", "Form: egg", 16, TextAnchor.UpperLeft, new Vector2(16, -78), new Vector2(260, 24));
-            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "Condition: warm", 16, TextAnchor.UpperLeft, new Vector2(16, -106), new Vector2(260, 24));
-            var hungerText = GetOrCreateText(panelTransform, "Hunger Text", "Hunger: 80", 16, TextAnchor.UpperLeft, new Vector2(16, -140), new Vector2(260, 24));
-            var moodText = GetOrCreateText(panelTransform, "Mood Text", "Mood: 70", 16, TextAnchor.UpperLeft, new Vector2(16, -168), new Vector2(260, 24));
-            var cleanlinessText = GetOrCreateText(panelTransform, "Cleanliness Text", "Cleanliness: 90", 16, TextAnchor.UpperLeft, new Vector2(16, -196), new Vector2(260, 24));
-            var sleepinessText = GetOrCreateText(panelTransform, "Sleepiness Text", "Sleepiness: 20", 16, TextAnchor.UpperLeft, new Vector2(16, -224), new Vector2(260, 24));
-            var healthText = GetOrCreateText(panelTransform, "Health Text", "Health: 100", 16, TextAnchor.UpperLeft, new Vector2(16, -252), new Vector2(260, 24));
-            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 16, TextAnchor.UpperLeft, new Vector2(16, -280), new Vector2(260, 24));
-            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -308), new Vector2(260, 24));
-            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 16, TextAnchor.UpperLeft, new Vector2(16, -336), new Vector2(260, 24));
-            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "Basic Milk: Lv. 0 (0 pts)", 16, TextAnchor.UpperLeft, new Vector2(16, -364), new Vector2(280, 24));
-            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "Star Milk: locked", 16, TextAnchor.UpperLeft, new Vector2(16, -392), new Vector2(280, 24));
-            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 16, TextAnchor.UpperLeft, new Vector2(16, -420), new Vector2(280, 24));
-            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "Care: 0 | Play 0 Clean 0 Rest 0", 14, TextAnchor.UpperLeft, new Vector2(16, -448), new Vector2(280, 24));
-            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "Today: M 0/1 P 0/1 C 0/1 R 0/1", 14, TextAnchor.UpperLeft, new Vector2(16, -476), new Vector2(280, 24));
-            var sessionText = GetOrCreateText(panelTransform, "Session Text", "Session: 00:00 | Today 00:00", 14, TextAnchor.UpperLeft, new Vector2(16, -504), new Vector2(280, 24));
-            var economyText = GetOrCreateText(panelTransform, "Economy Text", "Items: Coins 0 Drops 0 Frags 0", 14, TextAnchor.UpperLeft, new Vector2(16, -532), new Vector2(280, 24));
-            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 14, TextAnchor.UpperLeft, new Vector2(16, -560), new Vector2(280, 24));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 14, TextAnchor.UpperLeft, new Vector2(16, -590), new Vector2(280, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 14, TextAnchor.UpperLeft, new Vector2(16, -624), new Vector2(280, 88));
+            GetOrCreateText(panelTransform, "Detail Title Text", "Milkroom Notes", 18, TextAnchor.UpperLeft, new Vector2(18, -16), new Vector2(300, 28));
+            var formText = GetOrCreateText(panelTransform, "Form Text", "Form: egg", 15, TextAnchor.UpperLeft, new Vector2(18, -58), new Vector2(300, 24));
+            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "Condition: warm", 15, TextAnchor.UpperLeft, new Vector2(18, -86), new Vector2(300, 24));
+            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 15, TextAnchor.UpperLeft, new Vector2(18, -124), new Vector2(300, 24));
+            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -152), new Vector2(300, 24));
+            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 15, TextAnchor.UpperLeft, new Vector2(18, -180), new Vector2(300, 24));
+            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "Basic Milk: Lv. 0 (0 pts)", 15, TextAnchor.UpperLeft, new Vector2(18, -220), new Vector2(310, 24));
+            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "Star Milk: locked", 15, TextAnchor.UpperLeft, new Vector2(18, -248), new Vector2(310, 24));
+            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 15, TextAnchor.UpperLeft, new Vector2(18, -276), new Vector2(310, 24));
+            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "Care: 0 | Play 0 Clean 0 Rest 0", 13, TextAnchor.UpperLeft, new Vector2(18, -318), new Vector2(310, 24));
+            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "Today: M 0/1 P 0/1 C 0/1 R 0/1", 13, TextAnchor.UpperLeft, new Vector2(18, -346), new Vector2(310, 24));
+            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
+            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 13, TextAnchor.UpperLeft, new Vector2(18, -492), new Vector2(310, 98));
+
+            var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(470, -846), new Vector2(980, 74));
+            var statBarTransform = statBar.transform;
+            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "Hunger: 80", 15, TextAnchor.MiddleCenter, new Vector2(24, -20), new Vector2(170, 32));
+            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "Mood: 70", 15, TextAnchor.MiddleCenter, new Vector2(214, -20), new Vector2(170, 32));
+            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "Cleanliness: 90", 15, TextAnchor.MiddleCenter, new Vector2(404, -20), new Vector2(170, 32));
+            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "Sleepiness: 20", 15, TextAnchor.MiddleCenter, new Vector2(594, -20), new Vector2(170, 32));
+            var healthText = GetOrCreateText(statBarTransform, "Health Text", "Health: 100", 15, TextAnchor.MiddleCenter, new Vector2(784, -20), new Vector2(170, 32));
 
             controller.Configure(
                 nameText,
@@ -141,44 +160,37 @@ namespace CheeseTama.Core
             controller.ShowMessage("Ready for care.");
             visualController.Bind(manager.CurrentTama);
 
-            var catchDropsButton = GetOrCreateButton(canvas.transform, "Catch Drops Button", "Catch Drops", new Vector2(-700, 92));
-            ConfigureCareButton(catchDropsButton, MilkroomCareAction.CatchMilkDrops, controller, visualController);
+            var actionBar = GetOrCreatePanel(canvas.transform, "Bottom Action Bar", new Vector2(350, -968), new Vector2(1220, 84));
+            var actionBarTransform = actionBar.transform;
+            var milkButton = GetOrCreateButton(actionBarTransform, "Milk Button", "Milk", new Vector2(-510, 20));
+            ConfigureCareButton(milkButton, MilkroomCareAction.FeedMilk, controller, visualController);
 
-            var snackButton = GetOrCreateButton(canvas.transform, "Snack Button", "Snack", new Vector2(-700, 36));
+            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "Blend", new Vector2(-340, 20));
+            ConfigureCareButton(blendButton, MilkroomCareAction.Blend, controller, visualController);
+
+            var snackButton = GetOrCreateButton(actionBarTransform, "Snack Button", "Snack", new Vector2(-170, 20));
             ConfigureCareButton(snackButton, MilkroomCareAction.FeedSnack, controller, visualController);
 
-            var feedButton = GetOrCreateButton(canvas.transform, "Feed Milk Button", "Feed Milk", new Vector2(-560, 36));
-            ConfigureCareButton(feedButton, MilkroomCareAction.FeedMilk, controller, visualController);
-
-            var starMilkButton = GetOrCreateButton(canvas.transform, "Star Milk Button", "Star Milk", new Vector2(-420, 36));
-            ConfigureCareButton(starMilkButton, MilkroomCareAction.FeedStarMilk, controller, visualController);
-
-            var playButton = GetOrCreateButton(canvas.transform, "Play Button", "Play", new Vector2(-280, 36));
+            var playButton = GetOrCreateButton(actionBarTransform, "Play Button", "Play", new Vector2(0, 20));
             ConfigureCareButton(playButton, MilkroomCareAction.Play, controller, visualController);
 
-            var cleanButton = GetOrCreateButton(canvas.transform, "Clean Button", "Clean", new Vector2(-140, 36));
+            var cleanButton = GetOrCreateButton(actionBarTransform, "Clean Button", "Clean", new Vector2(170, 20));
             ConfigureCareButton(cleanButton, MilkroomCareAction.Clean, controller, visualController);
 
-            var restButton = GetOrCreateButton(canvas.transform, "Rest Button", "Rest", new Vector2(0, 36));
-            ConfigureCareButton(restButton, MilkroomCareAction.Rest, controller, visualController);
+            var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "Sleep", new Vector2(340, 20));
+            ConfigureCareButton(sleepButton, MilkroomCareAction.Rest, controller, visualController);
 
-            var waitHourButton = GetOrCreateButton(canvas.transform, "Wait Hour Button", "Wait 1h", new Vector2(140, 36));
-            ConfigureCareButton(waitHourButton, MilkroomCareAction.WaitHour, controller, visualController);
-
-            var saveButton = GetOrCreateButton(canvas.transform, "Save Button", "Save", new Vector2(280, 36));
-            ConfigureCareButton(saveButton, MilkroomCareAction.Save, controller, visualController);
-
-            var reloadButton = GetOrCreateButton(canvas.transform, "Reload Button", "Reload", new Vector2(420, 36));
-            ConfigureCareButton(reloadButton, MilkroomCareAction.Reload, controller, visualController);
-
-            var resetButton = GetOrCreateButton(canvas.transform, "Reset Button", "Reset", new Vector2(560, 36));
-            ConfigureCareButton(resetButton, MilkroomCareAction.Reset, controller, visualController);
-
-            var collectionButton = GetOrCreateButton(canvas.transform, "Collection Button", "Collection", new Vector2(700, 36));
+            var collectionButton = GetOrCreateButton(actionBarTransform, "Collection Button", "Collection", new Vector2(510, 20));
             ConfigureNavigationButton(collectionButton, SceneNames.Collection, true);
 
-            var debugButton = GetOrCreateButton(canvas.transform, "Debug Button", "Debug", new Vector2(840, 36));
-            ConfigureNavigationButton(debugButton, SceneNames.Debug, true);
+            var actionBarController = actionBar.GetComponent<BottomActionBarController>();
+            if (actionBarController == null)
+            {
+                actionBarController = actionBar.AddComponent<BottomActionBarController>();
+            }
+
+            actionBarController.Configure(milkButton, blendButton, snackButton, playButton, cleanButton, sleepButton, collectionButton);
+            BuildMilkroomSettings(canvas.transform, settingsButton, controller, visualController);
         }
 
         public static void BuildCollectionScene()
@@ -274,6 +286,96 @@ namespace CheeseTama.Core
             ConfigureNavigationButton(milkroomButton, SceneNames.Milkroom, true);
         }
 
+        private static void BuildMilkroomSettings(
+            Transform canvasTransform,
+            Button settingsButton,
+            MilkroomUIController controller,
+            CheeseTamaVisualController visualController)
+        {
+            var settingsModal = GetOrCreatePanel(canvasTransform, "Settings Modal", new Vector2(1320, -116), new Vector2(560, 620));
+            var settingsTransform = settingsModal.transform;
+            GetOrCreateText(settingsTransform, "Settings Title Text", "Settings", 22, TextAnchor.UpperLeft, new Vector2(24, -22), new Vector2(280, 34));
+            GetOrCreateText(settingsTransform, "Settings Data Title Text", "Data Management", 18, TextAnchor.UpperLeft, new Vector2(24, -96), new Vector2(300, 30));
+            GetOrCreateText(settingsTransform, "Settings Sound Title Text", "Sound", 16, TextAnchor.UpperLeft, new Vector2(24, -244), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Display Title Text", "Display", 16, TextAnchor.UpperLeft, new Vector2(24, -294), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "Controls", 16, TextAnchor.UpperLeft, new Vector2(24, -344), new Vector2(220, 26));
+
+            var closeSettingsButton = GetOrCreateButton(settingsTransform, "Close Settings Button", "Close", new Vector2(196, 552));
+            var manualSaveButton = GetOrCreateButton(settingsTransform, "Manual Save Button", "Save", new Vector2(-150, 410));
+            var manualLoadButton = GetOrCreateButton(settingsTransform, "Manual Load Button", "Load", new Vector2(0, 410));
+            var openResetButton = GetOrCreateButton(settingsTransform, "Open Reset Button", "Reset", new Vector2(150, 410));
+            ApplyDangerButtonStyle(openResetButton);
+            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "Auto-save runs after care actions.", 13, TextAnchor.UpperLeft, new Vector2(24, -176), new Vector2(500, 46));
+
+            var confirmRoot = GetOrCreatePanel(canvasTransform, "Confirm Reset Dialog", new Vector2(640, -300), new Vector2(640, 360));
+            var confirmTransform = confirmRoot.transform;
+            GetOrCreateText(confirmTransform, "Confirm Reset Title Text", "Reset Data", 22, TextAnchor.UpperLeft, new Vector2(24, -24), new Vector2(300, 34));
+            var confirmMessageText = GetOrCreateText(
+                confirmTransform,
+                "Confirm Reset Message Text",
+                "Type RESET to clear all local CheeseTama progress.",
+                15,
+                TextAnchor.UpperLeft,
+                new Vector2(24, -82),
+                new Vector2(580, 70));
+            var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "Type RESET", new Vector2(24, -176), new Vector2(360, 48));
+            var confirmResetButton = GetOrCreateButton(confirmTransform, "Confirm Reset Button", "Reset", new Vector2(120, 44));
+            ApplyDangerButtonStyle(confirmResetButton);
+            var cancelResetButton = GetOrCreateButton(confirmTransform, "Cancel Reset Button", "Cancel", new Vector2(280, 44));
+
+            var confirmResetDialog = confirmRoot.GetComponent<ConfirmResetDialog>();
+            if (confirmResetDialog == null)
+            {
+                confirmResetDialog = confirmRoot.AddComponent<ConfirmResetDialog>();
+            }
+
+            confirmResetDialog.Configure(
+                confirmRoot,
+                resetInput,
+                confirmMessageText,
+                confirmResetButton,
+                cancelResetButton,
+                controller,
+                visualController);
+
+            var dataPanel = settingsModal.GetComponent<DataManagementPanelController>();
+            if (dataPanel == null)
+            {
+                dataPanel = settingsModal.AddComponent<DataManagementPanelController>();
+            }
+
+            dataPanel.Configure(
+                manualSaveButton,
+                manualLoadButton,
+                openResetButton,
+                dataStatusText,
+                confirmResetDialog,
+                controller,
+                visualController);
+
+            var settingsController = settingsModal.GetComponent<SettingsMenuController>();
+            if (settingsController == null)
+            {
+                settingsController = settingsModal.AddComponent<SettingsMenuController>();
+            }
+
+            settingsController.Configure(settingsButton, closeSettingsButton, settingsModal);
+
+            var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1276, -746), new Vector2(300, 164));
+            var devPanelTransform = devPanel.transform;
+            GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "Dev Panel", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
+            var debugSceneButton = GetOrCreateButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(0, 26));
+            ConfigureNavigationButton(debugSceneButton, SceneNames.Debug, true);
+
+            var devPanelController = canvasTransform.GetComponent<DevPanelController>();
+            if (devPanelController == null)
+            {
+                devPanelController = canvasTransform.gameObject.AddComponent<DevPanelController>();
+            }
+
+            devPanelController.Configure(devPanel);
+        }
+
         private static Camera EnsureCamera(string name)
         {
             var existing = Object.FindFirstObjectByType<Camera>();
@@ -294,16 +396,39 @@ namespace CheeseTama.Core
 
         private static void EnsureLight()
         {
-            if (Object.FindFirstObjectByType<Light>() != null)
+            var keyObject = GameObject.Find("Milkroom Key Light");
+            if (keyObject == null)
             {
-                return;
+                keyObject = new GameObject("Milkroom Key Light");
             }
 
-            var lightObject = new GameObject("Milkroom Key Light");
-            var light = lightObject.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.intensity = 1.4f;
-            lightObject.transform.rotation = Quaternion.Euler(50, -30, 0);
+            var keyLight = keyObject.GetComponent<Light>();
+            if (keyLight == null)
+            {
+                keyLight = keyObject.AddComponent<Light>();
+            }
+
+            keyLight.type = LightType.Directional;
+            keyLight.color = new Color(1f, 0.96f, 0.86f);
+            keyLight.intensity = 1.45f;
+            keyObject.transform.rotation = Quaternion.Euler(48, -32, 0);
+
+            var rimObject = GameObject.Find("Milkroom Rim Light");
+            if (rimObject == null)
+            {
+                rimObject = new GameObject("Milkroom Rim Light");
+            }
+
+            var rimLight = rimObject.GetComponent<Light>();
+            if (rimLight == null)
+            {
+                rimLight = rimObject.AddComponent<Light>();
+            }
+
+            rimLight.type = LightType.Directional;
+            rimLight.color = new Color(0.76f, 0.92f, 1f);
+            rimLight.intensity = 0.35f;
+            rimObject.transform.rotation = Quaternion.Euler(25, 145, 0);
         }
 
         private static CheeseTamaVisualController EnsureCheeseTamaPlaceholder()
@@ -376,6 +501,23 @@ namespace CheeseTama.Core
 
             CreateText(canvas.transform, "Title Text", title, 34, TextAnchor.MiddleCenter, new Vector2(0, -82), new Vector2(520, 44), true);
             CreateText(canvas.transform, "Subtitle Text", subtitle, 18, TextAnchor.MiddleCenter, new Vector2(0, -128), new Vector2(520, 32), true);
+        }
+
+        private static void RemoveMilkroomPrototypeButtons(Transform canvasTransform)
+        {
+            RemoveChildIfExists(canvasTransform, "Catch Drops Button");
+            RemoveChildIfExists(canvasTransform, "Snack Button");
+            RemoveChildIfExists(canvasTransform, "Feed Milk Button");
+            RemoveChildIfExists(canvasTransform, "Star Milk Button");
+            RemoveChildIfExists(canvasTransform, "Play Button");
+            RemoveChildIfExists(canvasTransform, "Clean Button");
+            RemoveChildIfExists(canvasTransform, "Rest Button");
+            RemoveChildIfExists(canvasTransform, "Wait Hour Button");
+            RemoveChildIfExists(canvasTransform, "Save Button");
+            RemoveChildIfExists(canvasTransform, "Reload Button");
+            RemoveChildIfExists(canvasTransform, "Reset Button");
+            RemoveChildIfExists(canvasTransform, "Collection Button");
+            RemoveChildIfExists(canvasTransform, "Debug Button");
         }
 
         private static GameObject CreatePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
@@ -477,6 +619,67 @@ namespace CheeseTama.Core
             }
 
             return CreateText(parent, name, text, fontSize, alignment, anchoredPosition, size, centered);
+        }
+
+        private static InputField GetOrCreateInputField(
+            Transform parent,
+            string name,
+            string placeholder,
+            Vector2 anchoredPosition,
+            Vector2 size)
+        {
+            var existing = parent.Find(name);
+            if (existing != null && existing.TryGetComponent(out InputField existingInput))
+            {
+                ConfigureInputField(existingInput, placeholder, anchoredPosition, size);
+                return existingInput;
+            }
+
+            var inputObject = new GameObject(name);
+            inputObject.transform.SetParent(parent, false);
+            inputObject.AddComponent<RectTransform>();
+            var image = inputObject.AddComponent<Image>();
+            image.color = new Color(1f, 0.98f, 0.9f);
+
+            var input = inputObject.AddComponent<InputField>();
+            var text = CreateText(inputObject.transform, "Text", string.Empty, 18, TextAnchor.MiddleLeft, new Vector2(12, 0), new Vector2(size.x - 24, size.y), false);
+            var placeholderText = CreateText(inputObject.transform, "Placeholder", placeholder, 18, TextAnchor.MiddleLeft, new Vector2(12, 0), new Vector2(size.x - 24, size.y), false);
+            placeholderText.color = new Color(0.45f, 0.34f, 0.24f, 0.45f);
+            input.textComponent = text;
+            input.placeholder = placeholderText;
+            ConfigureInputField(input, placeholder, anchoredPosition, size);
+            return input;
+        }
+
+        private static void ConfigureInputField(
+            InputField input,
+            string placeholder,
+            Vector2 anchoredPosition,
+            Vector2 size)
+        {
+            var rect = input.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = size;
+
+            var image = input.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(1f, 0.98f, 0.9f);
+            }
+
+            if (input.placeholder is Text placeholderText)
+            {
+                ConfigureText(placeholderText, placeholder, 18, TextAnchor.MiddleLeft, new Vector2(12, 0), new Vector2(size.x - 24, size.y), false);
+                placeholderText.color = new Color(0.45f, 0.34f, 0.24f, 0.45f);
+            }
+
+            if (input.textComponent != null)
+            {
+                ConfigureText(input.textComponent, input.text, 18, TextAnchor.MiddleLeft, new Vector2(12, 0), new Vector2(size.x - 24, size.y), false);
+            }
         }
 
         private static void ConfigureText(
@@ -588,13 +791,23 @@ namespace CheeseTama.Core
                 image = button.gameObject.AddComponent<Image>();
             }
 
-            image.color = new Color(1f, 0.78f, 0.34f);
+            image.color = new Color(0.96f, 0.78f, 0.35f);
             button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            var colors = button.colors;
+            colors.normalColor = new Color(0.96f, 0.78f, 0.35f);
+            colors.highlightedColor = new Color(1f, 0.86f, 0.46f);
+            colors.pressedColor = new Color(0.91f, 0.61f, 0.2f);
+            colors.selectedColor = new Color(1f, 0.86f, 0.46f);
+            colors.disabledColor = new Color(0.72f, 0.66f, 0.56f, 0.72f);
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
 
             var labelTransform = button.transform.Find("Label");
             if (labelTransform == null)
             {
-                CreateText(button.transform, "Label", label, 16, TextAnchor.MiddleCenter, Vector2.zero, rect.sizeDelta, true);
+                var createdLabel = CreateText(button.transform, "Label", label, 16, TextAnchor.MiddleCenter, Vector2.zero, rect.sizeDelta, true);
+                ConfigureButtonLabel(createdLabel);
                 return;
             }
 
@@ -604,6 +817,47 @@ namespace CheeseTama.Core
             }
 
             ConfigureText(labelText, label, 16, TextAnchor.MiddleCenter, Vector2.zero, rect.sizeDelta, true);
+            ConfigureButtonLabel(labelText);
+        }
+
+        private static void ConfigureButtonLabel(Text label)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            label.color = new Color(0.31f, 0.22f, 0.14f);
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 11;
+            label.resizeTextMaxSize = 16;
+        }
+
+        private static void ApplyDangerButtonStyle(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(0.84f, 0.35f, 0.29f);
+            }
+
+            var colors = button.colors;
+            colors.normalColor = new Color(0.84f, 0.35f, 0.29f);
+            colors.highlightedColor = new Color(0.95f, 0.45f, 0.38f);
+            colors.pressedColor = new Color(0.68f, 0.24f, 0.2f);
+            colors.selectedColor = new Color(0.95f, 0.45f, 0.38f);
+            button.colors = colors;
+
+            var labelTransform = button.transform.Find("Label");
+            if (labelTransform != null && labelTransform.TryGetComponent(out Text label))
+            {
+                label.color = new Color(1f, 0.96f, 0.9f);
+            }
         }
 
         private static Font GetDefaultFont()
