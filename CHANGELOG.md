@@ -57,3 +57,4 @@
 - Update GAME_DESIGN with the current design direction, implemented systems, UI rules, character direction, and next-priority work.
 - Update Unity package manifest and ProjectVersion metadata to match the current Unity 6000.0.78f1 project setup.
 - Expand Unity-focused .gitignore and .gitattributes rules, add VS Code helper settings, track the package lock file, sync ProjectSettings assets, and mirror backup-folder scene files into the tracked repository.
+- Add a cozy 2.5D Milkroom background with window, shelves, bottles, rug, furniture, warm lighting, and improve CheeseTama proportions so the character reads rounder and less side-compressed.
