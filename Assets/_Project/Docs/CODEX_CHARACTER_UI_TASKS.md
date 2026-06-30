@@ -5,7 +5,8 @@
 - Runtime CheeseTama rig creates Body, FaceAnchor, Highlight, SoftShadow, and VFXRoot.
 - Hatched CheeseTama supports seven expression states.
 - Idle breathing and softer squash/stretch reactions are handled in code.
-- Milkroom bottom bar now focuses on direct actions only.
+- Milkroom bottom bar now focuses on six direct care actions only.
+- Collection is moved to the top menu beside Settings.
 - Save, Load, and Reset are moved into Settings > Data Management.
 - Reset requires typing `RESET`.
 - F12 Dev Panel is separated from the release-facing bottom bar.
@@ -20,7 +21,7 @@
 ## Next UI Work
 
 - Add real settings tabs for sound, display, and controls.
-- Add icon assets to the seven bottom action buttons.
+- Add icon assets to the six bottom care action buttons and top menu buttons.
 - Add toast notifications for save, discovery, and reward feedback.
 - Add a proper Blend panel with recipe inputs and safe hidden-recipe handling.
 - Improve Collection screen card layout while keeping hidden content fully invisible until unlocked.

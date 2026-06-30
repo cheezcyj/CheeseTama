@@ -94,6 +94,8 @@ namespace CheeseTama.Core
             var levelText = GetOrCreateText(topBarTransform, "Level Text", "Lv. 1 (0%)", 18, TextAnchor.MiddleLeft, new Vector2(300, -14), new Vector2(230, 34));
             var sessionText = GetOrCreateText(topBarTransform, "Session Text", "Session: 00:00 | Today 00:00", 15, TextAnchor.MiddleLeft, new Vector2(560, -14), new Vector2(390, 34));
             var economyText = GetOrCreateText(topBarTransform, "Economy Text", "Items: Coins 0 Drops 0 Frags 0", 15, TextAnchor.MiddleLeft, new Vector2(980, -14), new Vector2(520, 34));
+            var topCollectionButton = GetOrCreateButton(topBarTransform, "Top Collection Button", "Collection", new Vector2(638, 17));
+            ConfigureNavigationButton(topCollectionButton, SceneNames.Collection, true);
             var settingsButton = GetOrCreateButton(topBarTransform, "Settings Button", "Settings", new Vector2(790, 17));
 
             var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -116), new Vector2(350, 620));
@@ -162,26 +164,25 @@ namespace CheeseTama.Core
 
             var actionBar = GetOrCreatePanel(canvas.transform, "Bottom Action Bar", new Vector2(350, -968), new Vector2(1220, 84));
             var actionBarTransform = actionBar.transform;
-            var milkButton = GetOrCreateButton(actionBarTransform, "Milk Button", "Milk", new Vector2(-510, 20));
+            RemoveChildIfExists(actionBarTransform, "Collection Button");
+
+            var milkButton = GetOrCreateButton(actionBarTransform, "Milk Button", "Milk", new Vector2(-425, 20));
             ConfigureCareButton(milkButton, MilkroomCareAction.FeedMilk, controller, visualController);
 
-            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "Blend", new Vector2(-340, 20));
+            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "Blend", new Vector2(-255, 20));
             ConfigureCareButton(blendButton, MilkroomCareAction.Blend, controller, visualController);
 
-            var snackButton = GetOrCreateButton(actionBarTransform, "Snack Button", "Snack", new Vector2(-170, 20));
+            var snackButton = GetOrCreateButton(actionBarTransform, "Snack Button", "Snack", new Vector2(-85, 20));
             ConfigureCareButton(snackButton, MilkroomCareAction.FeedSnack, controller, visualController);
 
-            var playButton = GetOrCreateButton(actionBarTransform, "Play Button", "Play", new Vector2(0, 20));
+            var playButton = GetOrCreateButton(actionBarTransform, "Play Button", "Play", new Vector2(85, 20));
             ConfigureCareButton(playButton, MilkroomCareAction.Play, controller, visualController);
 
-            var cleanButton = GetOrCreateButton(actionBarTransform, "Clean Button", "Clean", new Vector2(170, 20));
+            var cleanButton = GetOrCreateButton(actionBarTransform, "Clean Button", "Clean", new Vector2(255, 20));
             ConfigureCareButton(cleanButton, MilkroomCareAction.Clean, controller, visualController);
 
-            var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "Sleep", new Vector2(340, 20));
+            var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "Sleep", new Vector2(425, 20));
             ConfigureCareButton(sleepButton, MilkroomCareAction.Rest, controller, visualController);
-
-            var collectionButton = GetOrCreateButton(actionBarTransform, "Collection Button", "Collection", new Vector2(510, 20));
-            ConfigureNavigationButton(collectionButton, SceneNames.Collection, true);
 
             var actionBarController = actionBar.GetComponent<BottomActionBarController>();
             if (actionBarController == null)
@@ -189,7 +190,7 @@ namespace CheeseTama.Core
                 actionBarController = actionBar.AddComponent<BottomActionBarController>();
             }
 
-            actionBarController.Configure(milkButton, blendButton, snackButton, playButton, cleanButton, sleepButton, collectionButton);
+            actionBarController.Configure(milkButton, blendButton, snackButton, playButton, cleanButton, sleepButton);
             BuildMilkroomSettings(canvas.transform, settingsButton, controller, visualController);
         }
 
