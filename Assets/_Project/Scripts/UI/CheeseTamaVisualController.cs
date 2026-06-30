@@ -28,6 +28,7 @@ namespace CheeseTama.UI
         private MaterialPropertyBlock propertyBlock;
         private Transform modelRoot;
         private Transform visualRoot;
+        private Transform cheeseMarksRoot;
         private Transform body;
         private Transform leftArm;
         private Transform rightArm;
@@ -245,11 +246,21 @@ namespace CheeseTama.UI
 
             modelRoot = GetOrCreateChild(transform, "ModelRoot");
             visualRoot = GetOrCreateChild(modelRoot, "VisualRoot");
+            cheeseMarksRoot = GetOrCreateChild(visualRoot, "CheeseMarks");
             RemoveLegacyVisualChild("Milk Belly Patch");
             RemoveLegacyVisualChild("Cream Cap");
             RemoveLegacyVisualChild("Left Jelly Stub");
             RemoveLegacyVisualChild("Right Jelly Stub");
             RemoveLegacyVisualChild("Highlight");
+            for (var i = 0; i < cheeseHoles.Length; i += 1)
+            {
+                RemoveLegacyVisualChild($"Cheese Hole {i + 1}");
+            }
+
+            for (var i = 0; i < cheeseSpeckles.Length; i += 1)
+            {
+                RemoveLegacyVisualChild($"Cheese Speckle {i + 1}");
+            }
 
             body = GetOrCreatePrimitiveChild(visualRoot, "Body", PrimitiveType.Sphere);
             leftArm = GetOrCreatePrimitiveChild(visualRoot, "Left Soft Arm", PrimitiveType.Sphere);
@@ -269,14 +280,14 @@ namespace CheeseTama.UI
 
             for (var i = 0; i < cheeseHoles.Length; i += 1)
             {
-                cheeseHoles[i] = GetOrCreatePrimitiveChild(visualRoot, $"Cheese Hole {i + 1}", PrimitiveType.Sphere);
+                cheeseHoles[i] = GetOrCreatePrimitiveChild(cheeseMarksRoot, $"Cheese Hole {i + 1}", PrimitiveType.Sphere);
                 cheeseHoleRenderers[i] = cheeseHoles[i].GetComponent<Renderer>();
                 ConfigureOverlayRenderer(cheeseHoleRenderers[i]);
             }
 
             for (var i = 0; i < cheeseSpeckles.Length; i += 1)
             {
-                cheeseSpeckles[i] = GetOrCreatePrimitiveChild(visualRoot, $"Cheese Speckle {i + 1}", PrimitiveType.Sphere);
+                cheeseSpeckles[i] = GetOrCreatePrimitiveChild(cheeseMarksRoot, $"Cheese Speckle {i + 1}", PrimitiveType.Sphere);
                 cheeseSpeckleRenderers[i] = cheeseSpeckles[i].GetComponent<Renderer>();
                 ConfigureOverlayRenderer(cheeseSpeckleRenderers[i]);
             }
@@ -382,7 +393,7 @@ namespace CheeseTama.UI
         {
             var isEgg = stage == CharacterStage.Egg;
             var hasCurl = stage >= CharacterStage.Soft;
-            var hasCrown = stage == CharacterStage.Final;
+            var hasCrown = stage == CharacterStage.Final && isReacting && reactionFlash >= HatchReactionFlash;
             var bodyHeight = isEgg ? 1.12f : stage >= CharacterStage.Mature ? 1.03f : 0.98f;
             var bodyWidth = isEgg ? 1.08f : stage >= CharacterStage.Mature ? 1.3f : 1.18f;
 
@@ -413,8 +424,8 @@ namespace CheeseTama.UI
             SetSpot(cheeseHoles[2], new Vector3(0.68f, -0.1f, -0.71f), new Vector3(0.13f, 0.18f, 0.024f), Quaternion.identity, stage >= CharacterStage.Soft);
             SetSpot(cheeseHoles[3], new Vector3(-0.18f, 0.58f, -0.68f), new Vector3(0.07f, 0.05f, 0.022f), Quaternion.identity, true);
             SetSpot(cheeseHoles[4], new Vector3(0.2f, -0.5f, -0.66f), new Vector3(0.08f, 0.06f, 0.022f), Quaternion.identity, !isEgg);
-            SetSpot(cheeseHoles[5], new Vector3(-0.7f, -0.28f, -0.69f), new Vector3(0.09f, 0.11f, 0.022f), Quaternion.identity, stage >= CharacterStage.Grown);
-            SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.42f, -0.68f), new Vector3(0.045f, 0.035f, 0.02f), Quaternion.identity, stage >= CharacterStage.Mature);
+            SetSpot(cheeseHoles[5], new Vector3(-0.7f, -0.28f, -0.69f), new Vector3(0.09f, 0.11f, 0.022f), Quaternion.identity, false);
+            SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.42f, -0.68f), new Vector3(0.045f, 0.035f, 0.02f), Quaternion.identity, false);
 
             SetSpot(cheeseSpeckles[0], new Vector3(-0.36f, -0.34f, -0.74f), new Vector3(0.035f, 0.02f, 0.018f), Quaternion.identity, true);
             SetSpot(cheeseSpeckles[1], new Vector3(-0.08f, -0.46f, -0.74f), new Vector3(0.028f, 0.02f, 0.018f), Quaternion.identity, true);
@@ -459,6 +470,18 @@ namespace CheeseTama.UI
                 return;
             }
 
+            if (expression == FaceExpression.Sparkle)
+            {
+                SetFeature(leftEye, new Vector3(-0.29f, 0.17f, -0.78f), new Vector3(0.2f, 0.24f, 0.04f), Quaternion.identity, true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.29f, 0.17f, -0.78f), new Vector3(0.2f, 0.24f, 0.04f), Quaternion.identity, true, eyeColor);
+                SetFeature(leftEyeSparkle, new Vector3(-0.35f, 0.25f, -0.81f), new Vector3(0.07f, 0.08f, 0.018f), Quaternion.identity, true, Color.white);
+                SetFeature(rightEyeSparkle, new Vector3(0.23f, 0.25f, -0.81f), new Vector3(0.07f, 0.08f, 0.018f), Quaternion.identity, true, Color.white);
+                SetMouthSmile(mouthColor, -0.12f, 0.18f);
+                SetFeature(leftCheek, new Vector3(-0.52f, -0.08f, -0.76f), new Vector3(0.24f, 0.11f, 0.026f), Quaternion.identity, true, cheekColor);
+                SetFeature(rightCheek, new Vector3(0.52f, -0.08f, -0.76f), new Vector3(0.24f, 0.11f, 0.026f), Quaternion.identity, true, cheekColor);
+                return;
+            }
+
             if (expression == FaceExpression.Sleepy)
             {
                 SetFeature(leftEye, new Vector3(-0.29f, 0.1f, -0.78f), new Vector3(0.18f, 0.045f, 0.04f), Quaternion.identity, true, eyeColor);
@@ -484,6 +507,20 @@ namespace CheeseTama.UI
                 SetFeature(mouthLeft, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
                 SetFeature(mouthRight, Vector3.zero, Vector3.one, Quaternion.identity, false, mouthColor);
                 SetFeature(mouthOpen, new Vector3(0f, -0.18f, -0.8f), new Vector3(0.1f, 0.11f, 0.025f), Quaternion.identity, true, mouthColor);
+                return;
+            }
+
+            if (expression == FaceExpression.Sad)
+            {
+                var sadCheek = Color.Lerp(cheekColor, Color.white, 0.35f);
+                SetFeature(leftEye, new Vector3(-0.29f, 0.1f, -0.78f), new Vector3(0.14f, 0.16f, 0.04f), Quaternion.Euler(0f, 0f, -8f), true, eyeColor);
+                SetFeature(rightEye, new Vector3(0.29f, 0.1f, -0.78f), new Vector3(0.14f, 0.16f, 0.04f), Quaternion.Euler(0f, 0f, 8f), true, eyeColor);
+                SetFeature(leftEyeSparkle, Vector3.zero, Vector3.one, Quaternion.identity, false, Color.white);
+                SetFeature(rightEyeSparkle, Vector3.zero, Vector3.one, Quaternion.identity, false, Color.white);
+                SetFeature(mouthLeft, new Vector3(-0.055f, -0.22f, -0.8f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, 16f), true, mouthColor);
+                SetFeature(mouthRight, new Vector3(0.055f, -0.22f, -0.8f), new Vector3(0.1f, 0.025f, 0.018f), Quaternion.Euler(0f, 0f, -16f), true, mouthColor);
+                SetFeature(leftCheek, new Vector3(-0.5f, -0.12f, -0.76f), new Vector3(0.16f, 0.07f, 0.026f), Quaternion.identity, true, sadCheek);
+                SetFeature(rightCheek, new Vector3(0.5f, -0.12f, -0.76f), new Vector3(0.16f, 0.07f, 0.026f), Quaternion.identity, true, sadCheek);
                 return;
             }
 
@@ -863,7 +900,12 @@ namespace CheeseTama.UI
 
             if (tama.stats.maturation > 95 || tama.levelProgress > 95)
             {
-                return FaceExpression.Surprised;
+                return FaceExpression.Sparkle;
+            }
+
+            if (tama.stats.mood < 35)
+            {
+                return FaceExpression.Sad;
             }
 
             if (tama.stats.mood > 80)
@@ -957,7 +999,9 @@ namespace CheeseTama.UI
             Sleepy,
             Upset,
             Surprised,
-            Sick
+            Sad,
+            Sick,
+            Sparkle
         }
     }
 }

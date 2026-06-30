@@ -1,4 +1,5 @@
 using CheeseTama.Data;
+using CheeseTama.Environment;
 using CheeseTama.Save;
 using CheeseTama.UI;
 using UnityEngine;
@@ -383,6 +384,7 @@ namespace CheeseTama.Core
 
             settingsController.Configure(settingsButton, closeSettingsButton, settingsModal);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1570, -116), new Vector2(326, 206));
             var devPanelTransform = devPanel.transform;
             GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "Dev Panel", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
@@ -399,6 +401,9 @@ namespace CheeseTama.Core
             }
 
             devPanelController.Configure(devPanel);
+#else
+            RemoveChildIfExists(canvasTransform, "Dev Panel");
+#endif
         }
 
         private static Camera EnsureCamera(string name)
@@ -438,22 +443,22 @@ namespace CheeseTama.Core
             keyLight.intensity = 1.45f;
             keyObject.transform.rotation = Quaternion.Euler(48, -32, 0);
 
-            var rimObject = GameObject.Find("Milkroom Rim Light");
-            if (rimObject == null)
+            var fillObject = GameObject.Find("Milkroom Fill Light");
+            if (fillObject == null)
             {
-                rimObject = new GameObject("Milkroom Rim Light");
+                fillObject = new GameObject("Milkroom Fill Light");
             }
 
-            var rimLight = rimObject.GetComponent<Light>();
-            if (rimLight == null)
+            var fillLight = fillObject.GetComponent<Light>();
+            if (fillLight == null)
             {
-                rimLight = rimObject.AddComponent<Light>();
+                fillLight = fillObject.AddComponent<Light>();
             }
 
-            rimLight.type = LightType.Directional;
-            rimLight.color = new Color(0.76f, 0.92f, 1f);
-            rimLight.intensity = 0.35f;
-            rimObject.transform.rotation = Quaternion.Euler(25, 145, 0);
+            fillLight.type = LightType.Directional;
+            fillLight.color = new Color(0.76f, 0.92f, 1f);
+            fillLight.intensity = 0.45f;
+            fillObject.transform.rotation = Quaternion.Euler(25, 145, 0);
         }
 
         private static void EnsureMilkroomBackground()
@@ -472,28 +477,90 @@ namespace CheeseTama.Core
             var root = new GameObject("Milkroom Background").transform;
             root.position = Vector3.zero;
 
-            CreateDecorPart(root, "Back Wall", PrimitiveType.Cube, new Vector3(0f, 0.55f, 2.85f), new Vector3(10.8f, 5.8f, 0.08f), new Color(0.82f, 0.61f, 0.42f));
-            CreateDecorPart(root, "Warm Wall Wash", PrimitiveType.Sphere, new Vector3(0f, 1.45f, 2.45f), new Vector3(5.6f, 3.2f, 0.05f), new Color(1f, 0.82f, 0.48f));
-            CreateDecorPart(root, "Floor Plane", PrimitiveType.Cube, new Vector3(0f, -2.62f, 1.72f), new Vector3(10.9f, 2.5f, 0.08f), new Color(0.58f, 0.34f, 0.18f));
+            var backgroundRoot = CreateLayerRoot(root, "BackgroundRoot");
+            var midgroundRoot = CreateLayerRoot(root, "MidgroundRoot");
+            var playAreaRoot = CreateLayerRoot(root, "PlayAreaRoot");
+            var foregroundRoot = CreateLayerRoot(root, "ForegroundRoot");
+            var themeVfxRoot = CreateLayerRoot(root, "ThemeVFXRoot");
+
+            CreateDecorPart(backgroundRoot, "Back Wall", PrimitiveType.Cube, new Vector3(0f, 0.55f, 2.85f), new Vector3(10.8f, 5.8f, 0.08f), new Color(0.82f, 0.61f, 0.42f));
+            CreateDecorPart(backgroundRoot, "Warm Wall Wash", PrimitiveType.Sphere, new Vector3(0f, 1.45f, 2.45f), new Vector3(5.6f, 3.2f, 0.05f), new Color(1f, 0.82f, 0.48f));
+            CreateDecorPart(midgroundRoot, "Floor Plane", PrimitiveType.Cube, new Vector3(0f, -2.62f, 1.72f), new Vector3(10.9f, 2.5f, 0.08f), new Color(0.58f, 0.34f, 0.18f));
 
             for (var i = 0; i < 7; i += 1)
             {
                 var y = -1.58f - i * 0.32f;
-                CreateDecorPart(root, $"Floor Plank Line {i + 1}", PrimitiveType.Cube, new Vector3(0f, y, 1.32f), new Vector3(10.2f, 0.018f, 0.04f), new Color(0.42f, 0.24f, 0.13f));
+                CreateDecorPart(midgroundRoot, $"Floor Plank Line {i + 1}", PrimitiveType.Cube, new Vector3(0f, y, 1.32f), new Vector3(10.2f, 0.018f, 0.04f), new Color(0.42f, 0.24f, 0.13f));
             }
 
             for (var i = 0; i < 9; i += 1)
             {
                 var x = -4.2f + i * 1.05f;
-                CreateDecorPart(root, $"Floor Vertical Seam {i + 1}", PrimitiveType.Cube, new Vector3(x, -2.65f, 1.31f), new Vector3(0.018f, 2.1f, 0.04f), new Color(0.49f, 0.29f, 0.16f));
+                CreateDecorPart(midgroundRoot, $"Floor Vertical Seam {i + 1}", PrimitiveType.Cube, new Vector3(x, -2.65f, 1.31f), new Vector3(0.018f, 2.1f, 0.04f), new Color(0.49f, 0.29f, 0.16f));
             }
 
-            CreateRug(root);
-            CreateWindow(root);
-            CreateLeftFurniture(root);
-            CreateRightFurniture(root);
-            CreateShelfGroup(root);
-            CreateHangingLights(root);
+            CreateRug(playAreaRoot);
+            CreateWindow(backgroundRoot);
+            CreateLeftFurniture(midgroundRoot);
+            CreateRightFurniture(midgroundRoot);
+            CreateShelfGroup(midgroundRoot);
+            CreateHangingLights(backgroundRoot);
+            CreateMilkroomForeground(foregroundRoot);
+            CreateAmbientThemeVfx(themeVfxRoot);
+            CreateLayerRoot(playAreaRoot, "CheeseTamaAnchor").localPosition = new Vector3(0f, -0.28f, 0f);
+            AddMilkroomControllers(root, backgroundRoot, midgroundRoot, playAreaRoot, foregroundRoot, themeVfxRoot);
+        }
+
+        private static Transform CreateLayerRoot(Transform parent, string name)
+        {
+            var layer = new GameObject(name).transform;
+            layer.SetParent(parent, false);
+            layer.localPosition = Vector3.zero;
+            layer.localRotation = Quaternion.identity;
+            layer.localScale = Vector3.one;
+            return layer;
+        }
+
+        private static void AddMilkroomControllers(
+            Transform root,
+            Transform backgroundRoot,
+            Transform midgroundRoot,
+            Transform playAreaRoot,
+            Transform foregroundRoot,
+            Transform themeVfxRoot)
+        {
+            var propController = root.GetComponent<MilkroomPropController>();
+            if (propController == null)
+            {
+                propController = root.gameObject.AddComponent<MilkroomPropController>();
+            }
+
+            propController.Configure(backgroundRoot, midgroundRoot, playAreaRoot, foregroundRoot, themeVfxRoot);
+
+            var ambientController = root.GetComponent<MilkroomAmbientEventController>();
+            if (ambientController == null)
+            {
+                ambientController = root.gameObject.AddComponent<MilkroomAmbientEventController>();
+            }
+
+            ambientController.Configure(themeVfxRoot);
+
+            var themeController = root.GetComponent<MilkroomThemeController>();
+            if (themeController == null)
+            {
+                themeController = root.gameObject.AddComponent<MilkroomThemeController>();
+            }
+
+            themeController.Configure(backgroundRoot, midgroundRoot, playAreaRoot, foregroundRoot, themeVfxRoot);
+            themeController.ApplyTheme(MilkroomThemeController.MorningThemeId);
+
+            var lightingController = root.GetComponent<MilkroomLightingController>();
+            if (lightingController == null)
+            {
+                lightingController = root.gameObject.AddComponent<MilkroomLightingController>();
+            }
+
+            lightingController.ApplyTheme(MilkroomThemeController.MorningThemeId);
         }
 
         private static void CreateRug(Transform root)
@@ -592,6 +659,34 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "Center Pendant Glow", PrimitiveType.Sphere, new Vector3(0.18f, 2.36f, 1.08f), new Vector3(0.36f, 0.28f, 0.05f), new Color(1f, 0.78f, 0.34f));
             CreateStarLamp(root, "Left Star Lamp", new Vector3(-3.9f, 1.72f, 1.02f), 0.32f);
             CreateStarLamp(root, "Right Star Lamp", new Vector3(2.05f, 2.28f, 1.02f), 0.3f);
+        }
+
+        private static void CreateMilkroomForeground(Transform root)
+        {
+            CreateDecorPart(root, "Foreground Soft Milk Drop L", PrimitiveType.Sphere, new Vector3(-3.38f, -2.12f, 0.48f), new Vector3(0.28f, 0.055f, 0.04f), new Color(0.94f, 0.9f, 0.78f));
+            CreateDecorPart(root, "Foreground Soft Milk Drop C", PrimitiveType.Sphere, new Vector3(2.2f, -2.1f, 0.48f), new Vector3(0.22f, 0.05f, 0.04f), new Color(0.94f, 0.9f, 0.78f));
+            CreateDecorPart(root, "Foreground Soft Milk Drop R", PrimitiveType.Sphere, new Vector3(4.05f, -2.0f, 0.48f), new Vector3(0.34f, 0.06f, 0.04f), new Color(0.94f, 0.9f, 0.78f));
+            CreateDecorPart(root, "Foreground Warm Vignette", PrimitiveType.Cube, new Vector3(0f, -2.98f, 0.36f), new Vector3(10.8f, 0.18f, 0.04f), new Color(0.35f, 0.2f, 0.12f));
+        }
+
+        private static void CreateAmbientThemeVfx(Transform root)
+        {
+            for (var i = 0; i < 12; i += 1)
+            {
+                var x = -4.6f + i * 0.84f;
+                var y = 2.38f - (i % 4) * 0.34f;
+                CreateDecorPart(root, $"Rain Streak {i + 1}", PrimitiveType.Cube, new Vector3(x, y, 0.62f), new Vector3(0.025f, 0.34f, 0.025f), new Color(0.62f, 0.74f, 0.82f));
+            }
+
+            for (var i = 0; i < 14; i += 1)
+            {
+                var x = -1.05f + (i % 7) * 0.36f;
+                var y = 1.28f + (i / 7) * 0.38f;
+                CreateDecorPart(root, $"Night Star Speckle {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 0.58f), new Vector3(0.035f, 0.035f, 0.018f), new Color(0.78f, 0.88f, 1f));
+            }
+
+            CreateDecorPart(root, "Evening Window Beam L", PrimitiveType.Cube, new Vector3(-0.7f, 0.08f, 0.54f), new Vector3(0.12f, 2.4f, 0.02f), new Color(1f, 0.62f, 0.25f));
+            CreateDecorPart(root, "Evening Window Beam R", PrimitiveType.Cube, new Vector3(0.7f, 0.08f, 0.54f), new Vector3(0.12f, 2.4f, 0.02f), new Color(1f, 0.62f, 0.25f));
         }
 
         private static void CreateMilkBottle(Transform root, string name, Vector3 position, float size)
