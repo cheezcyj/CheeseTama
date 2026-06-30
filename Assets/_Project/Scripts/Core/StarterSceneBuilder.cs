@@ -308,6 +308,11 @@ namespace CheeseTama.Core
             var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "Auto-save runs after care actions. Manual tools are below.", 13, TextAnchor.UpperLeft, new Vector2(28, -134), new Vector2(500, 42));
 
             var confirmRoot = GetOrCreatePanel(canvasTransform, "Confirm Reset Dialog", new Vector2(640, -300), new Vector2(640, 360));
+            if (confirmRoot.TryGetComponent(out Image confirmImage))
+            {
+                confirmImage.color = new Color(1f, 0.98f, 0.9f, 1f);
+            }
+
             var confirmTransform = confirmRoot.transform;
             GetOrCreateText(confirmTransform, "Confirm Reset Title Text", "Reset Data", 22, TextAnchor.UpperLeft, new Vector2(24, -24), new Vector2(300, 34));
             var confirmMessageText = GetOrCreateText(
@@ -318,7 +323,8 @@ namespace CheeseTama.Core
                 TextAnchor.UpperLeft,
                 new Vector2(24, -82),
                 new Vector2(580, 70));
-            var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "Type RESET", new Vector2(24, -176), new Vector2(360, 48));
+            GetOrCreateText(confirmTransform, "Reset Input Label Text", "Enter RESET to unlock the button.", 14, TextAnchor.UpperLeft, new Vector2(24, -152), new Vector2(420, 24));
+            var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "RESET", new Vector2(24, -184), new Vector2(360, 52));
             var confirmResetButton = GetOrCreateTopLeftButton(confirmTransform, "Confirm Reset Button", "Reset", new Vector2(344, -284), new Vector2(120, 42));
             ApplyDangerButtonStyle(confirmResetButton);
             var cancelResetButton = GetOrCreateTopLeftButton(confirmTransform, "Cancel Reset Button", "Cancel", new Vector2(480, -284), new Vector2(120, 42));

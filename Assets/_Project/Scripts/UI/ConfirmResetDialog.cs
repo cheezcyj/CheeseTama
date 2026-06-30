@@ -1,3 +1,4 @@
+using System;
 using CheeseTama.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +38,12 @@ namespace CheeseTama.UI
                 confirmButton.onClick.AddListener(ConfirmReset);
             }
 
+            if (resetInput != null)
+            {
+                resetInput.onValueChanged.RemoveListener(HandleInputChanged);
+                resetInput.onValueChanged.AddListener(HandleInputChanged);
+            }
+
             if (cancelButton != null)
             {
                 cancelButton.onClick.RemoveListener(Close);
@@ -53,11 +60,18 @@ namespace CheeseTama.UI
                 resetInput.text = string.Empty;
             }
 
-            SetMessage("Type RESET to clear all local CheeseTama progress.");
+            SetMessage("Type RESET in the box below. The Reset button unlocks only after the text matches.");
+            RefreshConfirmButtonState();
 
             if (dialogRoot != null)
             {
                 dialogRoot.SetActive(true);
+            }
+
+            if (resetInput != null)
+            {
+                resetInput.ActivateInputField();
+                resetInput.Select();
             }
         }
 
@@ -71,9 +85,10 @@ namespace CheeseTama.UI
 
         private void ConfirmReset()
         {
-            if (resetInput == null || resetInput.text != "RESET")
+            if (!IsResetInputValid())
             {
-                SetMessage("Reset blocked. Type RESET exactly to continue.");
+                SetMessage("Reset is locked. Type RESET exactly, then press Reset.");
+                RefreshConfirmButtonState();
                 return;
             }
 
@@ -85,6 +100,33 @@ namespace CheeseTama.UI
             visualController?.React(false);
             SetMessage("Save data reset.");
             Close();
+        }
+
+        private void HandleInputChanged(string value)
+        {
+            RefreshConfirmButtonState();
+            if (IsResetInputValid())
+            {
+                SetMessage("RESET matched. Press Reset to clear local progress.");
+            }
+            else
+            {
+                SetMessage("Type RESET in the box below. The Reset button unlocks only after the text matches.");
+            }
+        }
+
+        private void RefreshConfirmButtonState()
+        {
+            if (confirmButton != null)
+            {
+                confirmButton.interactable = IsResetInputValid();
+            }
+        }
+
+        private bool IsResetInputValid()
+        {
+            return resetInput != null
+                && string.Equals(resetInput.text.Trim(), "RESET", StringComparison.Ordinal);
         }
 
         private void SetMessage(string message)
