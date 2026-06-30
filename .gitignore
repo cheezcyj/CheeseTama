@@ -1,26 +1,44 @@
-# Unity generated files
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-[Uu]ser[Ss]ettings/
+# Unity generated folders
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+
+# Unity generated packages / exports
+*.unitypackage
+*.apk
+*.aab
+*.app
 
 # Visual Studio / Rider
 .vs/
 .idea/
+*.booproj
 *.csproj
 *.sln
+*.slnx
+*.pidb
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
 *.suo
 *.user
 *.userprefs
+*.DotSettings.user
+_ReSharper*/
 
 # OS files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Unity crash/debug output
 sysinfo.txt
 *.stackdump
-
