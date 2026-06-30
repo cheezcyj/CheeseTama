@@ -41,3 +41,4 @@
 - Save every successful Milkroom interaction so stat-only care actions persist reliably.
 - Track cumulative care history with collection milestones and hidden care records.
 - Add a daily care routine with Milkroom progress, collection milestones, and a hidden regular-care record.
+- Use edit-mode-safe object cleanup for generated visual parts and duplicate core objects.

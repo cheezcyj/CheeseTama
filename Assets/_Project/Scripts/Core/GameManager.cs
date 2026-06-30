@@ -38,7 +38,7 @@ namespace CheeseTama.Core
         {
             if (Instance != null && Instance != this)
             {
-                Destroy(gameObject);
+                DestroyGameObjectSafely(gameObject);
                 return;
             }
 
@@ -526,6 +526,22 @@ namespace CheeseTama.Core
 
             records.Add(id);
             return true;
+        }
+
+        private static void DestroyGameObjectSafely(GameObject target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(target);
+                return;
+            }
+
+            DestroyImmediate(target);
         }
     }
 }

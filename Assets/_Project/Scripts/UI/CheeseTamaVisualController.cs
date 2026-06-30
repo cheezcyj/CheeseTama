@@ -217,7 +217,7 @@ namespace CheeseTama.UI
             var collider = feature.GetComponent<Collider>();
             if (collider != null)
             {
-                Destroy(collider);
+                DestroySafely(collider);
             }
 
             var renderer = feature.GetComponent<Renderer>();
@@ -354,7 +354,7 @@ namespace CheeseTama.UI
             var collider = cue.GetComponent<Collider>();
             if (collider != null)
             {
-                Destroy(collider);
+                DestroySafely(collider);
             }
 
             eventCue = cue.transform;
@@ -462,6 +462,22 @@ namespace CheeseTama.UI
             propertyBlock.SetColor(BaseColorId, color);
             propertyBlock.SetColor(ColorId, color);
             renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private static void DestroySafely(Object target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(target);
+                return;
+            }
+
+            DestroyImmediate(target);
         }
 
         private void EnsurePropertyBlock()
