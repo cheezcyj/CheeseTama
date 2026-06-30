@@ -63,7 +63,7 @@ namespace CheeseTama.Gameplay.Events
 
             if (force || Random.value <= 0.06f)
             {
-                return new CareEventResult(true, "quiet_hum", "Event: The milkroom hummed softly for CheeseTama.");
+                return new CareEventResult(true, "quiet_hum", "이벤트: 밀크룸이 치즈타마에게 부드럽게 울렸습니다.");
             }
 
             return CareEventResult.None();
@@ -73,27 +73,27 @@ namespace CheeseTama.Gameplay.Events
         {
             if (tama.stats.health < 35)
             {
-                return new CareEventResult(true, "small_fever", "Event: CheeseTama felt chilly, so the light grew warmer.");
+                return new CareEventResult(true, "small_fever", "이벤트: 치즈타마가 추워해서 조명이 더 따뜻해졌습니다.");
             }
 
             if (tama.stats.hunger < 25)
             {
-                return new CareEventResult(true, "hungry_peep", "Event: CheeseTama made a tiny hungry peep.");
+                return new CareEventResult(true, "hungry_peep", "이벤트: 치즈타마가 배고픈 소리를 작게 냈습니다.");
             }
 
             if (tama.stats.cleanliness < 35)
             {
-                return new CareEventResult(true, "dusty_corner", "Event: A dusty corner caught CheeseTama's attention.");
+                return new CareEventResult(true, "dusty_corner", "이벤트: 먼지 낀 구석이 치즈타마의 눈에 들어왔습니다.");
             }
 
             if (tama.stats.sleepiness > 75)
             {
-                return new CareEventResult(true, "sleepy_yawn", "Event: CheeseTama let out a sleepy yawn.");
+                return new CareEventResult(true, "sleepy_yawn", "이벤트: 치즈타마가 졸린 하품을 했습니다.");
             }
 
             if (tama.stats.mood > 80)
             {
-                return new CareEventResult(true, "happy_wiggle", "Event: CheeseTama did a happy little wiggle.");
+                return new CareEventResult(true, "happy_wiggle", "이벤트: 치즈타마가 기분 좋게 살짝 흔들렸습니다.");
             }
 
             return CareEventResult.None();

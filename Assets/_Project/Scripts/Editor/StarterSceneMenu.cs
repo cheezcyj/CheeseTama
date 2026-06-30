@@ -7,7 +7,7 @@ namespace CheeseTama.Editor
 {
     public static class StarterSceneMenu
     {
-        [MenuItem("CheeseTama/Build Starter Scenes")]
+        [MenuItem("CheeseTama/시작 씬 빌드")]
         public static void BuildStarterScenes()
         {
             BuildScene(SceneNames.Boot, StarterSceneBuilder.BuildBootScene);
@@ -34,4 +34,3 @@ namespace CheeseTama.Editor
         }
     }
 }
-

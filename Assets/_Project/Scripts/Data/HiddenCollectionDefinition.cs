@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CheeseTama.Data
 {
-    [CreateAssetMenu(menuName = "CheeseTama/Data/Hidden Collection", fileName = "HiddenCollection_")]
+    [CreateAssetMenu(menuName = "CheeseTama/데이터/숨겨진 도감", fileName = "HiddenCollection_")]
     public sealed class HiddenCollectionDefinition : ScriptableObject
     {
         public string id;
@@ -44,4 +44,3 @@ namespace CheeseTama.Data
         }
     }
 }
-

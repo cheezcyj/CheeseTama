@@ -82,14 +82,14 @@ namespace CheeseTama.UI
             if (action == DebugAction.ResetSave)
             {
                 manager.ResetGame();
-                Refresh("Reset CheeseTama save data.", manager, false);
+                Refresh("CheeseTama 저장 데이터를 초기화했습니다.", manager, false);
                 return;
             }
 
             var tama = manager.CurrentTama;
             if (tama == null)
             {
-                Refresh("No CheeseTama save data was available.", manager, false);
+                Refresh("CheeseTama 저장 데이터를 사용할 수 없습니다.", manager, false);
                 return;
             }
 
@@ -117,34 +117,34 @@ namespace CheeseTama.UI
                     tama.stats.hunger = 10;
                     tama.stats.mood = 45;
                     tama.stats.health = 90;
-                    return "Debug preset applied: hungry CheeseTama.";
+                    return "개발자 프리셋 적용: 배고픈 CheeseTama.";
                 case DebugAction.SetSleepy:
                     tama.stats.sleepiness = 90;
                     tama.stats.mood = 45;
-                    return "Debug preset applied: sleepy CheeseTama.";
+                    return "개발자 프리셋 적용: 졸린 CheeseTama.";
                 case DebugAction.SetMessy:
                     tama.stats.cleanliness = 15;
                     tama.stats.mood = 50;
-                    return "Debug preset applied: messy CheeseTama.";
+                    return "개발자 프리셋 적용: 지저분한 CheeseTama.";
                 case DebugAction.SetUnwell:
                     tama.stats.health = 20;
                     tama.stats.hunger = 45;
                     tama.stats.cleanliness = 45;
-                    return "Debug preset applied: unwell CheeseTama.";
+                    return "개발자 프리셋 적용: 아픈 CheeseTama.";
                 case DebugAction.SetCheerful:
                     tama.stats.mood = 95;
                     tama.stats.affection = 35;
                     tama.stats.hunger = 85;
-                    return "Debug preset applied: cheerful CheeseTama.";
+                    return "개발자 프리셋 적용: 신난 CheeseTama.";
                 case DebugAction.HatchNow:
                     EnsureHatched(manager, tama);
                     celebrate = true;
-                    return "Debug hatch applied: Soft CheeseTama is awake.";
+                    return "개발자 부화 적용: 말랑 CheeseTama가 깨어났습니다.";
                 case DebugAction.UnlockStarMilk:
                     manager.UnlockStarMilk();
                     manager.RegisterMilkDiscovery(StarMilkId);
                     manager.RegisterEventDiscovery("star_milk_unlocked");
-                    return "Debug unlock applied: Star Milk is available.";
+                    return "개발자 해금 적용: 별빛 우유를 사용할 수 있습니다.";
                 case DebugAction.ForceEvent:
                     var eventResult = ForceCareEvent(manager);
                     eventId = eventResult.eventId;
@@ -152,7 +152,7 @@ namespace CheeseTama.UI
                 case DebugAction.AddSessionFiveMinutes:
                     return manager.TickMilkroomPresence(300);
                 default:
-                    return "No debug action was selected.";
+                    return "선택된 개발자 액션이 없습니다.";
             }
         }
 
@@ -161,7 +161,7 @@ namespace CheeseTama.UI
             var eventResult = manager.ForceCareEvent();
             if (!eventResult.occurred)
             {
-                return new CareEventResult(false, string.Empty, "Debug event roll found no event.");
+                return new CareEventResult(false, string.Empty, "발생한 개발자 이벤트가 없습니다.");
             }
 
             manager.RegisterEventDiscovery(eventResult.eventId);
@@ -195,7 +195,7 @@ namespace CheeseTama.UI
             if (!tama.isHatched)
             {
                 tama.isHatched = true;
-                tama.name = "Soft CheeseTama";
+                tama.name = "말랑 CheeseTama";
                 tama.form = "soft_cheesetama";
             }
 
@@ -228,7 +228,7 @@ namespace CheeseTama.UI
             }
             else
             {
-                Debug.LogWarning("DebugActionButton could not find CheeseTama visual controller.");
+                Debug.LogWarning("CheeseTama 비주얼 컨트롤러를 찾지 못했습니다.");
             }
 
             Debug.Log(message);

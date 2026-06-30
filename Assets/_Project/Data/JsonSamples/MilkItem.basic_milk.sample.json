@@ -1,6 +1,6 @@
 {
   "id": "basic_milk",
-  "displayName": "Basic Milk",
+  "displayName": "기본 우유",
   "rarity": "Common",
   "category": "Milk",
   "effects": {
@@ -23,4 +23,3 @@
   "growthPointGain": 1,
   "isHiddenUntilUnlocked": false
 }
-

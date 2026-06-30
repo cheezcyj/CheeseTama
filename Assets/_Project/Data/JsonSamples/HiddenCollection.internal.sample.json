@@ -1,7 +1,7 @@
 {
   "id": "hidden_001",
   "internalCategory": "internal",
-  "displayNameAfterUnlock": "Unlocked Card",
+  "displayNameAfterUnlock": "해금된 카드",
   "rarity": "Epic",
   "isHiddenUntilUnlocked": true,
   "displayPolicy": {
@@ -19,4 +19,3 @@
     "showAcquiredDateAfterUnlock": true
   }
 }
-

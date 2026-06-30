@@ -22,7 +22,7 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.milkSatisfaction += 4;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 8, "CheeseTama drank milk.");
+            return AddCareProgress(tama, 8, "치즈타마가 우유를 마셨습니다.");
         }
 
         public CareActionResult FeedStarMilk(CheeseTamaModel tama)
@@ -39,7 +39,7 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.milkSatisfaction += 8;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 12, "CheeseTama drank star milk.");
+            return AddCareProgress(tama, 12, "치즈타마가 별빛 우유를 마셨습니다.");
         }
 
         public CareActionResult FeedSnack(CheeseTamaModel tama)
@@ -58,8 +58,8 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.ClampAll();
 
             var message = tama.stats.cleanliness < 45
-                ? "CheeseTama enjoyed a crumbly cheese snack. The milkroom needs cleaning."
-                : "CheeseTama nibbled a cheese snack.";
+                ? "치즈타마가 부스러지는 치즈 간식을 먹었습니다. 밀크룸 청소가 필요합니다."
+                : "치즈타마가 치즈 간식을 조금 먹었습니다.";
             return AddCareProgress(tama, 5, message);
         }
 
@@ -76,7 +76,7 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.affection += 4;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 6, "CheeseTama played for a bit.");
+            return AddCareProgress(tama, 6, "치즈타마가 잠깐 놀았습니다.");
         }
 
         public CareActionResult Clean(CheeseTamaModel tama)
@@ -91,7 +91,7 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.health += 2;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 4, "The milkroom is clean.");
+            return AddCareProgress(tama, 4, "밀크룸이 깨끗해졌습니다.");
         }
 
         public CareActionResult Rest(CheeseTamaModel tama)
@@ -107,7 +107,7 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.mood += 2;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 3, "CheeseTama rested under warm light.");
+            return AddCareProgress(tama, 3, "치즈타마가 따뜻한 빛 아래에서 쉬었습니다.");
         }
 
         private CareActionResult AddCareProgress(CheeseTamaModel tama, int progress, string message)
@@ -118,18 +118,18 @@ namespace CheeseTama.Gameplay.Care
 
             if (hatched)
             {
-                return new CareActionResult(true, true, "The shell opened. A soft CheeseTama woke up.");
+                return new CareActionResult(true, true, "껍질이 열리고 말랑한 치즈타마가 깨어났습니다.");
             }
 
             if (tama.level > levelBefore)
             {
-                return new CareActionResult(true, false, $"{message} Level up. Hatch {HatchingSystem.GetHatchProgressPercent(tama)}%.");
+                return new CareActionResult(true, false, $"{message} 레벨이 올랐습니다. 부화 {HatchingSystem.GetHatchProgressPercent(tama)}%.");
             }
 
             var hatchProgress = HatchingSystem.GetHatchProgressPercent(tama);
             if (!tama.isHatched && hatchProgress >= 75)
             {
-                return new CareActionResult(true, false, $"{message} The shell feels warm. Hatch {hatchProgress}%.");
+                return new CareActionResult(true, false, $"{message} 껍질이 따뜻해졌습니다. 부화 {hatchProgress}%.");
             }
 
             return new CareActionResult(true, false, message);
@@ -137,7 +137,7 @@ namespace CheeseTama.Gameplay.Care
 
         private static CareActionResult MissingTama()
         {
-            return new CareActionResult(false, false, "No CheeseTama data is loaded.");
+            return new CareActionResult(false, false, "치즈타마 데이터를 불러오지 못했습니다.");
         }
     }
 }

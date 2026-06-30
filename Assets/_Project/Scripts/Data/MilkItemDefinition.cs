@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace CheeseTama.Data
 {
-    [CreateAssetMenu(menuName = "CheeseTama/Data/Milk Item", fileName = "MilkItem_")]
+    [CreateAssetMenu(menuName = "CheeseTama/데이터/우유 아이템", fileName = "MilkItem_")]
     public sealed class MilkItemDefinition : ScriptableObject
     {
         public string id;
@@ -15,4 +15,3 @@ namespace CheeseTama.Data
         public bool isHiddenUntilUnlocked;
     }
 }
-

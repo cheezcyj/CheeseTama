@@ -67,10 +67,10 @@ namespace CheeseTama.Core
             EnsureCamera("Boot Camera");
             EnsureEventSystem();
             EnsureCanvas("Boot Canvas");
-            EnsureTitle("Boot Canvas", "CheeseTama", "Loading core systems");
+            EnsureTitle("Boot Canvas", "CheeseTama", "핵심 시스템을 준비하는 중");
 
             var canvas = EnsureCanvas("Boot Canvas");
-            var startButton = GetOrCreateButton(canvas.transform, "Start Button", "Start", new Vector2(0, 120));
+            var startButton = GetOrCreateButton(canvas.transform, "Start Button", "시작", new Vector2(0, 120));
             ConfigureNavigationButton(startButton, SceneNames.Milkroom, false);
         }
 
@@ -95,9 +95,9 @@ namespace CheeseTama.Core
             var topBar = GetOrCreatePanel(canvas.transform, "Top Status Bar", new Vector2(24, -18), new Vector2(1872, 78));
             var topBarTransform = topBar.transform;
             var nameText = GetOrCreateText(topBarTransform, "Name Text", "CheeseTama", 22, TextAnchor.MiddleLeft, new Vector2(22, -14), new Vector2(250, 34));
-            var levelText = GetOrCreateText(topBarTransform, "Level Text", "Lv. 1 (0%)", 18, TextAnchor.MiddleLeft, new Vector2(300, -14), new Vector2(230, 34));
-            var sessionText = GetOrCreateText(topBarTransform, "Session Text", "Session: 00:00 | Today 00:00", 15, TextAnchor.MiddleLeft, new Vector2(560, -14), new Vector2(390, 34));
-            var economyText = GetOrCreateText(topBarTransform, "Economy Text", "Items: Coins 0 Drops 0 Frags 0", 15, TextAnchor.MiddleLeft, new Vector2(940, -14), new Vector2(430, 34));
+            var levelText = GetOrCreateText(topBarTransform, "Level Text", "레벨 1 (0%)", 18, TextAnchor.MiddleLeft, new Vector2(300, -14), new Vector2(230, 34));
+            var sessionText = GetOrCreateText(topBarTransform, "Session Text", "세션: 00:00 | 오늘 00:00", 15, TextAnchor.MiddleLeft, new Vector2(560, -14), new Vector2(390, 34));
+            var economyText = GetOrCreateText(topBarTransform, "Economy Text", "보유: 코인 0 방울 0 조각 0", 15, TextAnchor.MiddleLeft, new Vector2(940, -14), new Vector2(430, 34));
             RemoveChildIfExists(topBarTransform, "Top Collection Button");
             RemoveChildIfExists(topBarTransform, "Top Decorate Button");
             RemoveChildIfExists(topBarTransform, "Settings Button");
@@ -113,6 +113,10 @@ namespace CheeseTama.Core
             var topDecorateButton = GetOrCreateTopLeftButton(topMenuTransform, "Top Decorate Button", "꾸미기", new Vector2(158, -7), new Vector2(128, 42));
             var settingsButton = GetOrCreateTopLeftButton(topMenuTransform, "Settings Button", "설정", new Vector2(306, -7), new Vector2(128, 42));
 
+            SetButtonLabel(topCollectionButton, "도감");
+            SetButtonLabel(topDecorateButton, "꾸미기");
+            SetButtonLabel(settingsButton, "설정");
+
             var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -116), new Vector2(350, 620));
             var panelTransform = panel.transform;
             RemoveChildIfExists(panelTransform, "Milk Growth Text");
@@ -127,27 +131,27 @@ namespace CheeseTama.Core
             RemoveChildIfExists(panelTransform, "Economy Text");
             RemoveChildIfExists(panelTransform, "Message Text");
 
-            GetOrCreateText(panelTransform, "Detail Title Text", "Milkroom Notes", 18, TextAnchor.UpperLeft, new Vector2(18, -16), new Vector2(300, 28));
-            var formText = GetOrCreateText(panelTransform, "Form Text", "Form: egg", 15, TextAnchor.UpperLeft, new Vector2(18, -58), new Vector2(300, 24));
-            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "Condition: warm", 15, TextAnchor.UpperLeft, new Vector2(18, -86), new Vector2(300, 24));
-            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "Affection: 10", 15, TextAnchor.UpperLeft, new Vector2(18, -124), new Vector2(300, 24));
-            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "Maturation: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -152), new Vector2(300, 24));
-            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "Hatch: 0%", 15, TextAnchor.UpperLeft, new Vector2(18, -180), new Vector2(300, 24));
-            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "Basic Milk: Lv. 0 (0 pts)", 15, TextAnchor.UpperLeft, new Vector2(18, -220), new Vector2(310, 24));
-            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "Star Milk: locked", 15, TextAnchor.UpperLeft, new Vector2(18, -248), new Vector2(310, 24));
-            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "Unlocks: Star Milk locked", 15, TextAnchor.UpperLeft, new Vector2(18, -276), new Vector2(310, 24));
-            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "Care: 0 | Play 0 Clean 0 Rest 0", 13, TextAnchor.UpperLeft, new Vector2(18, -318), new Vector2(310, 24));
-            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "Today: M 0/1 P 0/1 C 0/1 R 0/1", 13, TextAnchor.UpperLeft, new Vector2(18, -346), new Vector2(310, 24));
-            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
+            GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 18, TextAnchor.UpperLeft, new Vector2(18, -16), new Vector2(300, 28));
+            var formText = GetOrCreateText(panelTransform, "Form Text", "형태: 알", 15, TextAnchor.UpperLeft, new Vector2(18, -58), new Vector2(300, 24));
+            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "컨디션: 따뜻함", 15, TextAnchor.UpperLeft, new Vector2(18, -86), new Vector2(300, 24));
+            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "애정: 10", 15, TextAnchor.UpperLeft, new Vector2(18, -124), new Vector2(300, 24));
+            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "성숙도: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -152), new Vector2(300, 24));
+            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "부화: 0%", 15, TextAnchor.UpperLeft, new Vector2(18, -180), new Vector2(300, 24));
+            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "기본 우유: 레벨 0 (0점)", 15, TextAnchor.UpperLeft, new Vector2(18, -220), new Vector2(310, 24));
+            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "별빛 우유: 잠김", 15, TextAnchor.UpperLeft, new Vector2(18, -248), new Vector2(310, 24));
+            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "해금: 별빛 우유 잠김", 15, TextAnchor.UpperLeft, new Vector2(18, -276), new Vector2(310, 24));
+            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "돌봄: 0 | 놀이 0 청소 0 휴식 0", 13, TextAnchor.UpperLeft, new Vector2(18, -318), new Vector2(310, 24));
+            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "오늘: 우유 0/1 놀이 0/1 청소 0/1 휴식 0/1", 13, TextAnchor.UpperLeft, new Vector2(18, -346), new Vector2(310, 24));
+            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "돌봄 팁: 우유를 먹여 성장시켜 주세요.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장: 없음", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
 
             var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(470, -846), new Vector2(980, 74));
             var statBarTransform = statBar.transform;
-            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "Hunger: 80", 15, TextAnchor.MiddleCenter, new Vector2(24, -20), new Vector2(170, 32));
-            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "Mood: 70", 15, TextAnchor.MiddleCenter, new Vector2(214, -20), new Vector2(170, 32));
-            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "Cleanliness: 90", 15, TextAnchor.MiddleCenter, new Vector2(404, -20), new Vector2(170, 32));
-            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "Sleepiness: 20", 15, TextAnchor.MiddleCenter, new Vector2(594, -20), new Vector2(170, 32));
-            var healthText = GetOrCreateText(statBarTransform, "Health Text", "Health: 100", 15, TextAnchor.MiddleCenter, new Vector2(784, -20), new Vector2(170, 32));
+            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감: 80", 15, TextAnchor.MiddleCenter, new Vector2(24, -20), new Vector2(170, 32));
+            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분: 70", 15, TextAnchor.MiddleCenter, new Vector2(214, -20), new Vector2(170, 32));
+            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결: 90", 15, TextAnchor.MiddleCenter, new Vector2(404, -20), new Vector2(170, 32));
+            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림: 20", 15, TextAnchor.MiddleCenter, new Vector2(594, -20), new Vector2(170, 32));
+            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강: 100", 15, TextAnchor.MiddleCenter, new Vector2(784, -20), new Vector2(170, 32));
 
             var messageBar = GetOrCreatePanel(canvas.transform, "Message Bar", new Vector2(470, -750), new Vector2(980, 72));
             if (messageBar.TryGetComponent(out Image messageBarImage))
@@ -155,7 +159,7 @@ namespace CheeseTama.Core
                 messageBarImage.color = new Color(1f, 0.93f, 0.68f, 0.98f);
             }
 
-            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "Ready for care.", 19, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
+            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "돌봄 준비 완료.", 19, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
             messageText.fontStyle = FontStyle.Bold;
             messageText.color = new Color(0.28f, 0.18f, 0.08f);
 
@@ -184,7 +188,7 @@ namespace CheeseTama.Core
                 messageText);
             manager.RefreshDerivedCollectionRecords();
             controller.Bind(manager.CurrentSave);
-            controller.ShowMessage("Ready for care.");
+            controller.ShowMessage("돌봄 준비 완료.");
             visualController.Bind(manager.CurrentTama);
 
             var actionBar = GetOrCreatePanel(canvas.transform, "Bottom Action Bar", new Vector2(350, -968), new Vector2(1220, 84));
@@ -208,6 +212,13 @@ namespace CheeseTama.Core
 
             var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "수면", new Vector2(425, 20));
             ConfigureCareButton(sleepButton, MilkroomCareAction.Rest, controller, visualController);
+
+            SetButtonLabel(milkButton, "우유");
+            SetButtonLabel(blendButton, "조합");
+            SetButtonLabel(snackButton, "간식");
+            SetButtonLabel(playButton, "놀이");
+            SetButtonLabel(cleanButton, "청소");
+            SetButtonLabel(sleepButton, "수면");
 
             var actionBarController = actionBar.GetComponent<BottomActionBarController>();
             if (actionBarController == null)
@@ -252,20 +263,20 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<CollectionUIController>();
             }
 
-            EnsureTitle("Collection Canvas", "Collection", "Only discovered records appear here");
+            EnsureTitle("Collection Canvas", "도감", "발견한 기록만 표시됩니다");
 
             var panel = GetOrCreatePanel(canvas.transform, "Collection Records Panel", new Vector2(24, -180), new Vector2(640, 620));
             var panelTransform = panel.transform;
-            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "Milk Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(600, 72));
-            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "Evolution Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -96), new Vector2(600, 72));
-            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "Event Records: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -176), new Vector2(600, 210));
+            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "우유 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(600, 72));
+            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "진화 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -96), new Vector2(600, 72));
+            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "이벤트 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -176), new Vector2(600, 210));
             var hiddenText = GetOrCreateText(panelTransform, "Hidden Records Text", string.Empty, 16, TextAnchor.UpperLeft, new Vector2(16, -396), new Vector2(600, 92));
-            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "Feed milk and hatch CheeseTama to add records here.", 14, TextAnchor.UpperLeft, new Vector2(16, -496), new Vector2(600, 64));
+            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "우유를 먹이고 부화시키면 이곳에 기록이 추가됩니다.", 14, TextAnchor.UpperLeft, new Vector2(16, -496), new Vector2(600, 64));
 
             controller.Configure(milkText, evolutionText, eventText, hiddenText, messageText);
             controller.Bind(manager.CurrentSave);
 
-            var backButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(0, 36));
+            var backButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "밀크룸", new Vector2(0, 36));
             ConfigureNavigationButton(backButton, SceneNames.Milkroom, false);
         }
 
@@ -285,49 +296,49 @@ namespace CheeseTama.Core
                 controller = canvas.gameObject.AddComponent<DebugUIController>();
             }
 
-            EnsureTitle("Debug Canvas", "Debug", "Developer test surface");
+            EnsureTitle("Debug Canvas", "개발자", "테스트용 화면");
 
             var panel = GetOrCreatePanel(canvas.transform, "Debug State Panel", new Vector2(24, -180), new Vector2(500, 600));
             var panelTransform = panel.transform;
-            var stateText = GetOrCreateText(panelTransform, "Debug State Text", "Debug State", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(460, 430));
-            var messageText = GetOrCreateText(panelTransform, "Debug Message Text", "Pick a preset.", 14, TextAnchor.UpperLeft, new Vector2(16, -480), new Vector2(460, 80));
+            var stateText = GetOrCreateText(panelTransform, "Debug State Text", "개발자 상태", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(460, 430));
+            var messageText = GetOrCreateText(panelTransform, "Debug Message Text", "프리셋을 선택하세요.", 14, TextAnchor.UpperLeft, new Vector2(16, -480), new Vector2(460, 80));
 
             controller.Configure(stateText, messageText);
             controller.Bind(manager.CurrentSave);
-            controller.ShowMessage("Pick a preset to check values and CheeseTama expressions.");
+            controller.ShowMessage("프리셋을 선택해 수치와 CheeseTama 표정을 확인하세요.");
             visualController.Bind(manager.CurrentTama);
 
-            var hungryButton = GetOrCreateButton(canvas.transform, "Hungry Preset Button", "Hungry", new Vector2(-490, 96));
+            var hungryButton = GetOrCreateButton(canvas.transform, "Hungry Preset Button", "배고픔", new Vector2(-490, 96));
             ConfigureDebugButton(hungryButton, DebugAction.SetHungry, controller, visualController);
 
-            var sleepyButton = GetOrCreateButton(canvas.transform, "Sleepy Preset Button", "Sleepy", new Vector2(-350, 96));
+            var sleepyButton = GetOrCreateButton(canvas.transform, "Sleepy Preset Button", "졸림", new Vector2(-350, 96));
             ConfigureDebugButton(sleepyButton, DebugAction.SetSleepy, controller, visualController);
 
-            var messyButton = GetOrCreateButton(canvas.transform, "Messy Preset Button", "Messy", new Vector2(-210, 96));
+            var messyButton = GetOrCreateButton(canvas.transform, "Messy Preset Button", "지저분함", new Vector2(-210, 96));
             ConfigureDebugButton(messyButton, DebugAction.SetMessy, controller, visualController);
 
-            var unwellButton = GetOrCreateButton(canvas.transform, "Unwell Preset Button", "Unwell", new Vector2(-70, 96));
+            var unwellButton = GetOrCreateButton(canvas.transform, "Unwell Preset Button", "아픔", new Vector2(-70, 96));
             ConfigureDebugButton(unwellButton, DebugAction.SetUnwell, controller, visualController);
 
-            var cheerfulButton = GetOrCreateButton(canvas.transform, "Cheerful Preset Button", "Cheerful", new Vector2(70, 96));
+            var cheerfulButton = GetOrCreateButton(canvas.transform, "Cheerful Preset Button", "신남", new Vector2(70, 96));
             ConfigureDebugButton(cheerfulButton, DebugAction.SetCheerful, controller, visualController);
 
-            var hatchButton = GetOrCreateButton(canvas.transform, "Hatch Preset Button", "Hatch", new Vector2(210, 96));
+            var hatchButton = GetOrCreateButton(canvas.transform, "Hatch Preset Button", "부화", new Vector2(210, 96));
             ConfigureDebugButton(hatchButton, DebugAction.HatchNow, controller, visualController);
 
-            var unlockStarButton = GetOrCreateButton(canvas.transform, "Unlock Star Preset Button", "Unlock Star", new Vector2(-210, 36));
+            var unlockStarButton = GetOrCreateButton(canvas.transform, "Unlock Star Preset Button", "별빛 해금", new Vector2(-210, 36));
             ConfigureDebugButton(unlockStarButton, DebugAction.UnlockStarMilk, controller, visualController);
 
-            var resetButton = GetOrCreateButton(canvas.transform, "Debug Reset Button", "Reset", new Vector2(-70, 36));
+            var resetButton = GetOrCreateButton(canvas.transform, "Debug Reset Button", "초기화", new Vector2(-70, 36));
             ConfigureDebugButton(resetButton, DebugAction.ResetSave, controller, visualController);
 
-            var forceEventButton = GetOrCreateButton(canvas.transform, "Force Event Button", "Force Event", new Vector2(70, 36));
+            var forceEventButton = GetOrCreateButton(canvas.transform, "Force Event Button", "이벤트 발생", new Vector2(70, 36));
             ConfigureDebugButton(forceEventButton, DebugAction.ForceEvent, controller, visualController);
 
-            var stayButton = GetOrCreateButton(canvas.transform, "Stay Five Minutes Button", "Stay +5m", new Vector2(350, 96));
+            var stayButton = GetOrCreateButton(canvas.transform, "Stay Five Minutes Button", "5분 체류", new Vector2(350, 96));
             ConfigureDebugButton(stayButton, DebugAction.AddSessionFiveMinutes, controller, visualController);
 
-            var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "Milkroom", new Vector2(210, 36));
+            var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "밀크룸", new Vector2(210, 36));
             ConfigureNavigationButton(milkroomButton, SceneNames.Milkroom, true);
         }
 
@@ -355,11 +366,11 @@ namespace CheeseTama.Core
             }
 
             var recordsTransform = recordsPanel.transform;
-            var milkText = GetOrCreateText(recordsTransform, "Milk Records Text", "Milk Records: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(314, 136));
-            var evolutionText = GetOrCreateText(recordsTransform, "Evolution Records Text", "Evolution Records: 0", 15, TextAnchor.UpperLeft, new Vector2(350, -18), new Vector2(314, 136));
-            var eventText = GetOrCreateText(recordsTransform, "Event Records Text", "Event Records: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -168), new Vector2(646, 190));
+            var milkText = GetOrCreateText(recordsTransform, "Milk Records Text", "우유 기록: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(314, 136));
+            var evolutionText = GetOrCreateText(recordsTransform, "Evolution Records Text", "진화 기록: 0", 15, TextAnchor.UpperLeft, new Vector2(350, -18), new Vector2(314, 136));
+            var eventText = GetOrCreateText(recordsTransform, "Event Records Text", "이벤트 기록: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -168), new Vector2(646, 190));
             var hiddenText = GetOrCreateText(recordsTransform, "Hidden Records Text", string.Empty, 15, TextAnchor.UpperLeft, new Vector2(18, -372), new Vector2(646, 72));
-            var messageText = GetOrCreateText(recordsTransform, "Collection Message Text", "Feed milk and hatch CheeseTama to add records here.", 14, TextAnchor.UpperLeft, new Vector2(18, -444), new Vector2(646, 28));
+            var messageText = GetOrCreateText(recordsTransform, "Collection Message Text", "우유를 먹이고 부화시키면 이곳에 기록이 추가됩니다.", 14, TextAnchor.UpperLeft, new Vector2(18, -444), new Vector2(646, 28));
 
             collectionController = overlay.GetComponent<CollectionUIController>();
             if (collectionController == null)
@@ -393,8 +404,8 @@ namespace CheeseTama.Core
             }
 
             var previewTransform = previewPanel.transform;
-            GetOrCreateText(previewTransform, "Decorate Theme Text", "Warm Morning Milkroom", 18, TextAnchor.UpperLeft, new Vector2(22, -22), new Vector2(420, 32));
-            GetOrCreateText(previewTransform, "Decorate Theme Detail Text", "Cream walls / warm wood / soft rug / milk shelf / cozy morning light", 14, TextAnchor.UpperLeft, new Vector2(22, -64), new Vector2(620, 32));
+            GetOrCreateText(previewTransform, "Decorate Theme Text", "따뜻한 아침 밀크룸", 18, TextAnchor.UpperLeft, new Vector2(22, -22), new Vector2(420, 32));
+            GetOrCreateText(previewTransform, "Decorate Theme Detail Text", "크림색 벽 / 따뜻한 나무 / 부드러운 러그 / 우유 선반 / 포근한 아침빛", 14, TextAnchor.UpperLeft, new Vector2(22, -64), new Vector2(620, 32));
             GetOrCreateText(previewTransform, "Decorate Slot A Text", "조명", 16, TextAnchor.UpperLeft, new Vector2(22, -132), new Vector2(120, 26));
             GetOrCreateText(previewTransform, "Decorate Slot A Value Text", "따뜻한 햇살 + 부드러운 림라이트", 14, TextAnchor.UpperLeft, new Vector2(142, -132), new Vector2(460, 26));
             GetOrCreateText(previewTransform, "Decorate Slot B Text", "가구", 16, TextAnchor.UpperLeft, new Vector2(22, -188), new Vector2(120, 26));
@@ -447,18 +458,18 @@ namespace CheeseTama.Core
         {
             var settingsModal = GetOrCreatePanel(canvasTransform, "Settings Modal", new Vector2(1320, -116), new Vector2(560, 620));
             var settingsTransform = settingsModal.transform;
-            GetOrCreateText(settingsTransform, "Settings Title Text", "Settings", 22, TextAnchor.UpperLeft, new Vector2(28, -24), new Vector2(280, 34));
-            GetOrCreateText(settingsTransform, "Settings Data Title Text", "Data Management", 18, TextAnchor.UpperLeft, new Vector2(28, -92), new Vector2(300, 30));
-            GetOrCreateText(settingsTransform, "Settings Sound Title Text", "Sound", 16, TextAnchor.UpperLeft, new Vector2(28, -294), new Vector2(220, 26));
-            GetOrCreateText(settingsTransform, "Settings Display Title Text", "Display", 16, TextAnchor.UpperLeft, new Vector2(28, -344), new Vector2(220, 26));
-            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "Controls", 16, TextAnchor.UpperLeft, new Vector2(28, -394), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Title Text", "설정", 22, TextAnchor.UpperLeft, new Vector2(28, -24), new Vector2(280, 34));
+            GetOrCreateText(settingsTransform, "Settings Data Title Text", "데이터 관리", 18, TextAnchor.UpperLeft, new Vector2(28, -92), new Vector2(300, 30));
+            GetOrCreateText(settingsTransform, "Settings Sound Title Text", "소리", 16, TextAnchor.UpperLeft, new Vector2(28, -294), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Display Title Text", "화면", 16, TextAnchor.UpperLeft, new Vector2(28, -344), new Vector2(220, 26));
+            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "조작", 16, TextAnchor.UpperLeft, new Vector2(28, -394), new Vector2(220, 26));
 
-            var closeSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Close Settings Button", "Close", new Vector2(424, -20), new Vector2(108, 40));
-            var manualSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Save Button", "Save", new Vector2(28, -190), new Vector2(120, 42));
-            var manualLoadButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Load Button", "Load", new Vector2(166, -190), new Vector2(120, 42));
-            var openResetButton = GetOrCreateTopLeftButton(settingsTransform, "Open Reset Button", "Reset", new Vector2(304, -190), new Vector2(120, 42));
+            var closeSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Close Settings Button", "닫기", new Vector2(424, -20), new Vector2(108, 40));
+            var manualSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Save Button", "저장", new Vector2(28, -190), new Vector2(120, 42));
+            var manualLoadButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Load Button", "불러오기", new Vector2(166, -190), new Vector2(120, 42));
+            var openResetButton = GetOrCreateTopLeftButton(settingsTransform, "Open Reset Button", "초기화", new Vector2(304, -190), new Vector2(120, 42));
             ApplyDangerButtonStyle(openResetButton);
-            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "Auto-save runs after care actions. Manual tools are below.", 13, TextAnchor.UpperLeft, new Vector2(28, -134), new Vector2(500, 42));
+            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "돌봄 행동 후 자동 저장됩니다. 아래에서 수동 관리할 수 있습니다.", 13, TextAnchor.UpperLeft, new Vector2(28, -134), new Vector2(500, 42));
 
             var confirmRoot = GetOrCreatePanel(canvasTransform, "Confirm Reset Dialog", new Vector2(640, -300), new Vector2(640, 360));
             if (confirmRoot.TryGetComponent(out Image confirmImage))
@@ -467,20 +478,20 @@ namespace CheeseTama.Core
             }
 
             var confirmTransform = confirmRoot.transform;
-            GetOrCreateText(confirmTransform, "Confirm Reset Title Text", "Reset Data", 22, TextAnchor.UpperLeft, new Vector2(24, -24), new Vector2(300, 34));
+            GetOrCreateText(confirmTransform, "Confirm Reset Title Text", "데이터 초기화", 22, TextAnchor.UpperLeft, new Vector2(24, -24), new Vector2(300, 34));
             var confirmMessageText = GetOrCreateText(
                 confirmTransform,
                 "Confirm Reset Message Text",
-                "Type RESET to clear all local CheeseTama progress.",
+                "로컬 CheeseTama 진행도를 모두 지우려면 RESET을 입력하세요.",
                 15,
                 TextAnchor.UpperLeft,
                 new Vector2(24, -82),
                 new Vector2(580, 70));
-            GetOrCreateText(confirmTransform, "Reset Input Label Text", "Enter RESET to unlock the button.", 14, TextAnchor.UpperLeft, new Vector2(24, -152), new Vector2(420, 24));
+            GetOrCreateText(confirmTransform, "Reset Input Label Text", "RESET을 입력하면 버튼이 활성화됩니다.", 14, TextAnchor.UpperLeft, new Vector2(24, -152), new Vector2(420, 24));
             var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "RESET", new Vector2(24, -184), new Vector2(360, 52));
-            var confirmResetButton = GetOrCreateTopLeftButton(confirmTransform, "Confirm Reset Button", "Reset", new Vector2(344, -284), new Vector2(120, 42));
+            var confirmResetButton = GetOrCreateTopLeftButton(confirmTransform, "Confirm Reset Button", "초기화", new Vector2(344, -284), new Vector2(120, 42));
             ApplyDangerButtonStyle(confirmResetButton);
-            var cancelResetButton = GetOrCreateTopLeftButton(confirmTransform, "Cancel Reset Button", "Cancel", new Vector2(480, -284), new Vector2(120, 42));
+            var cancelResetButton = GetOrCreateTopLeftButton(confirmTransform, "Cancel Reset Button", "취소", new Vector2(480, -284), new Vector2(120, 42));
 
             var confirmResetDialog = confirmRoot.GetComponent<ConfirmResetDialog>();
             if (confirmResetDialog == null)
@@ -523,11 +534,11 @@ namespace CheeseTama.Core
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1570, -116), new Vector2(326, 206));
             var devPanelTransform = devPanel.transform;
-            GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "Dev Panel", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
-            GetOrCreateText(devPanelTransform, "Dev Panel Help Text", "Editor test tools", 13, TextAnchor.UpperLeft, new Vector2(18, -48), new Vector2(240, 24));
-            var waitHourButton = GetOrCreateTopLeftButton(devPanelTransform, "Wait Hour Dev Button", "Wait +1h", new Vector2(18, -86), new Vector2(126, 42));
+            GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "개발자 패널", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
+            GetOrCreateText(devPanelTransform, "Dev Panel Help Text", "에디터 테스트 도구", 13, TextAnchor.UpperLeft, new Vector2(18, -48), new Vector2(240, 24));
+            var waitHourButton = GetOrCreateTopLeftButton(devPanelTransform, "Wait Hour Dev Button", "1시간 경과", new Vector2(18, -86), new Vector2(126, 42));
             ConfigureCareButton(waitHourButton, MilkroomCareAction.WaitHour, controller, visualController);
-            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(170, -86), new Vector2(126, 42));
+            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "개발자 씬", new Vector2(170, -86), new Vector2(126, 42));
             ConfigureNavigationButton(debugSceneButton, SceneNames.Debug, true);
 
             var devPanelController = canvasTransform.GetComponent<DevPanelController>();
@@ -1819,6 +1830,22 @@ namespace CheeseTama.Core
 
             ConfigureText(labelText, label, 16, TextAnchor.MiddleCenter, Vector2.zero, size, true);
             ConfigureButtonLabel(labelText);
+        }
+
+        private static void SetButtonLabel(Button button, string label)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var labelTransform = button.transform.Find("Label");
+            if (labelTransform == null || !labelTransform.TryGetComponent(out Text labelText))
+            {
+                return;
+            }
+
+            labelText.text = label;
         }
 
         private static void ConfigureButtonLabel(Text label)

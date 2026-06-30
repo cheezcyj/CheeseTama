@@ -1,210 +1,182 @@
-# CheeseTama Game Design Brief
+# CheeseTama 게임 기획 요약
 
-This internal brief summarizes the current CheeseTama implementation direction and the working rules Codex should follow while building the Unity prototype.
+이 문서는 현재 유니티 프로토타입의 구현 방향과 작업 규칙을 정리합니다.
 
-## Current Direction
+## 현재 방향
 
-CheeseTama is a PC-first cozy creature-raising simulation. The player visits the Milkroom one to three times per day, stays for roughly 10 to 30 minutes, cares for a small cheese creature, feeds milk-based items, manages status values, and slowly grows collections and room systems.
+CheeseTama는 밀크룸에 머물며 작은 치즈 생명체를 돌보는 피시 중심 육성 게임입니다. 플레이어는 하루에 한 번에서 세 번 정도 접속해 10분에서 30분가량 머물고, 상태를 관리하며 도감과 방 꾸미기 요소를 천천히 확장합니다.
 
-The first public impression should stay simple and cozy: a cute CheeseTama egg grows into a soft yellow cheese-pudding creature. Deeper collection systems can exist internally, but they must not be advertised or exposed before unlock.
+첫인상은 단순하고 포근해야 합니다. 귀여운 치즈 알이 말랑한 노란 치즈 생명체로 자라나는 흐름을 중심에 둡니다. 후반 도감과 숨겨진 요소는 내부에 존재하더라도, 해금 전에는 조건이나 개수를 노출하지 않습니다.
 
-## Core Loop
+## 핵심 반복 구조
 
-1. Enter the Milkroom.
-2. Check CheeseTama's current state and message.
-3. Use care actions: Milk, Blend, Snack, Play, Clean, Sleep.
-4. Watch CheeseTama react with squash/stretch, face changes, and event cues.
-5. Stay in the room to earn light session rewards.
-6. Review discovered records in Collection.
-7. Save automatically after important interactions, with manual data tools in Settings.
+1. 밀크룸에 들어갑니다.
+2. CheeseTama의 상태와 메시지를 확인합니다.
+3. 우유, 조합, 간식, 놀이, 청소, 수면 행동을 사용합니다.
+4. CheeseTama의 표정, 통통 튀는 반응, 이벤트 단서를 확인합니다.
+5. 방에 머물며 가벼운 체류 보상을 받습니다.
+6. 발견한 기록을 도감에서 확인합니다.
+7. 주요 상호작용 후 자동 저장하고, 설정에서 수동 저장 도구를 제공합니다.
 
-## Current MVP Scope
+## 현재 구현 범위
 
-- Boot, Milkroom, Collection, and Debug scenes.
-- Runtime bootstrapping for missing core systems.
-- Local JSON save/load/reset.
-- CheeseTama model with level, hatch state, stats, growth history, and unlock data.
-- Status values: hunger, mood, cleanliness, sleepiness, health, affection, maturation.
-- Basic Milk and Star Milk growth tracking.
-- Lv.10 hatch flag and staged visual changes.
-- Milkroom stay-time tracking and light session rewards.
-- Early economy: Milk Coins, Milk Drops, Collection Fragments.
-- Basic collection registration for milk, growth, events, evolution, and hidden-unlocked-only records.
-- Prototype minigame loop: Milk Drop catching.
-- Random care events and small event cues.
+- 부트, 밀크룸, 도감, 개발자 씬
+- 핵심 시스템 자동 준비
+- 로컬 저장/불러오기/초기화
+- 레벨, 부화 상태, 상태 수치, 성장 기록, 해금 데이터
+- 포만감, 기분, 청결, 졸림, 건강, 애정, 성숙도
+- 기본 우유와 별빛 우유 성장 추적
+- 레벨 10 부화 플래그와 단계별 비주얼 변화
+- 밀크룸 체류 시간과 가벼운 세션 보상
+- 초기 재화: 코인, 우유 방울, 도감 조각
+- 우유, 성장, 이벤트, 진화, 숨겨진 기록의 기본 등록
+- 우유 방울 잡기 프로토타입
+- 돌봄 기반 무작위 이벤트와 짧은 반응 연출
 
-## Character Art Direction
+## 캐릭터 방향
 
-CheeseTama is a full 3D stylized toon character in a fixed-camera diorama scene: warm toon material, simple silhouette, rim/outline support, and soft squash/stretch motion.
+CheeseTama는 고정 카메라 디오라마 안의 3D 카툰 캐릭터입니다. 부드러운 노란 치즈 푸딩 같은 몸, 큰 눈, 복숭아빛 볼, 작은 팔과 발, 얕은 치즈 구멍, 광택 하이라이트가 핵심입니다.
 
-### Visual Identity
+성장 단계:
 
-- Warm yellow cheese-pudding body.
-- Soft rounded blob silhouette.
-- Orange cheese holes and small speckles.
-- Large dark brown eyes with white sparkle dots.
-- Peach blush cheeks.
-- Small cute mouth: idle smile, happy smile, sleepy line, worried frown, or small open mouth.
-- Tiny soft arms and little oval feet after hatch.
-- Top curl from the soft/grown stage onward.
-- Honey-gold crown parts are reserved for celebration/cosmetic cues, not always-on base-form readability.
-- Milk-white glossy highlights and a soft oval shadow.
+- 레벨 1: 치즈타마 알
+- 레벨 10: 부화
+- 레벨 15: 말랑 CheeseTama
+- 레벨 20: 성장한 CheeseTama
+- 레벨 28: 숙성 CheeseTama
+- 레벨 33: 최종형
 
-### Growth Silhouette
+최종 아트 에셋 전까지는 절차적 오브젝트를 사용할 수 있지만, 단순 원형 덩어리처럼 보이면 안 됩니다. 커스텀 말랑 메시, 카툰 재질, 외곽선, 표정 파츠, 치즈 무늬, 광택, 그림자, 부드러운 반응 모션이 필요합니다.
 
-- Lv.1: CheeseTama egg, taller and paler.
-- Lv.10: Hatchling state.
-- Lv.15: Soft CheeseTama with top curl.
-- Lv.20: Grown CheeseTama with wider body and limbs.
-- Lv.28: Mature CheeseTama with stronger pudding shape and more spots.
-- Lv.33: Final form with crown.
+## 밀크룸 화면 규칙
 
-### Runtime Placeholder Rule
+직접 돌봄 행동과 시스템 메뉴를 명확히 분리합니다.
 
-Until final art assets exist, the runtime visual controller may build the character procedurally with grouped primitive shapes, but it must not read as a raw primitive. Toon material profiles, outline geometry, face parts, cheese marks, glossy highlights, soft shadow, and motion are required.
+상단 상태 바:
 
-The current procedural pass should target the supplied 3D toon references: a soft, glossy, warm-yellow rounded CheeseTama with large eyes, peach blush, tiny arms/feet, shallow cheese holes, and a non-geometric body mesh. The Milkroom should read as a cozy wooden room, not a flat backdrop: arched window, curtains, shelves, milk bottles, plants, rug texture, refrigerator, chair, warm lamp, and small lived-in props are required even before final authored assets arrive.
+- CheeseTama 이름
+- 레벨과 진행도
+- 세션 시간과 오늘 체류 시간
+- 초기 재화 수량
+- 상단 메뉴: 도감, 꾸미기, 설정
 
-## Milkroom UI Layout
+중앙 화면:
 
-The Milkroom UI must separate direct care actions from system/navigation tools.
+- CheeseTama가 중앙에서 잘 보여야 합니다.
+- 일반 플레이 중 패널이 캐릭터를 가리지 않아야 합니다.
+- 중요한 피드백은 하단 중앙 메시지 바에 표시합니다.
 
-### Top Status Bar
+상태 바:
 
-- CheeseTama name.
-- Level and progress.
-- Session time and daily stay time.
-- Early economy counts.
-- Top menu buttons: 도감, 꾸미기, 설정.
+- 포만감
+- 기분
+- 청결
+- 졸림
+- 건강
 
-### Main View
-
-- CheeseTama is centered and readable.
-- The character must not be hidden by panels during normal play.
-- Important feedback appears in a dedicated bottom-center Message Bar.
-
-### Stat Bar
-
-Shows the five core condition values:
-
-- Hunger
-- Mood
-- Cleanliness
-- Sleepiness
-- Health
-
-### Bottom Action Bar
-
-Only direct care actions belong here:
+하단 행동 바:
 
 ```text
 우유 / 조합 / 간식 / 놀이 / 청소 / 수면
 ```
 
-Do not put Collection, Decorate, Save, Load, Reset, Debug, or Wait +1h in the bottom care bar.
-Use number keys 1-6 for the six direct care actions.
+도감, 꾸미기, 저장, 불러오기, 초기화, 개발자 기능, 1시간 경과 버튼은 하단 행동 바에 넣지 않습니다. 숫자 1-6은 여섯 직접 돌봄 행동 단축키로 사용합니다.
 
-### Settings
+## 설정
 
-Collection and Decorate open from the top menu. Settings also opens from the top menu and currently contains Data Management:
+도감과 꾸미기는 상단 메뉴에서 열립니다. 설정도 상단 메뉴에서 열리며 현재는 데이터 관리 기능을 포함합니다.
 
-- Manual Save
-- Load
-- Reset
+- 저장
+- 불러오기
+- 초기화
 
-Reset must require typing `RESET` before the destructive button becomes interactable.
+초기화는 반드시 `RESET`을 정확히 입력해야 실행 버튼이 활성화됩니다.
 
-### Dev Panel
+## 개발자 패널
 
-The F12 Dev Panel is Editor/Development-only and must open away from the Stat Bar. It currently contains:
+개발자 패널은 에디터와 개발 빌드에서만 사용합니다. 상태 수치를 가리지 않도록 배치하며, 현재 기능은 다음과 같습니다.
 
-- Wait +1h
-- Debug Scene
+- 1시간 경과
+- 개발자 씬 이동
 
-Debug/test tools should stay out of the release-facing bottom action bar.
+개발자/테스트 도구는 일반 플레이용 하단 행동 바에 넣지 않습니다.
 
-## Collection Rules
+## 도감 규칙
 
-- Collection is opened from the top menu.
-- Discovered milk, growth, evolution, and event records can be shown.
-- Hidden late-game collection records must be hidden until actually unlocked.
-- Do not show hidden slots, names, rarity, category, total counts, or unlock conditions before unlock.
-- Even after unlock, do not expose exact growth conditions in user-facing UI.
+- 도감은 상단 메뉴에서 엽니다.
+- 발견한 우유, 성장, 진화, 이벤트 기록만 보여 줍니다.
+- 숨겨진 후반 기록은 해금 전까지 슬롯, 이름, 희귀도, 분류, 전체 개수, 해금 조건을 노출하지 않습니다.
+- 해금 후에도 정확한 성장 조건은 사용자 화면에 노출하지 않습니다.
 
-## Unity Setup Notes
+## 유니티 작업 메모
 
-- The user's editable backup folder is `C:\Users\user\Desktop\CheeseTama`.
-- The tracked GitHub folder is `C:\Users\user\Documents\GitHub\CheeseTama`.
-- Open the Unity project from the folder the user is actively testing.
-- Use `Assets > Refresh` after code changes.
-- Use `CheeseTama > Build Starter Scenes` to regenerate starter scene objects.
-- Open `Assets/_Project/Scenes/Milkroom.unity` and press Play.
+- 사용자가 테스트하는 작업 폴더는 `C:\Users\user\Desktop\CheeseTama`입니다.
+- 깃허브 추적 저장소 폴더는 `C:\Users\user\Documents\GitHub\CheeseTama`입니다.
+- 코드 변경 후 유니티에서 새로고침합니다.
+- `CheeseTama > 시작 씬 빌드`를 실행해 시작 씬 오브젝트를 재생성합니다.
+- 밀크룸 씬을 열고 재생 버튼을 누릅니다.
 
-## Quick Test Checklist
+## 빠른 테스트 목록
 
-### Milkroom
+밀크룸:
 
-1. Open Milkroom and press Play.
-2. Confirm top menu shows 도감, 꾸미기, 설정.
-3. Confirm bottom bar shows only Milk, Blend, Snack, Play, Clean, Sleep.
-4. Click each care action and confirm stats/message/character reaction update.
-5. Confirm Message Bar is readable.
-6. Press F12 and confirm Dev Panel does not cover the Stat Bar.
-7. Use Wait +1h from Dev Panel and confirm time progression updates.
+1. 밀크룸을 열고 재생합니다.
+2. 상단 메뉴가 도감, 꾸미기, 설정으로 보이는지 확인합니다.
+3. 하단 바가 우유, 조합, 간식, 놀이, 청소, 수면만 표시하는지 확인합니다.
+4. 각 돌봄 행동을 눌러 수치, 메시지, 캐릭터 반응이 갱신되는지 확인합니다.
+5. 메시지 바가 읽기 쉬운지 확인합니다.
+6. 개발자 패널이 상태 바를 가리지 않는지 확인합니다.
+7. `1시간 경과`로 시간 진행이 반영되는지 확인합니다.
 
-### Settings
+설정:
 
-1. Open Settings.
-2. Confirm Save, Load, Reset do not overlap text.
-3. Confirm Save and Load update the status/message.
-4. Open Reset.
-5. Confirm Reset button is disabled until `RESET` is typed.
+1. 설정을 엽니다.
+2. 저장, 불러오기, 초기화 버튼이 글자와 겹치지 않는지 확인합니다.
+3. 저장과 불러오기가 상태 메시지를 갱신하는지 확인합니다.
+4. 초기화 창을 열고 `RESET` 입력 전에는 버튼이 비활성인지 확인합니다.
 
-### Character
+캐릭터:
 
-1. Confirm Lv.1 egg has face, highlights, and cheese spots.
-2. Use Debug scene hatch tools to check post-hatch forms.
-3. Confirm hungry, sleepy, upset, sick, surprised, and happy expressions are visually distinct.
-4. Confirm reactions are soft and not excessively high.
+1. 레벨 1 알에 얼굴, 하이라이트, 치즈 무늬가 있는지 확인합니다.
+2. 개발자 씬에서 부화 후 형태를 확인합니다.
+3. 배고픔, 졸림, 불편함, 아픔, 놀람, 기쁨 표정이 구분되는지 확인합니다.
+4. 반응이 과하게 튀지 않고 부드러운지 확인합니다.
 
-### Collection
+도감:
 
-1. Perform milk/care actions.
-2. Open Collection from the top menu.
-3. Confirm discovered records appear.
-4. Confirm hidden records do not expose unrevealed slots or counts.
+1. 우유와 돌봄 행동을 수행합니다.
+2. 상단 메뉴에서 도감을 엽니다.
+3. 발견한 기록이 표시되는지 확인합니다.
+4. 숨겨진 기록이 해금 전 노출되지 않는지 확인합니다.
 
-## Build Verification
+## 빌드 검증
 
-When Unity has generated the project files, use:
+유니티가 프로젝트 파일을 만든 뒤 아래 명령으로 컴파일을 확인합니다.
 
 ```powershell
 dotnet restore CheeseTama.csproj
 dotnet build CheeseTama.csproj --no-restore
 ```
 
-The active development environment has been using .NET SDK 10 for C# compile checks.
+## 구현 규칙
 
-## Implementation Rules
+- 첫 화면은 포근하고 읽기 쉬우며 CheeseTama가 중심이어야 합니다.
+- 직접 돌봄 행동과 시스템/개발자/이동 도구를 분리합니다.
+- 숨겨진 후반 콘텐츠는 해금 전 완전히 숨깁니다.
+- 먹이 페널티는 영구 처벌처럼 느껴지지 않게 합니다.
+- 피시 마우스 우선 조작을 기준으로 하되, 향후 입력 확장을 막지 않습니다.
+- 깃 커밋 메시지는 한국어로 작성합니다.
+- 의미 있는 변경 후 백업 폴더 변경분을 추적 저장소에 복사하고 커밋/푸시합니다.
 
-- Keep the first-screen experience cozy, readable, and centered on CheeseTama.
-- Keep direct care actions separate from system/debug/navigation controls.
-- Keep hidden late-game content fully hidden before unlock.
-- Avoid permanent punishment from feeding penalties.
-- Prefer PC mouse-first interactions while keeping future input portability in mind.
-- Use Korean Git commit messages.
-- After meaningful changes, copy the backup folder changes into the tracked GitHub folder, commit, and push.
+## 다음 우선순위
 
-## Next Priorities
+- 조합 패널과 레시피 입력 흐름 구현
+- 돌봄 버튼과 상단 메뉴에 아이콘 추가
+- 도감 카드 레이아웃 개선
+- 소리, 화면, 조작 설정 탭 추가
+- 첫 세션 안내 흐름 추가
+- 오디오와 효과 연출 보강
 
-- Replace procedural character pieces with final art/model assets when available.
-- Build a proper Blend panel with recipe inputs and safe hidden-recipe handling.
-- Add icons to care and top-menu buttons.
-- Improve Collection card layout.
-- Add proper settings tabs for sound, display, and controls.
-- Add tutorial guidance for the first session.
-- Add audio and VFX polish.
+## 라이선스
 
-## License
-
-This project uses the MIT License. See `LICENSE` for details.
+이 프로젝트는 MIT 라이선스를 사용합니다.

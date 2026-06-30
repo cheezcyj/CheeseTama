@@ -1,70 +1,36 @@
-# Changelog
+# 변경 기록
 
 ## 0.1.0
 
-- Added the initial README and documented the MIT license.
-- Created the initial Unity project structure.
-- Updated the README with the early project setup/status notes.
-- Added core gameplay, data, save, collection, and UI script skeletons.
-- Added placeholder scenes for Boot, Milkroom, Collection, and Debug.
-- Added runtime and editor starter scene builders for core managers and basic Milkroom UI.
-- Added EventSystem setup and basic test button actions for the Milkroom scene.
-- Rebind Milkroom UI and button actions at runtime when the scene already contains generated UI.
-- Added basic care actions for feeding, playing, cleaning, resting, and visible progress feedback.
-- Added visible last-save feedback plus Reload and Reset test buttons.
-- Added CheeseTama placeholder color and pulse feedback for care actions.
-- Restored the mesh renderer path and uses property blocks so the egg stays visible in Play Mode.
-- Prefer the active GameManager instance and force scene rebinding after Play Mode scene load.
-- Added per-button MilkroomCareButton components so care actions bind reliably in Play Mode.
-- Made CheeseTama care feedback visibly hop, pulse, and flash after button actions.
-- Reworked care feedback into a direct hop coroutine and added a visual-controller fallback lookup.
-- Changed care feedback to an immediate realtime reaction and added logs for visual trigger diagnosis.
-- Hold the care reaction at its peak first so Transform position changes are visible in Inspector.
-- Move MaterialPropertyBlock creation out of the visual controller field initializer to satisfy Unity runtime rules.
-- Tune CheeseTama care feedback into a shorter, gentler hop and remove temporary visual diagnostics.
-- Add Hatch progress to the Milkroom status panel and celebrate the first hatch with a stronger visual reaction.
-- Connect offline time progression on load and add a Wait 1h prototype button for stat-decay testing.
-- Fix the Wait 1h button compiler error caused by duplicate local variable names.
-- Add a Milkroom condition line and tint CheeseTama by hunger, cleanliness, sleepiness, and health state.
-- Connect first collection records from Milkroom care and add a generated Collection scene summary panel.
-- Add scene navigation buttons between Boot, Milkroom, and Collection prototype scenes.
-- Persist Basic Milk growth points from Milkroom feeding and show milk growth in the status panel.
-- Record Basic Milk growth milestones as collection events with readable Collection scene labels.
-- Add a Star Milk prototype that unlocks from Basic Milk Lv. 2 and can be fed from the Milkroom.
-- Split Basic and Star Milk growth displays and backfill missing milk milestone collection records.
-- Add a visible hatched CheeseTama form with face details and friendly display names after hatching.
-- Add condition-based facial expressions for hatched CheeseTama.
-- Add Debug scene controls for quick condition, hatch, and Star Milk unlock testing.
-- Add care-based random events and a Debug force-event button for collection testing.
-- Add visible CheeseTama event reactions with a brief floating event cue.
-- Unlock and display hidden collection records from hatch, Star Milk, events, and balanced care.
-- Add a Cheese Snack care action with collection event records and a hidden first-snack record.
-- Refresh the README with the current implementation status and setup guidance.
-- Add Milkroom care tips that recommend the next action from current stats and unlocks.
-- Save every successful Milkroom interaction so stat-only care actions persist reliably.
-- Track cumulative care history with collection milestones and hidden care records.
-- Add a daily care routine with Milkroom progress, collection milestones, and a hidden regular-care record.
-- Use edit-mode-safe object cleanup for generated visual parts and duplicate core objects.
-- Add Milkroom stay-time tracking with 5/10/20/30 minute rewards, early economy values, and a Catch Drops prototype.
-- Add character art-direction docs, a UI style guide, and Codex task notes for the character/UI redesign pass.
-- Rework the Milkroom layout with clearer status/message surfaces, a bottom action bar, a settings panel, data-management controls, a developer panel, reset confirmation, and toast notifications.
-- Fix Settings data-management button overlap and make Save, Load, and Reset click targets behave reliably.
-- Improve the reset confirmation flow with a clearer input requirement and feedback message.
-- Move the Collection button to the top menu so it no longer competes with core care actions.
-- Move the Wait 1h time-skip button into the developer panel and keep the main care bar focused on player actions.
-- Improve the CheeseTama character silhouette, facial expression readability, status message visibility, and developer-panel placement.
-- Rebuild CheeseTama visuals toward the revised 3D toon-rendered cheese creature direction, including cheese holes, blush, limbs, shiny eyes, stage curls, toon material profiles, and event/cosmetic crown cues.
-- Update GAME_DESIGN with the current design direction, implemented systems, UI rules, character direction, and next-priority work.
-- Update Unity package manifest and ProjectVersion metadata to match the current Unity 6000.0.78f1 project setup.
-- Expand Unity-focused .gitignore and .gitattributes rules, add VS Code helper settings, track the package lock file, sync ProjectSettings assets, and mirror backup-folder scene files into the tracked repository.
-- Add a cozy 3D toon Milkroom with window, shelves, bottles, rug, furniture, warm lighting, and improve CheeseTama proportions so the character reads rounder and less side-compressed.
-- Add runtime toon material profiles, character outline geometry, Milkroom scene hierarchy grouping, rim light, side walls, and a blending table for stronger 3D room readability.
-- Rework the Milkroom toward the v2.0 full 3D toon diorama direction with RoomShell, WindowSet, FridgeSet, MilkShelfSet, BlendingTableSet, ChalkboardSet, Rug, CozyChair, Lamps, and Props groups.
-- Fix pink/magenta rendering by selecting shaders from the active render pipeline instead of forcing URP shaders when the project has no custom render pipeline assigned.
-- Update the Milkroom UI to the v2.1 layout: top menu contains 도감/꾸미기/설정, and the bottom action bar contains only 우유/조합/간식/놀이/청소/수면.
-- Add a top-menu controller with Collection and Decorate overlays, Settings modal routing, Esc close handling, and C/B/K/D shortcuts.
-- Add 1-6 keyboard shortcuts for direct care actions.
-- Hide late-game collection category/count text until special records are actually unlocked.
-- Limit base CheeseTama visible holes to 0-3 small marks and reserve the exact 7-hole constellation layout for Emmental CheeseTama.
-- Rename internal Milkroom grouping helpers from layer terminology to group terminology and attach a GlobalVolume component when the render-pipeline type is available.
-- Rework the procedural CheeseTama body into a custom soft blob mesh, enlarge the glossy face treatment, and add denser Milkroom diorama details such as arched window framing, curtain folds, rug tufts, rounded fridge accents, shelf props, plants, and bottle labels.
+- 초기 설명 문서와 MIT 라이선스 정보를 추가했습니다.
+- 유니티 프로젝트 기본 구조를 만들었습니다.
+- 핵심 게임플레이, 데이터, 저장, 도감, 사용자 화면 스크립트 골격을 추가했습니다.
+- 부트, 밀크룸, 도감, 개발자 씬을 구성했습니다.
+- 핵심 시스템 자동 준비와 시작 씬 자동 생성 메뉴를 추가했습니다.
+- 밀크룸 버튼 동작, 상태 수치 표시, 메시지 피드백을 연결했습니다.
+- 우유 먹이기, 놀이, 청소, 휴식, 간식 행동을 추가했습니다.
+- 저장, 불러오기, 초기화 흐름과 마지막 저장 표시를 추가했습니다.
+- 버튼별 돌봄 컴포넌트를 추가해 재생 모드에서 클릭 동작이 안정적으로 연결되게 했습니다.
+- CheeseTama 반응을 짧고 부드러운 통통 튐으로 조정했습니다.
+- 부화 진행도와 첫 부화 반응을 추가했습니다.
+- 오프라인 시간 진행과 1시간 경과 테스트 기능을 추가했습니다.
+- 컨디션 표시와 상태에 따른 색/표정 반응을 추가했습니다.
+- 기본 우유와 별빛 우유 성장 기록을 분리하고 도감 기록 누락을 보정했습니다.
+- 별빛 우유 해금, 성장, 도감 등록 흐름을 추가했습니다.
+- 개발자 씬에서 배고픔, 졸림, 청결 저하, 아픔, 신남, 부화, 별빛 해금 프리셋을 테스트할 수 있게 했습니다.
+- 돌봄 기반 무작위 이벤트와 이벤트 도감 등록을 추가했습니다.
+- 숨겨진 도감 기록은 해금 전 표시되지 않도록 규칙을 추가했습니다.
+- 일일 돌봄 루틴, 누적 돌봄 기록, 체류 시간 보상, 우유 방울 잡기 프로토타입을 추가했습니다.
+- 밀크룸 화면을 상단 상태 바, 중앙 캐릭터, 메시지 바, 상태 바, 하단 행동 바로 재구성했습니다.
+- 저장/불러오기/초기화 버튼을 설정 패널로 옮기고 겹침 문제를 수정했습니다.
+- 초기화는 `RESET` 입력이 있어야 실행되도록 확인 창을 개선했습니다.
+- 도감과 꾸미기를 상단 메뉴로 옮겼습니다.
+- 1시간 경과 버튼을 개발자 패널로 옮기고 하단 행동 바는 직접 돌봄 행동만 남겼습니다.
+- CheeseTama 캐릭터를 3D 카툰 렌더링 방향으로 개선했습니다.
+- 노란 말랑 몸체, 치즈 구멍, 볼터치, 작은 팔/발, 광택 눈, 상단 컬, 외곽선, 이벤트 왕관 단서를 추가했습니다.
+- 밀크룸을 따뜻한 목재 디오라마 방향으로 재작업했습니다.
+- 창문, 커튼, 선반, 우유병, 러그, 냉장고, 의자, 조명, 소품, 식물, 조합 테이블을 추가했습니다.
+- 렌더 파이프라인이 맞지 않아 분홍색으로 보이는 문제를 피하도록 활성 파이프라인에 맞는 셰이더 선택 흐름을 적용했습니다.
+- 밀크룸 씬 계층을 카메라, 조명, 환경, 캐릭터, 효과, 화면 그룹으로 정리했습니다.
+- 시작 씬 생성 메뉴 이름을 `CheeseTama > 시작 씬 빌드`로 변경했습니다.
+- 사용자에게 보이는 버튼, 패널, 상태 메시지, 개발자 메시지, 도감 기본 문구를 한국어로 정리했습니다.

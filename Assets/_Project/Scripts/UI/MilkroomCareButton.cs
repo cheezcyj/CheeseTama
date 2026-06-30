@@ -86,14 +86,14 @@ namespace CheeseTama.UI
 
             if (uiController == null)
             {
-                Debug.LogWarning("MilkroomCareButton could not find MilkroomUIController.");
+                Debug.LogWarning("밀크룸 UI 컨트롤러를 찾지 못했습니다.");
                 return;
             }
 
             if (action == MilkroomCareAction.Save)
             {
                 manager.SaveGame();
-                Refresh("Saved CheeseTama test data.", manager, false);
+                Refresh("치즈타마 데이터를 저장했습니다.", manager, false);
                 return;
             }
 
@@ -101,8 +101,8 @@ namespace CheeseTama.UI
             {
                 manager.ReloadGame();
                 var reloadMessage = manager.LastTimeProgression.applied
-                    ? manager.LastTimeProgression.ToSummary("While away,")
-                    : "Reloaded CheeseTama save data.";
+                    ? manager.LastTimeProgression.ToSummary("비운 사이")
+                    : "치즈타마 저장 데이터를 다시 불러왔습니다.";
                 Refresh(reloadMessage, manager, false);
                 return;
             }
@@ -110,7 +110,7 @@ namespace CheeseTama.UI
             if (action == MilkroomCareAction.Reset)
             {
                 manager.ResetGame();
-                Refresh("Reset CheeseTama save data.", manager, false);
+                Refresh("치즈타마 저장 데이터를 초기화했습니다.", manager, false);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace CheeseTama.UI
                 manager.RegisterCareAction("wait_hour", timeResult.applied ? timeResult.hours : 1);
                 var timeEvent = RegisterRandomEvent(manager);
                 PersistAfterInteraction(manager);
-                Refresh(CombineMessages(timeResult.ToSummary("In the milkroom,"), timeEvent.message), manager, false, timeEvent.eventId);
+                Refresh(CombineMessages(timeResult.ToSummary("밀크룸에서"), timeEvent.message), manager, false, timeEvent.eventId);
                 return;
             }
 
@@ -136,13 +136,13 @@ namespace CheeseTama.UI
             {
                 manager.RegisterCareAction("blend");
                 PersistAfterInteraction(manager);
-                Refresh("The blending table is warming up.", manager, false, "happy_wiggle");
+                Refresh("조합 테이블이 따뜻하게 준비되고 있습니다.", manager, false, "happy_wiggle");
                 return;
             }
 
             if (action == MilkroomCareAction.FeedStarMilk && !manager.IsMilkUnlocked(StarMilkId))
             {
-                Refresh("Star Milk is locked. Raise Basic Milk to Lv. 2.", manager, false);
+                Refresh("별빛 우유는 잠겨 있습니다. 기본 우유를 레벨 2까지 올리세요.", manager, false);
                 return;
             }
 
@@ -168,7 +168,7 @@ namespace CheeseTama.UI
                 MilkroomCareAction.Play => careActions.Play(manager.CurrentTama),
                 MilkroomCareAction.Clean => careActions.Clean(manager.CurrentTama),
                 MilkroomCareAction.Rest => careActions.Rest(manager.CurrentTama),
-                _ => new CareActionResult(false, false, "No care action was selected.")
+                _ => new CareActionResult(false, false, "선택된 돌봄 행동이 없습니다.")
             };
         }
 
@@ -184,7 +184,7 @@ namespace CheeseTama.UI
             {
                 manager.RegisterCareAction(actionId);
                 return manager.RegisterDailyCareAction(actionId)
-                    ? "Today's care routine complete."
+                    ? "오늘 돌봄 루틴을 완료했습니다."
                     : string.Empty;
             }
 
@@ -223,7 +223,7 @@ namespace CheeseTama.UI
                 {
                     manager.RegisterMilkDiscovery(StarMilkId);
                     manager.RegisterEventDiscovery("star_milk_unlocked");
-                    message = CombineMessages(message, "Star Milk unlocked.");
+                    message = CombineMessages(message, "별빛 우유가 해금되었습니다.");
                 }
             }
 
@@ -258,13 +258,13 @@ namespace CheeseTama.UI
                 return string.Empty;
             }
 
-            return $"{FormatMilkName(milkId)} reached Lv. {growth.growthLevel}.";
+            return $"{FormatMilkName(milkId)} 레벨 {growth.growthLevel} 달성.";
         }
 
         private static string RegisterSnackDiscovery(GameManager manager)
         {
             var message = manager.RegisterEventDiscovery("cheese_snack_fed")
-                ? "Cheese Snack recorded."
+                ? "치즈 간식 기록을 추가했습니다."
                 : string.Empty;
 
             var tama = manager.CurrentTama;
@@ -273,7 +273,7 @@ namespace CheeseTama.UI
                 && tama.stats.cleanliness < 60
                 && manager.RegisterEventDiscovery("crumbly_snack"))
             {
-                message = CombineMessages(message, "Crumbly snack moment recorded.");
+                message = CombineMessages(message, "부스러지는 간식 순간을 기록했습니다.");
             }
 
             manager.RefreshDerivedCollectionRecords();
@@ -325,7 +325,7 @@ namespace CheeseTama.UI
 
         private static string FormatMilkName(string milkId)
         {
-            return milkId == StarMilkId ? "Star Milk" : "Basic Milk";
+            return milkId == StarMilkId ? "별빛 우유" : "기본 우유";
         }
 
         private void Refresh(string message, GameManager manager, bool celebrate, string eventId = "")
@@ -348,7 +348,7 @@ namespace CheeseTama.UI
             }
             else
             {
-                Debug.LogWarning("MilkroomCareButton could not find CheeseTama visual controller.");
+                Debug.LogWarning("CheeseTama 비주얼 컨트롤러를 찾지 못했습니다.");
             }
 
             Debug.Log(message);

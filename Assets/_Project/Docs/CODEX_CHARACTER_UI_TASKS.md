@@ -1,46 +1,46 @@
-# Codex Character/UI Task Notes
+# CheeseTama 캐릭터/화면 작업 노트
 
-## Done In Current Pass
+## 이번 단계에서 완료한 내용
 
-- Runtime CheeseTama rig creates Body, FaceAnchor, CheeseMarks, Highlight, SoftShadow, and VFXRoot.
-- Hatched CheeseTama supports idle, happy, hungry, sleepy, upset, surprised, sad, sick, and sparkle expression states.
-- Idle breathing and softer squash/stretch reactions are handled in code.
-- Base CheeseTama now limits visible cheese holes to 0-3 small marks; the exact 7-hole constellation layout is reserved for Emmental CheeseTama.
-- Milkroom bottom bar follows the v2.1 instruction: 우유, 조합, 간식, 놀이, 청소, 수면.
-- Top menu follows the v2.1 instruction: 도감, 꾸미기, 설정.
-- Collection opens as a Milkroom overlay and only shows discovered records.
-- Decorate opens as a top-menu overlay with the current Warm Morning Milkroom summary.
-- Save, Load, and Reset are moved into Settings > Data Management.
-- Reset requires typing `RESET`.
-- F12 Dev Panel is separated from the release-facing bottom bar.
-- Wait +1h is available from the F12 Dev Panel for testing time progression.
-- CheeseTama placeholder now follows the revised 3D toon direction: yellow pudding body, orange holes, glossy highlights, tiny limbs, top curl, toon material profiles, and warm outline geometry.
-- Lv.33 crown parts are kept as celebration/cosmetic cues instead of always-on base-form parts.
-- Status messages are shown in a dedicated bottom-center message bar.
-- Dev Panel opens near the upper-right side so it does not cover the stat bar.
-- Milkroom background now uses full 3D diorama groups: RoomShell, WindowSet, FridgeSet, MilkShelfSet, BlendingTableSet, ChalkboardSet, Rug, CozyChair, Lamps, Props, and ThemeVFXRoot.
-- Milkroom currently targets the warm morning theme first; additional themes remain expansion work.
-- Milkroom now has a `MilkroomSceneRoot` hierarchy with CameraRig, Lighting, Environment, Character, VFX, and UI groups.
-- Runtime renderers use active-pipeline-safe toon material profiles so Built-in projects do not render URP materials as magenta.
+- 런타임 CheeseTama 리그가 몸체, 얼굴 기준점, 치즈 무늬, 하이라이트, 부드러운 그림자, 효과 기준점을 생성합니다.
+- 부화 후 CheeseTama는 기본, 기쁨, 배고픔, 졸림, 불편함, 놀람, 슬픔, 아픔, 반짝임 표정을 지원합니다.
+- 숨쉬기와 부드러운 눌림/늘어남 반응을 코드로 처리합니다.
+- 기본 CheeseTama의 보이는 치즈 구멍은 작게 제한하고, 정확한 7구멍 배열은 후반 형태 전용으로 남겼습니다.
+- 밀크룸 하단 바는 우유, 조합, 간식, 놀이, 청소, 수면만 표시합니다.
+- 상단 메뉴는 도감, 꾸미기, 설정으로 구성합니다.
+- 도감은 밀크룸 오버레이로 열리며 발견한 기록만 보여 줍니다.
+- 꾸미기는 상단 메뉴 오버레이로 열리며 현재 따뜻한 아침 밀크룸 요약을 보여 줍니다.
+- 저장, 불러오기, 초기화는 설정의 데이터 관리 영역으로 이동했습니다.
+- 초기화는 `RESET` 입력이 필요합니다.
+- 개발자 패널은 일반 플레이용 하단 바와 분리했습니다.
+- 1시간 경과 버튼은 개발자 패널에서 시간 진행 테스트에 사용합니다.
+- CheeseTama 임시 비주얼은 3D 카툰 방향을 따릅니다.
+- 최종형 왕관 파츠는 항상 켜지지 않고 축하/보상 단서로만 사용합니다.
+- 상태 메시지는 하단 중앙 메시지 바에 표시합니다.
+- 개발자 패널은 상태 바를 가리지 않는 위치에 열립니다.
+- 밀크룸 배경은 방 구조, 창문, 냉장고, 우유 선반, 조합 테이블, 칠판, 러그, 의자, 조명, 소품, 테마 효과 그룹으로 구성합니다.
+- 밀크룸은 우선 따뜻한 아침 테마를 목표로 합니다.
+- 씬 계층은 카메라, 조명, 환경, 캐릭터, 효과, 화면 그룹으로 정리합니다.
+- 런타임 렌더러는 활성 파이프라인에 맞는 카툰 재질을 사용해 분홍색 렌더링을 피합니다.
 
-## Next Character Work
+## 다음 캐릭터 작업
 
-- Replace primitive sphere placeholder with a custom blob mesh or imported model.
-- Add real toon material assets and URP shader settings.
-- Add face decal textures or sprites for cleaner expressions.
-- Replace the current Emmental visual trigger with final evolution data once that content is implemented, without exposing hidden conditions early.
-- Replace placeholder crown pieces with a cosmetic/evolution reward asset once the cosmetic route is defined.
+- 절차적 조각을 최종 메시 또는 가져온 모델로 교체합니다.
+- 실제 카툰 재질 에셋과 셰이더 설정을 추가합니다.
+- 표정 품질을 높이기 위해 얼굴 데칼 또는 스프라이트를 도입합니다.
+- 숨겨진 조건을 노출하지 않는 방식으로 후반 형태 데이터를 연결합니다.
+- 왕관 파츠는 꾸미기 또는 진화 보상 에셋으로 교체합니다.
 
-## Next UI Work
+## 다음 화면 작업
 
-- Add real settings tabs for sound, display, and controls.
-- Add icon assets to the six bottom care action buttons and top menu buttons.
-- Add toast notifications for save, discovery, and reward feedback.
-- Add a proper Blend panel with recipe inputs and safe hidden-recipe handling.
-- Improve Collection screen card layout while keeping hidden content fully invisible until unlocked.
+- 소리, 화면, 조작 설정 탭을 추가합니다.
+- 여섯 돌봄 버튼과 상단 메뉴 버튼에 아이콘을 추가합니다.
+- 저장, 발견, 보상 피드백용 짧은 알림을 추가합니다.
+- 조합 패널과 레시피 입력 흐름을 구현합니다.
+- 숨겨진 콘텐츠가 해금 전 보이지 않도록 도감 카드 레이아웃을 개선합니다.
 
-## Next Milkroom Work
+## 다음 밀크룸 작업
 
-- Replace procedural primitive props with imported 3D furniture/room models using the same toon material profiles.
-- Add a safe theme selection flow after unlock rules are finalized.
-- Add weather/time transitions without exposing hidden route requirements.
+- 절차적 소품을 가져온 3D 가구와 방 모델로 교체합니다.
+- 해금 규칙이 확정된 뒤 안전한 테마 선택 흐름을 추가합니다.
+- 숨겨진 루트 조건을 노출하지 않는 날씨/시간 전환을 추가합니다.

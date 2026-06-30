@@ -32,23 +32,23 @@ namespace CheeseTama.UI
         {
             if (current == null || current.stats == null)
             {
-                SetText(stateText, "Debug State\nNo CheeseTama save data loaded.");
+                SetText(stateText, "개발자 상태\n치즈타마 저장 데이터를 불러오지 못했습니다.");
                 return;
             }
 
             var builder = new StringBuilder();
-            builder.AppendLine("Debug State");
-            builder.AppendLine($"Name: {current.name}");
-            builder.AppendLine($"Form: {FormatFormName(current.form)}");
-            builder.AppendLine($"Lv: {current.level} ({current.levelProgress}%)");
-            builder.AppendLine($"Condition: {FormatCondition(current)}");
-            builder.AppendLine($"Hunger: {current.stats.hunger}");
-            builder.AppendLine($"Mood: {current.stats.mood}");
-            builder.AppendLine($"Cleanliness: {current.stats.cleanliness}");
-            builder.AppendLine($"Sleepiness: {current.stats.sleepiness}");
-            builder.AppendLine($"Health: {current.stats.health}");
-            builder.AppendLine($"Affection: {current.stats.affection}");
-            builder.AppendLine(FormatMilkGrowthLine("basic_milk", "Basic Milk"));
+            builder.AppendLine("개발자 상태");
+            builder.AppendLine($"이름: {current.name}");
+            builder.AppendLine($"형태: {FormatFormName(current.form)}");
+            builder.AppendLine($"레벨: {current.level} ({current.levelProgress}%)");
+            builder.AppendLine($"컨디션: {FormatCondition(current)}");
+            builder.AppendLine($"포만감: {current.stats.hunger}");
+            builder.AppendLine($"기분: {current.stats.mood}");
+            builder.AppendLine($"청결: {current.stats.cleanliness}");
+            builder.AppendLine($"졸림: {current.stats.sleepiness}");
+            builder.AppendLine($"건강: {current.stats.health}");
+            builder.AppendLine($"애정: {current.stats.affection}");
+            builder.AppendLine(FormatMilkGrowthLine("basic_milk", "기본 우유"));
             builder.AppendLine(FormatStarMilkLine());
             builder.AppendLine(FormatUnlocks());
             builder.AppendLine(FormatCareHistory());
@@ -69,20 +69,20 @@ namespace CheeseTama.UI
             var entry = FindMilkGrowthEntry(milkId);
             if (entry == null)
             {
-                return $"{displayName}: Lv. 0 (0 pts)";
+                return $"{displayName}: 레벨 0 (0점)";
             }
 
-            return $"{displayName}: Lv. {entry.growthLevel} ({entry.growthPoints} pts)";
+            return $"{displayName}: 레벨 {entry.growthLevel} ({entry.growthPoints}점)";
         }
 
         private string FormatStarMilkLine()
         {
             if (currentSave == null || currentSave.unlocks == null || !currentSave.unlocks.starMilkUnlocked)
             {
-                return "Star Milk: locked";
+                return "별빛 우유: 잠김";
             }
 
-            return FormatMilkGrowthLine("star_milk", "Star Milk");
+            return FormatMilkGrowthLine("star_milk", "별빛 우유");
         }
 
         private MilkGrowthSaveEntry FindMilkGrowthEntry(string milkId)
@@ -106,9 +106,9 @@ namespace CheeseTama.UI
         private string FormatUnlocks()
         {
             var starMilkState = currentSave != null && currentSave.unlocks != null && currentSave.unlocks.starMilkUnlocked
-                ? "Star Milk unlocked"
-                : "Star Milk locked";
-            return $"Unlocks: {starMilkState}";
+                ? "별빛 우유 해금"
+                : "별빛 우유 잠김";
+            return $"해금: {starMilkState}";
         }
 
         private string FormatHiddenRecords()
@@ -118,7 +118,7 @@ namespace CheeseTama.UI
                 && currentSave.collections.hiddenUnlockedOnly != null
                 ? currentSave.collections.hiddenUnlockedOnly.Count
                 : 0;
-            return $"Hidden Records: {count}";
+            return $"숨겨진 기록: {count}";
         }
 
         private string FormatCareHistory()
@@ -126,10 +126,10 @@ namespace CheeseTama.UI
             var history = currentSave?.careHistory;
             if (history == null)
             {
-                return "Care: 0 actions";
+                return "돌봄: 0회";
             }
 
-            return $"Care: {history.totalCareActions} actions, Wait {history.waitHours}h";
+            return $"돌봄: {history.totalCareActions}회, 시간 경과 {history.waitHours}시간";
         }
 
         private string FormatDailyRoutine()
@@ -137,10 +137,10 @@ namespace CheeseTama.UI
             var daily = currentSave?.dailyCare;
             if (daily == null)
             {
-                return "Today: M 0/1 P 0/1 C 0/1 R 0/1";
+                return "오늘: 우유 0/1 놀이 0/1 청소 0/1 휴식 0/1";
             }
 
-            return $"Today: M {ClampGoal(daily.milkFeeds)}/1 P {ClampGoal(daily.playSessions)}/1 C {ClampGoal(daily.cleanings)}/1 R {ClampGoal(daily.rests)}/1, Done {daily.completedRoutineCount}";
+            return $"오늘: 우유 {ClampGoal(daily.milkFeeds)}/1 놀이 {ClampGoal(daily.playSessions)}/1 청소 {ClampGoal(daily.cleanings)}/1 휴식 {ClampGoal(daily.rests)}/1, 완료 {daily.completedRoutineCount}";
         }
 
         private string FormatSession()
@@ -148,10 +148,10 @@ namespace CheeseTama.UI
             var session = currentSave?.milkroomSession;
             if (session == null)
             {
-                return "Session: 00:00, Today 00:00, Catches 0";
+                return "세션: 00:00, 오늘 00:00, 획득 0";
             }
 
-            return $"Session: {FormatDuration(session.currentSessionSeconds)}, Today {FormatDuration(session.todaySeconds)}, Catches {session.totalMilkDropCatches}";
+            return $"세션: {FormatDuration(session.currentSessionSeconds)}, 오늘 {FormatDuration(session.todaySeconds)}, 획득 {session.totalMilkDropCatches}";
         }
 
         private string FormatEconomy()
@@ -159,10 +159,10 @@ namespace CheeseTama.UI
             var economy = currentSave?.economy;
             if (economy == null)
             {
-                return "Items: Coins 0, Drops 0, Frags 0";
+                return "보유: 코인 0, 방울 0, 조각 0";
             }
 
-            return $"Items: Coins {economy.milkCoins}, Drops {economy.milkDrops}, Frags {economy.collectionFragments}";
+            return $"보유: 코인 {economy.milkCoins}, 방울 {economy.milkDrops}, 조각 {economy.collectionFragments}";
         }
 
         private static int ClampGoal(int value)
@@ -182,50 +182,50 @@ namespace CheeseTama.UI
         {
             if (form == "egg")
             {
-                return "Egg";
+                return "알";
             }
 
             if (form == "soft_cheesetama")
             {
-                return "Soft CheeseTama";
+                return "말랑 치즈타마";
             }
 
-            return string.IsNullOrWhiteSpace(form) ? "Unknown" : form;
+            return string.IsNullOrWhiteSpace(form) ? "알 수 없음" : form;
         }
 
         private static string FormatCondition(CheeseTamaModel tama)
         {
             if (tama == null || tama.stats == null)
             {
-                return "unknown";
+                return "알 수 없음";
             }
 
             if (tama.stats.health < 35)
             {
-                return "unwell";
+                return "아픔";
             }
 
             if (tama.stats.hunger < 25)
             {
-                return "hungry";
+                return "배고픔";
             }
 
             if (tama.stats.cleanliness < 35)
             {
-                return "messy";
+                return "지저분함";
             }
 
             if (tama.stats.sleepiness > 75)
             {
-                return "sleepy";
+                return "졸림";
             }
 
             if (tama.stats.mood > 80)
             {
-                return "cheerful";
+                return "신남";
             }
 
-            return tama.isHatched ? "curious" : "warm";
+            return tama.isHatched ? "호기심" : "따뜻함";
         }
 
         private static void SetText(Text target, string value)

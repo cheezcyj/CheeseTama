@@ -59,7 +59,7 @@ namespace CheeseTama.Core
         {
             if (saveManager == null)
             {
-                Debug.LogWarning("SaveManager is missing. Runtime save data was not loaded.");
+                Debug.LogWarning("저장 관리자가 없습니다. 런타임 저장 데이터를 불러오지 못했습니다.");
                 return;
             }
 
@@ -148,7 +148,7 @@ namespace CheeseTama.Core
         {
             if (CurrentSave == null)
             {
-                return "No CheeseTama save data is loaded.";
+                return "치즈타마 저장 데이터를 불러오지 못했습니다.";
             }
 
             CurrentSave.EnsureRuntimeDefaults();
@@ -173,7 +173,7 @@ namespace CheeseTama.Core
             }
 
             AddUniqueRecord(CurrentSave.collections.events, MilkDropCatchEventId);
-            return $"Caught milk drops. +{coinGain} Milk Coins, +{dropGain} Milk Drops.";
+            return $"우유 방울을 모았습니다. 코인 +{coinGain}, 방울 +{dropGain}.";
         }
 
         public void RegisterMilkDiscovery(string milkId)
@@ -572,10 +572,10 @@ namespace CheeseTama.Core
         private string GrantPresenceRewards(int previousMinute, int currentMinute)
         {
             var message = string.Empty;
-            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 5, 5, 2, 0, "Stayed 5 min."));
-            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 10, 10, 4, 0, "Stayed 10 min."));
-            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 20, 20, 8, 1, "Stayed 20 min."));
-            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 30, 33, 12, 2, "Stayed 30 min."));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 5, 5, 2, 0, "5분 체류 보상"));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 10, 10, 4, 0, "10분 체류 보상"));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 20, 20, 8, 1, "20분 체류 보상"));
+            message = CombineMessages(message, TryGrantPresenceReward(previousMinute, currentMinute, 30, 33, 12, 2, "30분 체류 보상"));
             return message;
         }
 
@@ -604,9 +604,9 @@ namespace CheeseTama.Core
             session.lastRewardAtIso = DateTimeOffset.Now.ToString("O");
 
             var fragmentMessage = collectionFragments > 0
-                ? $", +{collectionFragments} Collection Fragment"
+                ? $", 도감 조각 +{collectionFragments}"
                 : string.Empty;
-            return $"{message} +{milkCoins} Milk Coins, +{milkDrops} Milk Drops{fragmentMessage}.";
+            return $"{message}: 코인 +{milkCoins}, 우유 방울 +{milkDrops}{fragmentMessage}.";
         }
 
         private bool EnsureDailyCareDate()

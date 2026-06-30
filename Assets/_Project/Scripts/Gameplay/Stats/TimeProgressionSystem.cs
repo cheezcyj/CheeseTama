@@ -40,11 +40,11 @@ namespace CheeseTama.Gameplay.Stats
         {
             if (!applied)
             {
-                return "No time-based stat changes yet.";
+                return "아직 시간 경과에 따른 변화가 없습니다.";
             }
 
-            var healthText = healthDelta == 0 ? string.Empty : $", Health {healthDelta}";
-            return $"{prefix} {hours}h passed. Hunger {hungerDelta}, Mood {moodDelta}, Cleanliness {cleanlinessDelta}, Sleepiness +{sleepinessDelta}{healthText}.";
+            var healthText = healthDelta == 0 ? string.Empty : $", 건강 {healthDelta}";
+            return $"{prefix} {hours}시간이 지났습니다. 포만감 {hungerDelta}, 기분 {moodDelta}, 청결 {cleanlinessDelta}, 졸림 +{sleepinessDelta}{healthText}.";
         }
     }
 

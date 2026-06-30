@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CheeseTama.Data
 {
-    [CreateAssetMenu(menuName = "CheeseTama/Data/Evolution", fileName = "Evolution_")]
+    [CreateAssetMenu(menuName = "CheeseTama/데이터/진화", fileName = "Evolution_")]
     public sealed class EvolutionDefinition : ScriptableObject
     {
         public string id;
@@ -31,4 +31,3 @@ namespace CheeseTama.Data
         public string pattern;
     }
 }
-

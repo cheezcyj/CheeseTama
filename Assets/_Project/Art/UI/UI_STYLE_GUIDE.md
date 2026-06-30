@@ -1,65 +1,65 @@
-# CheeseTama UI Style Guide
+# CheeseTama 화면 스타일 가이드
 
-## Layout Rule
+## 배치 규칙
 
-The Milkroom first screen must separate direct care actions from system controls.
+밀크룸 첫 화면은 직접 돌봄 행동과 시스템 조작을 분리합니다.
 
-Bottom action bar:
-
-```text
-우유 / 조합 / 간식 / 놀이 / 청소 / 수면 / 도감
-```
-
-Top menu:
+하단 행동 바:
 
 ```text
-Settings
+우유 / 조합 / 간식 / 놀이 / 청소 / 수면
 ```
 
-System controls:
+상단 메뉴:
 
 ```text
-Settings > Data Management > Save / Load / Reset
+도감 / 꾸미기 / 설정
 ```
 
-Debug controls:
+시스템 조작:
 
 ```text
-Debug scene or F12 Dev Panel in Editor/Development builds only
-Wait +1h lives in the F12 Dev Panel for testing.
+설정 > 데이터 관리 > 저장 / 불러오기 / 초기화
 ```
 
-## Palette
+개발자 조작:
 
-| Token | Hex | Use |
+```text
+개발자 씬 또는 개발자 패널에서만 사용
+1시간 경과 버튼은 시간 진행 테스트용
+```
+
+## 색상
+
+| 이름 | 값 | 용도 |
 |---|---|---|
-| Milk White | `#FFF8E9` | background, cards |
-| Cream Beige | `#F3E3C5` | panels |
-| Butter Yellow | `#F6C75A` | primary buttons |
-| Honey Gold | `#F2A93B` | highlight, reward |
-| Mint Blue | `#9EDFD1` | clean/supportive states |
-| Coffee Brown | `#7B5438` | text and face details |
-| Danger Red | `#D85A4A` | destructive actions |
+| 우유 흰색 | `#FFF8E9` | 배경, 카드 |
+| 크림 베이지 | `#F3E3C5` | 패널 |
+| 버터 노랑 | `#F6C75A` | 주요 버튼 |
+| 꿀빛 금색 | `#F2A93B` | 강조, 보상 |
+| 민트 파랑 | `#9EDFD1` | 청결/보조 상태 |
+| 커피 갈색 | `#7B5438` | 글자와 얼굴 디테일 |
+| 위험 빨강 | `#D85A4A` | 파괴적 행동 |
 
-## Main Screen
+## 기본 화면 구조
 
 ```text
-TopStatusBar
-MainMilkroomArea
-MessageBar
-StatBar
-BottomActionBar
-SettingsModal
-ConfirmResetDialog
-DevPanel
+상단 상태 바
+중앙 밀크룸 영역
+메시지 바
+상태 바
+하단 행동 바
+설정 창
+초기화 확인 창
+개발자 패널
 ```
 
-## UX Rules
+## 사용성 규칙
 
-- Do not expose hidden late-game slots, counts, categories, or conditions.
-- Keep save/load/reset away from the bottom action bar.
-- Keep Collection as the seventh bottom action button per the v2.0 visual/UI direction.
-- Reset must require an explicit confirmation input.
-- Keep the message bar large and clear near the bottom center.
-- Open the F12 Dev Panel away from the stat bar.
-- Keep the default view focused on CheeseTama and care actions.
+- 숨겨진 후반 슬롯, 개수, 분류, 조건은 해금 전 노출하지 않습니다.
+- 저장, 불러오기, 초기화는 하단 행동 바에 넣지 않습니다.
+- 도감과 꾸미기는 상단 메뉴에서 엽니다.
+- 초기화는 명시적인 확인 입력이 필요합니다.
+- 메시지 바는 하단 중앙에 크게 배치합니다.
+- 개발자 패널은 상태 바를 가리지 않게 엽니다.
+- 기본 화면은 CheeseTama와 돌봄 행동에 집중합니다.

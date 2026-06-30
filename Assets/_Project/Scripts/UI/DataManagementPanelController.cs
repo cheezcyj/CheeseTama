@@ -54,7 +54,7 @@ namespace CheeseTama.UI
         {
             var manager = StarterSceneBuilder.EnsureCoreSystems();
             manager.SaveGame();
-            RefreshBoundViews(manager, "Manual save complete.");
+            RefreshBoundViews(manager, "수동 저장을 완료했습니다.");
         }
 
         private void Load()
@@ -62,8 +62,8 @@ namespace CheeseTama.UI
             var manager = StarterSceneBuilder.EnsureCoreSystems();
             manager.ReloadGame();
             var message = manager.LastTimeProgression.applied
-                ? manager.LastTimeProgression.ToSummary("While away,")
-                : "Save data loaded.";
+                ? manager.LastTimeProgression.ToSummary("비운 사이")
+                : "저장 데이터를 불러왔습니다.";
             RefreshBoundViews(manager, message);
         }
 

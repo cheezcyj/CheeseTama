@@ -60,7 +60,7 @@ namespace CheeseTama.UI
                 resetInput.text = string.Empty;
             }
 
-            SetMessage("Type RESET in the box below. The Reset button unlocks only after the text matches.");
+            SetMessage("아래 입력칸에 RESET을 입력하세요. 정확히 일치해야 초기화 버튼이 열립니다.");
             RefreshConfirmButtonState();
 
             if (dialogRoot != null)
@@ -87,7 +87,7 @@ namespace CheeseTama.UI
         {
             if (!IsResetInputValid())
             {
-                SetMessage("Reset is locked. Type RESET exactly, then press Reset.");
+                SetMessage("초기화가 잠겨 있습니다. RESET을 정확히 입력한 뒤 초기화를 누르세요.");
                 RefreshConfirmButtonState();
                 return;
             }
@@ -95,10 +95,10 @@ namespace CheeseTama.UI
             var manager = StarterSceneBuilder.EnsureCoreSystems();
             manager.ResetGame();
             milkroomUi?.Bind(manager.CurrentSave);
-            milkroomUi?.ShowMessage("Save data reset.");
+            milkroomUi?.ShowMessage("저장 데이터를 초기화했습니다.");
             visualController?.Bind(manager.CurrentTama);
             visualController?.React(false);
-            SetMessage("Save data reset.");
+            SetMessage("저장 데이터를 초기화했습니다.");
             Close();
         }
 
@@ -107,11 +107,11 @@ namespace CheeseTama.UI
             RefreshConfirmButtonState();
             if (IsResetInputValid())
             {
-                SetMessage("RESET matched. Press Reset to clear local progress.");
+                SetMessage("RESET이 일치합니다. 초기화를 누르면 로컬 진행도가 삭제됩니다.");
             }
             else
             {
-                SetMessage("Type RESET in the box below. The Reset button unlocks only after the text matches.");
+                SetMessage("아래 입력칸에 RESET을 입력하세요. 정확히 일치해야 초기화 버튼이 열립니다.");
             }
         }
 

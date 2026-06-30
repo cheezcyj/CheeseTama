@@ -34,20 +34,20 @@ namespace CheeseTama.UI
         {
             if (saveData == null)
             {
-                SetText(milkText, "Milk Records: 0");
-                SetText(evolutionText, "Evolution Records: 0");
-                SetText(eventText, "Event Records: 0");
+                SetText(milkText, "우유 기록: 0");
+                SetText(evolutionText, "진화 기록: 0");
+                SetText(eventText, "이벤트 기록: 0");
                 SetText(hiddenText, string.Empty);
-                SetText(messageText, "No collection data loaded.");
+                SetText(messageText, "도감 데이터를 불러오지 못했습니다.");
                 return;
             }
 
             saveData.EnsureRuntimeDefaults();
-            SetText(milkText, FormatRecordList("Milk Records", saveData.collections.milk, FormatKnownRecordName));
-            SetText(evolutionText, FormatRecordList("Evolution Records", saveData.collections.evolution, FormatKnownRecordName));
-            SetText(eventText, FormatRecordList("Event Records", saveData.collections.events, FormatKnownRecordName));
+            SetText(milkText, FormatRecordList("우유 기록", saveData.collections.milk, FormatKnownRecordName));
+            SetText(evolutionText, FormatRecordList("진화 기록", saveData.collections.evolution, FormatKnownRecordName));
+            SetText(eventText, FormatRecordList("이벤트 기록", saveData.collections.events, FormatKnownRecordName));
             SetText(hiddenText, FormatHiddenRecordList(saveData.collections.hiddenUnlockedOnly));
-            SetText(messageText, "Feed milk and hatch CheeseTama to add records here.");
+            SetText(messageText, "우유를 먹이고 부화시키면 이곳에 기록됩니다.");
         }
 
         public HiddenCollectionDefinition[] GetVisibleHiddenCards(
@@ -71,7 +71,7 @@ namespace CheeseTama.UI
         {
             if (records == null || records.Count == 0)
             {
-                return $"{title}: 0\n- none yet";
+                return $"{title}: 0\n- 아직 없음";
             }
 
             var labels = new string[records.Count];
@@ -96,258 +96,258 @@ namespace CheeseTama.UI
                 var entry = records[i];
                 if (entry == null)
                 {
-                    labels[i] = "unknown";
+                    labels[i] = "알 수 없음";
                     continue;
                 }
 
                 labels[i] = $"{FormatHiddenRecordName(entry.id)} ({FormatIso(entry.acquiredAtIso)})";
             }
 
-            return $"Special Records: {records.Count}\n- {string.Join("\n- ", labels)}";
+            return $"특별 기록: {records.Count}\n- {string.Join("\n- ", labels)}";
         }
 
         private static string FormatKnownRecordName(string id)
         {
             if (id == "basic_milk")
             {
-                return "Basic Milk";
+                return "기본 우유";
             }
 
             if (id == "star_milk")
             {
-                return "Star Milk";
+                return "별빛 우유";
             }
 
             if (id == "star_milk_unlocked")
             {
-                return "Star Milk unlocked";
+                return "별빛 우유 해금";
             }
 
             if (id == "cheese_snack_fed")
             {
-                return "Cheese Snack tasted";
+                return "치즈 간식 맛봄";
             }
 
             if (id == "crumbly_snack")
             {
-                return "Crumbly snack";
+                return "부스러지는 간식";
             }
 
             if (id == "care_total_5")
             {
-                return "5 care actions";
+                return "돌봄 5회";
             }
 
             if (id == "care_total_15")
             {
-                return "15 care actions";
+                return "돌봄 15회";
             }
 
             if (id == "milk_feeds_5")
             {
-                return "Fed milk 5 times";
+                return "우유 5회";
             }
 
             if (id == "star_milk_feeds_3")
             {
-                return "Fed Star Milk 3 times";
+                return "별빛 우유 3회";
             }
 
             if (id == "snacks_fed_3")
             {
-                return "Shared 3 snacks";
+                return "간식 3회";
             }
 
             if (id == "play_sessions_3")
             {
-                return "Played 3 times";
+                return "놀이 3회";
             }
 
             if (id == "cleanings_3")
             {
-                return "Cleaned 3 times";
+                return "청소 3회";
             }
 
             if (id == "rests_3")
             {
-                return "Rested 3 times";
+                return "휴식 3회";
             }
 
             if (id == "wait_hours_3")
             {
-                return "Waited 3 hours";
+                return "3시간 경과";
             }
 
             if (id == "daily_routine_complete")
             {
-                return "Daily routine complete";
+                return "일일 루틴 완료";
             }
 
             if (id == "daily_routine_3")
             {
-                return "3 daily routines";
+                return "일일 루틴 3회";
             }
 
             if (id == "session_5m")
             {
-                return "Stayed 5 minutes";
+                return "5분 체류";
             }
 
             if (id == "session_10m")
             {
-                return "Stayed 10 minutes";
+                return "10분 체류";
             }
 
             if (id == "session_20m")
             {
-                return "Stayed 20 minutes";
+                return "20분 체류";
             }
 
             if (id == "session_30m")
             {
-                return "Stayed 30 minutes";
+                return "30분 체류";
             }
 
             if (id == "daily_presence_10m")
             {
-                return "10 minutes in the milkroom today";
+                return "오늘 밀크룸 10분";
             }
 
             if (id == "daily_presence_30m")
             {
-                return "30 minutes in the milkroom today";
+                return "오늘 밀크룸 30분";
             }
 
             if (id == "milk_drop_catch")
             {
-                return "Caught milk drops";
+                return "우유 방울 획득";
             }
 
             if (id == "milk_drop_catch_5")
             {
-                return "Caught milk drops 5 times";
+                return "우유 방울 5회 획득";
             }
 
             if (id == "milk_drop_catch_10")
             {
-                return "Caught milk drops 10 times";
+                return "우유 방울 10회 획득";
             }
 
             if (id == "quiet_hum")
             {
-                return "Quiet milkroom hum";
+                return "조용한 밀크룸 울림";
             }
 
             if (id == "small_fever")
             {
-                return "Small fever";
+                return "작은 열기";
             }
 
             if (id == "hungry_peep")
             {
-                return "Hungry peep";
+                return "배고픈 소리";
             }
 
             if (id == "dusty_corner")
             {
-                return "Dusty corner";
+                return "먼지 낀 구석";
             }
 
             if (id == "sleepy_yawn")
             {
-                return "Sleepy yawn";
+                return "졸린 하품";
             }
 
             if (id == "happy_wiggle")
             {
-                return "Happy wiggle";
+                return "기쁜 흔들림";
             }
 
             if (id == "soft_cheesetama")
             {
-                return "Soft CheeseTama";
+                return "말랑 치즈타마";
             }
 
             const string BasicMilkGrowthPrefix = "basic_milk_growth_lv_";
             if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(BasicMilkGrowthPrefix))
             {
-                return $"Basic Milk reached Lv. {id.Substring(BasicMilkGrowthPrefix.Length)}";
+                return $"기본 우유 레벨 {id.Substring(BasicMilkGrowthPrefix.Length)} 달성";
             }
 
             const string StarMilkGrowthPrefix = "star_milk_growth_lv_";
             if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(StarMilkGrowthPrefix))
             {
-                return $"Star Milk reached Lv. {id.Substring(StarMilkGrowthPrefix.Length)}";
+                return $"별빛 우유 레벨 {id.Substring(StarMilkGrowthPrefix.Length)} 달성";
             }
 
-            return string.IsNullOrWhiteSpace(id) ? "unknown" : id;
+            return string.IsNullOrWhiteSpace(id) ? "알 수 없음" : id;
         }
 
         private static string FormatHiddenRecordName(string id)
         {
             if (id == "first_soft_hatch")
             {
-                return "First Soft Hatch";
+                return "첫 말랑 부화";
             }
 
             if (id == "star_milk_keeper")
             {
-                return "Star Milk Keeper";
+                return "별빛 우유 지킴이";
             }
 
             if (id == "milkroom_listener")
             {
-                return "Milkroom Listener";
+                return "밀크룸 청취자";
             }
 
             if (id == "first_snack_bite")
             {
-                return "First Snack Bite";
+                return "첫 간식 한입";
             }
 
             if (id == "gentle_caretaker")
             {
-                return "Gentle Caretaker";
+                return "다정한 돌봄이";
             }
 
             if (id == "tidy_keeper")
             {
-                return "Tidy Keeper";
+                return "깔끔한 관리인";
             }
 
             if (id == "playful_friend")
             {
-                return "Playful Friend";
+                return "장난스러운 친구";
             }
 
             if (id == "warm_balance")
             {
-                return "Warm Balance";
+                return "따뜻한 균형";
             }
 
             if (id == "daily_regular")
             {
-                return "Daily Regular";
+                return "꾸준한 일과";
             }
 
             if (id == "patient_guest")
             {
-                return "Patient Milkroom Guest";
+                return "느긋한 밀크룸 손님";
             }
 
             if (id == "drop_listener")
             {
-                return "Drop Listener";
+                return "방울 청취자";
             }
 
-            return string.IsNullOrWhiteSpace(id) ? "unknown" : id;
+            return string.IsNullOrWhiteSpace(id) ? "알 수 없음" : id;
         }
 
         private static string FormatIso(string iso)
         {
             if (string.IsNullOrWhiteSpace(iso))
             {
-                return "unknown";
+                return "알 수 없음";
             }
 
             return iso.Length > 10 ? iso.Substring(0, 10) : iso;

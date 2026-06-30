@@ -133,18 +133,18 @@ namespace CheeseTama.UI
             }
 
             SetText(nameText, current.name);
-            SetText(levelText, $"Lv. {current.level} ({current.levelProgress}%)");
-            SetText(formText, $"Form: {FormatFormName(current.form)}");
-            SetText(conditionText, $"Condition: {FormatCondition(current)}");
-            SetText(hungerText, $"Hunger: {current.stats.hunger}");
-            SetText(moodText, $"Mood: {current.stats.mood}");
-            SetText(cleanlinessText, $"Cleanliness: {current.stats.cleanliness}");
-            SetText(sleepinessText, $"Sleepiness: {current.stats.sleepiness}");
-            SetText(healthText, $"Health: {current.stats.health}");
-            SetText(affectionText, $"Affection: {current.stats.affection}");
-            SetText(maturationText, $"Maturation: {current.stats.maturation}");
+            SetText(levelText, $"레벨 {current.level} ({current.levelProgress}%)");
+            SetText(formText, $"형태: {FormatFormName(current.form)}");
+            SetText(conditionText, $"컨디션: {FormatCondition(current)}");
+            SetText(hungerText, $"포만감: {current.stats.hunger}");
+            SetText(moodText, $"기분: {current.stats.mood}");
+            SetText(cleanlinessText, $"청결: {current.stats.cleanliness}");
+            SetText(sleepinessText, $"졸림: {current.stats.sleepiness}");
+            SetText(healthText, $"건강: {current.stats.health}");
+            SetText(affectionText, $"애정: {current.stats.affection}");
+            SetText(maturationText, $"성숙도: {current.stats.maturation}");
             SetText(hatchProgressText, FormatHatchProgress(current));
-            SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "Basic Milk"));
+            SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "기본 우유"));
             SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
             SetText(unlockText, FormatUnlocks(currentSave));
             SetText(careSummaryText, FormatCareSummary(currentSave));
@@ -152,7 +152,7 @@ namespace CheeseTama.UI
             SetText(sessionText, FormatSession(currentSave));
             SetText(economyText, FormatEconomy(currentSave));
             SetText(careTipText, FormatCareTip(currentSave, current));
-            SetText(lastSavedText, $"Last Saved: {FormatIso(current.lastSavedAtIso)}");
+            SetText(lastSavedText, $"마지막 저장: {FormatIso(current.lastSavedAtIso)}");
         }
 
         public void ShowMessage(string message)
@@ -172,7 +172,7 @@ namespace CheeseTama.UI
         {
             if (string.IsNullOrWhiteSpace(iso))
             {
-                return "Never";
+                return "없음";
             }
 
             return iso.Length > 19 ? iso.Substring(0, 19).Replace('T', ' ') : iso;
@@ -182,25 +182,25 @@ namespace CheeseTama.UI
         {
             if (tama.isHatched)
             {
-                return "Hatch: awake";
+                return "부화: 깨어남";
             }
 
-            return $"Hatch: {HatchingSystem.GetHatchProgressPercent(tama)}%";
+            return $"부화: {HatchingSystem.GetHatchProgressPercent(tama)}%";
         }
 
         private static string FormatFormName(string form)
         {
             if (form == "egg")
             {
-                return "Egg";
+                return "알";
             }
 
             if (form == "soft_cheesetama")
             {
-                return "Soft CheeseTama";
+                return "말랑 치즈타마";
             }
 
-            return string.IsNullOrWhiteSpace(form) ? "Unknown" : form;
+            return string.IsNullOrWhiteSpace(form) ? "알 수 없음" : form;
         }
 
         private static string FormatMilkGrowthLine(CheeseTamaSaveData saveData, string milkId, string displayName)
@@ -208,20 +208,20 @@ namespace CheeseTama.UI
             var entry = FindMilkGrowthEntry(saveData, milkId);
             if (entry == null)
             {
-                return $"{displayName}: Lv. 0 (0 pts)";
+                return $"{displayName}: 레벨 0 (0점)";
             }
 
-            return $"{displayName}: Lv. {entry.growthLevel} ({entry.growthPoints} pts)";
+            return $"{displayName}: 레벨 {entry.growthLevel} ({entry.growthPoints}점)";
         }
 
         private static string FormatStarMilkGrowthLine(CheeseTamaSaveData saveData)
         {
             if (saveData == null || saveData.unlocks == null || !saveData.unlocks.starMilkUnlocked)
             {
-                return "Star Milk: locked";
+                return "별빛 우유: 잠김";
             }
 
-            return FormatMilkGrowthLine(saveData, "star_milk", "Star Milk");
+            return FormatMilkGrowthLine(saveData, "star_milk", "별빛 우유");
         }
 
         private static MilkGrowthSaveEntry FindMilkGrowthEntry(CheeseTamaSaveData saveData, string milkId)
@@ -245,9 +245,9 @@ namespace CheeseTama.UI
         private static string FormatUnlocks(CheeseTamaSaveData saveData)
         {
             var starMilkState = saveData != null && saveData.unlocks != null && saveData.unlocks.starMilkUnlocked
-                ? "Star Milk unlocked"
-                : "Star Milk locked";
-            return $"Unlocks: {starMilkState}";
+                ? "별빛 우유 해금"
+                : "별빛 우유 잠김";
+            return $"해금: {starMilkState}";
         }
 
         private static string FormatCareSummary(CheeseTamaSaveData saveData)
@@ -255,10 +255,10 @@ namespace CheeseTama.UI
             var history = saveData?.careHistory;
             if (history == null)
             {
-                return "Care: 0 | Play 0 Clean 0 Rest 0";
+                return "돌봄: 0 | 놀이 0 청소 0 휴식 0";
             }
 
-            return $"Care: {history.totalCareActions} | Play {history.playSessions} Clean {history.cleanings} Rest {history.rests}";
+            return $"돌봄: {history.totalCareActions} | 놀이 {history.playSessions} 청소 {history.cleanings} 휴식 {history.rests}";
         }
 
         private static string FormatDailyRoutine(CheeseTamaSaveData saveData)
@@ -266,10 +266,10 @@ namespace CheeseTama.UI
             var daily = saveData?.dailyCare;
             if (daily == null)
             {
-                return "Today: M 0/1 P 0/1 C 0/1 R 0/1";
+                return "오늘: 우유 0/1 놀이 0/1 청소 0/1 휴식 0/1";
             }
 
-            return $"Today: M {ClampGoal(daily.milkFeeds)}/1 P {ClampGoal(daily.playSessions)}/1 C {ClampGoal(daily.cleanings)}/1 R {ClampGoal(daily.rests)}/1";
+            return $"오늘: 우유 {ClampGoal(daily.milkFeeds)}/1 놀이 {ClampGoal(daily.playSessions)}/1 청소 {ClampGoal(daily.cleanings)}/1 휴식 {ClampGoal(daily.rests)}/1";
         }
 
         private static string FormatSession(CheeseTamaSaveData saveData)
@@ -277,10 +277,10 @@ namespace CheeseTama.UI
             var session = saveData?.milkroomSession;
             if (session == null)
             {
-                return "Session: 00:00 | Today 00:00";
+                return "세션: 00:00 | 오늘 00:00";
             }
 
-            return $"Session: {FormatDuration(session.currentSessionSeconds)} | Today {FormatDuration(session.todaySeconds)}";
+            return $"세션: {FormatDuration(session.currentSessionSeconds)} | 오늘 {FormatDuration(session.todaySeconds)}";
         }
 
         private static string FormatEconomy(CheeseTamaSaveData saveData)
@@ -288,50 +288,50 @@ namespace CheeseTama.UI
             var economy = saveData?.economy;
             if (economy == null)
             {
-                return "Items: Coins 0 Drops 0 Frags 0";
+                return "보유: 코인 0 방울 0 조각 0";
             }
 
-            return $"Items: Coins {economy.milkCoins} Drops {economy.milkDrops} Frags {economy.collectionFragments}";
+            return $"보유: 코인 {economy.milkCoins} 방울 {economy.milkDrops} 조각 {economy.collectionFragments}";
         }
 
         private static string FormatCareTip(CheeseTamaSaveData saveData, CheeseTamaModel tama)
         {
             if (tama == null || tama.stats == null)
             {
-                return "Care Tip: Load CheeseTama data.";
+                return "돌봄 팁: 치즈타마 데이터를 불러오세요.";
             }
 
             if (tama.stats.health < 35)
             {
-                return "Care Tip: Rest and clean first.";
+                return "돌봄 팁: 먼저 쉬게 하고 방을 청소하세요.";
             }
 
             if (tama.stats.hunger < 30)
             {
-                return "Care Tip: Feed Milk or Snack.";
+                return "돌봄 팁: 우유나 간식을 주세요.";
             }
 
             if (tama.stats.cleanliness < 35)
             {
-                return "Care Tip: Clean the milkroom.";
+                return "돌봄 팁: 밀크룸을 청소하세요.";
             }
 
             if (tama.stats.sleepiness > 75)
             {
-                return "Care Tip: Rest under warm light.";
+                return "돌봄 팁: 따뜻한 빛 아래에서 쉬게 하세요.";
             }
 
             if (tama.stats.mood < 45)
             {
-                return "Care Tip: Play or offer a snack.";
+                return "돌봄 팁: 놀아주거나 간식을 주세요.";
             }
 
             if (!tama.isHatched)
             {
                 var hatchProgress = HatchingSystem.GetHatchProgressPercent(tama);
                 return hatchProgress >= 75
-                    ? "Care Tip: Keep caring; hatch is close."
-                    : "Care Tip: Feed Milk to grow.";
+                    ? "돌봄 팁: 부화가 가까워졌습니다."
+                    : "돌봄 팁: 우유를 먹이면 성장합니다.";
             }
 
             if (saveData != null
@@ -339,21 +339,21 @@ namespace CheeseTama.UI
                 && saveData.unlocks.starMilkUnlocked
                 && FindMilkGrowthEntry(saveData, "star_milk") == null)
             {
-                return "Care Tip: Try Star Milk.";
+                return "돌봄 팁: 별빛 우유를 시도해 보세요.";
             }
 
             if (saveData != null
                 && saveData.dailyCare != null
                 && !IsDailyRoutineComplete(saveData.dailyCare))
             {
-                return $"Care Tip: {FormatNextDailyRoutineStep(saveData.dailyCare)}";
+                return $"돌봄 팁: {FormatNextDailyRoutineStep(saveData.dailyCare)}";
             }
 
             if (saveData != null
                 && saveData.milkroomSession != null
                 && saveData.milkroomSession.currentSessionSeconds < 300)
             {
-                return "Care Tip: Stay to 5 min for milk drops.";
+                return "돌봄 팁: 우유 방울 보상을 위해 5분까지 머물러 보세요.";
             }
 
             if (tama.stats.hunger >= 70
@@ -362,10 +362,10 @@ namespace CheeseTama.UI
                 && tama.stats.sleepiness <= 35
                 && tama.stats.health >= 80)
             {
-                return "Care Tip: Cozy and balanced.";
+                return "돌봄 팁: 안정적인 상태입니다.";
             }
 
-            return "Care Tip: Keep the rhythm gentle.";
+            return "돌봄 팁: 천천히 리듬을 유지하세요.";
         }
 
         private static string FormatDuration(int seconds)
@@ -394,60 +394,60 @@ namespace CheeseTama.UI
         {
             if (daily.milkFeeds < 1)
             {
-                return "Add milk to today's routine.";
+                return "오늘 루틴: 우유 주기.";
             }
 
             if (daily.playSessions < 1)
             {
-                return "Play once for today's routine.";
+                return "오늘 루틴: 한 번 놀아주기.";
             }
 
             if (daily.cleanings < 1)
             {
-                return "Clean once for today's routine.";
+                return "오늘 루틴: 한 번 청소하기.";
             }
 
             if (daily.rests < 1)
             {
-                return "Rest once for today's routine.";
+                return "오늘 루틴: 한 번 쉬게 하기.";
             }
 
-            return "Today's routine is complete.";
+            return "오늘 루틴 완료.";
         }
 
         private static string FormatCondition(CheeseTamaModel tama)
         {
             if (tama == null || tama.stats == null)
             {
-                return "unknown";
+                return "알 수 없음";
             }
 
             if (tama.stats.health < 35)
             {
-                return "unwell";
+                return "아픔";
             }
 
             if (tama.stats.hunger < 25)
             {
-                return "hungry";
+                return "배고픔";
             }
 
             if (tama.stats.cleanliness < 35)
             {
-                return "messy";
+                return "지저분함";
             }
 
             if (tama.stats.sleepiness > 75)
             {
-                return "sleepy";
+                return "졸림";
             }
 
             if (tama.stats.mood > 80)
             {
-                return "cheerful";
+                return "신남";
             }
 
-            return tama.isHatched ? "curious" : "warm";
+            return tama.isHatched ? "호기심" : "따뜻함";
         }
     }
 }

@@ -49,13 +49,13 @@ namespace CheeseTama.UI
         {
             if (string.IsNullOrWhiteSpace(targetSceneName))
             {
-                Debug.LogWarning("SceneNavigationButton target scene is empty.");
+                Debug.LogWarning("이동할 씬 이름이 비어 있습니다.");
                 return;
             }
 
             if (!Application.CanStreamedLevelBeLoaded(targetSceneName))
             {
-                Debug.LogWarning($"Scene '{targetSceneName}' is not in Build Settings. Run CheeseTama > Build Starter Scenes.");
+                Debug.LogWarning($"'{targetSceneName}' 씬이 빌드 설정에 없습니다. CheeseTama > 시작 씬 빌드를 실행하세요.");
                 return;
             }
 
