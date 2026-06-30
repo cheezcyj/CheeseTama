@@ -11,6 +11,7 @@ The first impression must be round, warm, gentle, and slightly bouncy.
 - Proportion: wider after hatching, taller while still an egg.
 - Surface: smooth, soft, and milk-glossy.
 - Face: large simple eyes, small mouth, cheeks, and minimal cheese holes.
+- Signature details: cream cap, milk belly patch, soft side jelly stubs after hatching.
 - Shadow: soft oval under the body.
 
 ## Color
@@ -50,6 +51,7 @@ CheeseTamaRoot
 - Care reactions should be a small squash/stretch pop.
 - Hatch reactions can be larger, but should still feel soft.
 - Avoid extreme hops that make the character feel like a ball.
+- Even the egg state should show enough face and gloss to feel alive.
 
 ## Avoid
 

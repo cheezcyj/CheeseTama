@@ -46,6 +46,7 @@ Wait +1h lives in the F12 Dev Panel for testing.
 ```text
 TopStatusBar
 MainMilkroomArea
+MessageBar
 StatBar
 BottomActionBar
 SettingsModal
@@ -59,4 +60,6 @@ DevPanel
 - Keep save/load/reset away from the bottom action bar.
 - Keep Collection in the top menu, not in the bottom care action bar.
 - Reset must require an explicit confirmation input.
+- Keep the message bar large and clear near the bottom center.
+- Open the F12 Dev Panel away from the stat bar.
 - Keep the default view focused on CheeseTama and care actions.

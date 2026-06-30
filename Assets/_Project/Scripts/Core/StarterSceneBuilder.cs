@@ -110,6 +110,7 @@ namespace CheeseTama.Core
             RemoveChildIfExists(panelTransform, "Health Text");
             RemoveChildIfExists(panelTransform, "Session Text");
             RemoveChildIfExists(panelTransform, "Economy Text");
+            RemoveChildIfExists(panelTransform, "Message Text");
 
             GetOrCreateText(panelTransform, "Detail Title Text", "Milkroom Notes", 18, TextAnchor.UpperLeft, new Vector2(18, -16), new Vector2(300, 28));
             var formText = GetOrCreateText(panelTransform, "Form Text", "Form: egg", 15, TextAnchor.UpperLeft, new Vector2(18, -58), new Vector2(300, 24));
@@ -124,7 +125,6 @@ namespace CheeseTama.Core
             var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "Today: M 0/1 P 0/1 C 0/1 R 0/1", 13, TextAnchor.UpperLeft, new Vector2(18, -346), new Vector2(310, 24));
             var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "Care Tip: Feed Milk to grow.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
             var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "Last Saved: Never", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
-            var messageText = GetOrCreateText(panelTransform, "Message Text", "Ready for care.", 13, TextAnchor.UpperLeft, new Vector2(18, -492), new Vector2(310, 98));
 
             var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(470, -846), new Vector2(980, 74));
             var statBarTransform = statBar.transform;
@@ -133,6 +133,16 @@ namespace CheeseTama.Core
             var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "Cleanliness: 90", 15, TextAnchor.MiddleCenter, new Vector2(404, -20), new Vector2(170, 32));
             var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "Sleepiness: 20", 15, TextAnchor.MiddleCenter, new Vector2(594, -20), new Vector2(170, 32));
             var healthText = GetOrCreateText(statBarTransform, "Health Text", "Health: 100", 15, TextAnchor.MiddleCenter, new Vector2(784, -20), new Vector2(170, 32));
+
+            var messageBar = GetOrCreatePanel(canvas.transform, "Message Bar", new Vector2(470, -750), new Vector2(980, 72));
+            if (messageBar.TryGetComponent(out Image messageBarImage))
+            {
+                messageBarImage.color = new Color(1f, 0.93f, 0.68f, 0.98f);
+            }
+
+            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "Ready for care.", 19, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
+            messageText.fontStyle = FontStyle.Bold;
+            messageText.color = new Color(0.28f, 0.18f, 0.08f);
 
             controller.Configure(
                 nameText,
@@ -368,13 +378,13 @@ namespace CheeseTama.Core
 
             settingsController.Configure(settingsButton, closeSettingsButton, settingsModal);
 
-            var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1276, -718), new Vector2(300, 206));
+            var devPanel = GetOrCreatePanel(canvasTransform, "Dev Panel", new Vector2(1570, -116), new Vector2(326, 206));
             var devPanelTransform = devPanel.transform;
             GetOrCreateText(devPanelTransform, "Dev Panel Title Text", "Dev Panel", 17, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(240, 28));
             GetOrCreateText(devPanelTransform, "Dev Panel Help Text", "Editor test tools", 13, TextAnchor.UpperLeft, new Vector2(18, -48), new Vector2(240, 24));
             var waitHourButton = GetOrCreateTopLeftButton(devPanelTransform, "Wait Hour Dev Button", "Wait +1h", new Vector2(18, -86), new Vector2(126, 42));
             ConfigureCareButton(waitHourButton, MilkroomCareAction.WaitHour, controller, visualController);
-            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(158, -86), new Vector2(126, 42));
+            var debugSceneButton = GetOrCreateTopLeftButton(devPanelTransform, "Debug Scene Button", "Debug Scene", new Vector2(170, -86), new Vector2(126, 42));
             ConfigureNavigationButton(debugSceneButton, SceneNames.Debug, true);
 
             var devPanelController = canvasTransform.GetComponent<DevPanelController>();
