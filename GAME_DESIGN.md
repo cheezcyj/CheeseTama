@@ -73,7 +73,7 @@ The Milkroom UI must separate direct care actions from system/navigation tools.
 - Level and progress.
 - Session time and daily stay time.
 - Early economy counts.
-- Settings button.
+- Top menu buttons: 도감, 꾸미기, 설정.
 
 ### Main View
 
@@ -96,14 +96,15 @@ Shows the five core condition values:
 Only direct care actions belong here:
 
 ```text
-우유 / 조합 / 간식 / 놀이 / 청소 / 수면 / 도감
+우유 / 조합 / 간식 / 놀이 / 청소 / 수면
 ```
 
-Do not put Save, Load, Reset, Debug, or Wait +1h in the bottom care bar.
+Do not put Collection, Decorate, Save, Load, Reset, Debug, or Wait +1h in the bottom care bar.
+Use number keys 1-6 for the six direct care actions.
 
 ### Settings
 
-Settings opens from the top menu and currently contains Data Management:
+Collection and Decorate open from the top menu. Settings also opens from the top menu and currently contains Data Management:
 
 - Manual Save
 - Load
@@ -142,7 +143,7 @@ Debug/test tools should stay out of the release-facing bottom action bar.
 ### Milkroom
 
 1. Open Milkroom and press Play.
-2. Confirm top menu shows Collection and Settings.
+2. Confirm top menu shows 도감, 꾸미기, 설정.
 3. Confirm bottom bar shows only Milk, Blend, Snack, Play, Clean, Sleep.
 4. Click each care action and confirm stats/message/character reaction update.
 5. Confirm Message Bar is readable.

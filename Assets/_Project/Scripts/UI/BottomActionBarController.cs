@@ -28,5 +28,27 @@ namespace CheeseTama.UI
                 }
             }
         }
+
+        private void Update()
+        {
+            if (actionButtons == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < actionButtons.Length && i < 6; i += 1)
+            {
+                var alphaKey = (KeyCode)((int)KeyCode.Alpha1 + i);
+                var keypadKey = (KeyCode)((int)KeyCode.Keypad1 + i);
+                if (Input.GetKeyDown(alphaKey) || Input.GetKeyDown(keypadKey))
+                {
+                    var button = actionButtons[i];
+                    if (button != null && button.interactable && button.gameObject.activeInHierarchy)
+                    {
+                        button.onClick.Invoke();
+                    }
+                }
+            }
+        }
     }
 }

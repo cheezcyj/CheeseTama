@@ -455,13 +455,26 @@ namespace CheeseTama.UI
         private void UpdateCheeseSpots(CharacterStage stage)
         {
             var isEgg = stage == CharacterStage.Egg;
-            SetSpot(cheeseHoles[0], new Vector3(-0.6f, 0.18f, -0.74f), new Vector3(0.2f, 0.24f, 0.026f), Quaternion.identity, true);
-            SetSpot(cheeseHoles[1], new Vector3(0.5f, 0.4f, -0.71f), new Vector3(0.19f, 0.16f, 0.026f), Quaternion.Euler(0f, 0f, -15f), true);
-            SetSpot(cheeseHoles[2], new Vector3(0.68f, -0.1f, -0.71f), new Vector3(0.13f, 0.18f, 0.024f), Quaternion.identity, stage >= CharacterStage.Soft);
-            SetSpot(cheeseHoles[3], new Vector3(-0.18f, 0.58f, -0.68f), new Vector3(0.07f, 0.05f, 0.022f), Quaternion.identity, true);
-            SetSpot(cheeseHoles[4], new Vector3(0.2f, -0.5f, -0.66f), new Vector3(0.08f, 0.06f, 0.022f), Quaternion.identity, !isEgg);
-            SetSpot(cheeseHoles[5], new Vector3(-0.7f, -0.28f, -0.69f), new Vector3(0.09f, 0.11f, 0.022f), Quaternion.identity, false);
-            SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.42f, -0.68f), new Vector3(0.045f, 0.035f, 0.02f), Quaternion.identity, false);
+            if (IsEmmentalCheeseTama(current))
+            {
+                SetSpot(cheeseHoles[0], new Vector3(-0.58f, 0.22f, -0.74f), new Vector3(0.18f, 0.22f, 0.026f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[1], new Vector3(0.42f, 0.44f, -0.72f), new Vector3(0.17f, 0.15f, 0.026f), Quaternion.Euler(0f, 0f, -12f), true);
+                SetSpot(cheeseHoles[2], new Vector3(0.66f, -0.08f, -0.71f), new Vector3(0.12f, 0.17f, 0.024f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[3], new Vector3(-0.12f, 0.62f, -0.69f), new Vector3(0.09f, 0.07f, 0.022f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[4], new Vector3(0.18f, -0.48f, -0.68f), new Vector3(0.1f, 0.08f, 0.022f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[5], new Vector3(-0.68f, -0.24f, -0.7f), new Vector3(0.1f, 0.12f, 0.022f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.28f, -0.68f), new Vector3(0.055f, 0.045f, 0.02f), Quaternion.identity, true);
+            }
+            else
+            {
+                SetSpot(cheeseHoles[0], new Vector3(-0.6f, 0.18f, -0.74f), new Vector3(0.16f, 0.2f, 0.026f), Quaternion.identity, true);
+                SetSpot(cheeseHoles[1], new Vector3(0.5f, 0.4f, -0.71f), new Vector3(0.15f, 0.12f, 0.026f), Quaternion.Euler(0f, 0f, -15f), true);
+                SetSpot(cheeseHoles[2], new Vector3(0.68f, -0.1f, -0.71f), new Vector3(0.1f, 0.14f, 0.024f), Quaternion.identity, stage >= CharacterStage.Soft);
+                SetSpot(cheeseHoles[3], new Vector3(-0.18f, 0.58f, -0.68f), new Vector3(0.07f, 0.05f, 0.022f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[4], new Vector3(0.2f, -0.5f, -0.66f), new Vector3(0.08f, 0.06f, 0.022f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[5], new Vector3(-0.7f, -0.28f, -0.69f), new Vector3(0.09f, 0.11f, 0.022f), Quaternion.identity, false);
+                SetSpot(cheeseHoles[6], new Vector3(0.02f, 0.42f, -0.68f), new Vector3(0.045f, 0.035f, 0.02f), Quaternion.identity, false);
+            }
 
             SetSpot(cheeseSpeckles[0], new Vector3(-0.36f, -0.34f, -0.74f), new Vector3(0.035f, 0.02f, 0.018f), Quaternion.identity, true);
             SetSpot(cheeseSpeckles[1], new Vector3(-0.08f, -0.46f, -0.74f), new Vector3(0.028f, 0.02f, 0.018f), Quaternion.identity, true);
@@ -579,7 +592,8 @@ namespace CheeseTama.UI
         private void PaintBody(Color bodyColor, CharacterStage stage)
         {
             var armColor = Color.Lerp(bodyColor, new Color(0.96f, 0.58f, 0.12f), 0.18f);
-            var holeColor = new Color(0.93f, 0.58f, 0.12f);
+            var emmentalGlow = IsEmmentalStarGlowActive(current);
+            var holeColor = emmentalGlow ? new Color(1f, 0.72f, 0.18f) : new Color(0.93f, 0.58f, 0.12f);
             var speckColor = new Color(0.82f, 0.48f, 0.14f);
             var crownColor = new Color(1f, 0.72f, 0.16f);
 
@@ -606,7 +620,20 @@ namespace CheeseTama.UI
 
             foreach (var renderer in cheeseHoleRenderers)
             {
-                PaintFeature(renderer, stage == CharacterStage.Egg ? Color.Lerp(holeColor, Color.white, 0.28f) : holeColor);
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                var color = stage == CharacterStage.Egg ? Color.Lerp(holeColor, Color.white, 0.28f) : holeColor;
+                if (emmentalGlow)
+                {
+                    ToonMaterialUtility.Apply(renderer, ToonMaterialProfile.EnvironmentGlow, color);
+                }
+                else
+                {
+                    PaintFeature(renderer, color);
+                }
             }
 
             foreach (var renderer in cheeseSpeckleRenderers)
@@ -885,6 +912,34 @@ namespace CheeseTama.UI
             }
 
             return CharacterStage.Hatchling;
+        }
+
+        private static bool IsEmmentalCheeseTama(CheeseTamaModel tama)
+        {
+            if (tama == null)
+            {
+                return false;
+            }
+
+            return ContainsIgnoreCase(tama.form, "emmental")
+                || ContainsIgnoreCase(tama.evolutionId, "emmental");
+        }
+
+        private static bool IsEmmentalStarGlowActive(CheeseTamaModel tama)
+        {
+            if (!IsEmmentalCheeseTama(tama))
+            {
+                return false;
+            }
+
+            return (tama.stats != null && tama.stats.maturation >= 95)
+                || tama.levelProgress >= 95;
+        }
+
+        private static bool ContainsIgnoreCase(string value, string token)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                && value.IndexOf(token, System.StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static Vector3 GetStageRootScale(CharacterStage stage)

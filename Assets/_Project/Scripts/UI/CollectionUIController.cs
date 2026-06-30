@@ -37,7 +37,7 @@ namespace CheeseTama.UI
                 SetText(milkText, "Milk Records: 0");
                 SetText(evolutionText, "Evolution Records: 0");
                 SetText(eventText, "Event Records: 0");
-                SetText(hiddenText, "Hidden Records: 0");
+                SetText(hiddenText, string.Empty);
                 SetText(messageText, "No collection data loaded.");
                 return;
             }
@@ -87,7 +87,7 @@ namespace CheeseTama.UI
         {
             if (records == null || records.Count == 0)
             {
-                return "Hidden Records: 0\n- none yet";
+                return string.Empty;
             }
 
             var labels = new string[records.Count];
@@ -103,7 +103,7 @@ namespace CheeseTama.UI
                 labels[i] = $"{FormatHiddenRecordName(entry.id)} ({FormatIso(entry.acquiredAtIso)})";
             }
 
-            return $"Hidden Records: {records.Count}\n- {string.Join("\n- ", labels)}";
+            return $"Special Records: {records.Count}\n- {string.Join("\n- ", labels)}";
         }
 
         private static string FormatKnownRecordName(string id)

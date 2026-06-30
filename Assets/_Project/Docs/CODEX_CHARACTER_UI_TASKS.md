@@ -5,9 +5,11 @@
 - Runtime CheeseTama rig creates Body, FaceAnchor, CheeseMarks, Highlight, SoftShadow, and VFXRoot.
 - Hatched CheeseTama supports idle, happy, hungry, sleepy, upset, surprised, sad, sick, and sparkle expression states.
 - Idle breathing and softer squash/stretch reactions are handled in code.
-- Base CheeseTama now limits visible cheese holes to the 2-5 range from the visual guide; 6-7 hole layouts are reserved for later variants.
-- Milkroom bottom bar now follows the v2.0 instruction: 우유, 조합, 간식, 놀이, 청소, 수면, 도감.
-- Collection is no longer duplicated in the top menu.
+- Base CheeseTama now limits visible cheese holes to 0-3 small marks; the exact 7-hole constellation layout is reserved for Emmental CheeseTama.
+- Milkroom bottom bar follows the v2.1 instruction: 우유, 조합, 간식, 놀이, 청소, 수면.
+- Top menu follows the v2.1 instruction: 도감, 꾸미기, 설정.
+- Collection opens as a Milkroom overlay and only shows discovered records.
+- Decorate opens as a top-menu overlay with the current Warm Morning Milkroom summary.
 - Save, Load, and Reset are moved into Settings > Data Management.
 - Reset requires typing `RESET`.
 - F12 Dev Panel is separated from the release-facing bottom bar.
@@ -26,7 +28,7 @@
 - Replace primitive sphere placeholder with a custom blob mesh or imported model.
 - Add real toon material assets and URP shader settings.
 - Add face decal textures or sprites for cleaner expressions.
-- Add special visual rules for star route and Emmental form later, without exposing hidden conditions early.
+- Replace the current Emmental visual trigger with final evolution data once that content is implemented, without exposing hidden conditions early.
 - Replace placeholder crown pieces with a cosmetic/evolution reward asset once the cosmetic route is defined.
 
 ## Next UI Work

@@ -21,7 +21,7 @@ namespace CheeseTama.Environment
 
         private void Awake()
         {
-            CacheLayerRoots();
+            CacheGroupRoots();
             ApplyCurrentTheme();
         }
 
@@ -50,15 +50,15 @@ namespace CheeseTama.Environment
             currentThemeId = NormalizeThemeId(themeId);
             var palette = MilkroomThemePalette.For(currentThemeId);
 
-            PaintLayer(backgroundRoot, palette);
-            PaintLayer(midgroundRoot, palette);
-            PaintLayer(playAreaRoot, palette);
-            PaintLayer(foregroundRoot, palette);
-            PaintLayer(themeVfxRoot, palette);
+            PaintGroup(backgroundRoot, palette);
+            PaintGroup(midgroundRoot, palette);
+            PaintGroup(playAreaRoot, palette);
+            PaintGroup(foregroundRoot, palette);
+            PaintGroup(themeVfxRoot, palette);
             SetThemeVfxVisibility(currentThemeId);
         }
 
-        private void CacheLayerRoots()
+        private void CacheGroupRoots()
         {
             backgroundRoot ??= transform.Find("BackgroundRoot");
             midgroundRoot ??= transform.Find("MidgroundRoot");
@@ -67,14 +67,14 @@ namespace CheeseTama.Environment
             themeVfxRoot ??= transform.Find("ThemeVFXRoot");
         }
 
-        private void PaintLayer(Transform layerRoot, MilkroomThemePalette palette)
+        private void PaintGroup(Transform groupRoot, MilkroomThemePalette palette)
         {
-            if (layerRoot == null)
+            if (groupRoot == null)
             {
                 return;
             }
 
-            var renderers = layerRoot.GetComponentsInChildren<Renderer>(true);
+            var renderers = groupRoot.GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in renderers)
             {
                 PaintRenderer(renderer, ResolveColor(renderer.name, palette));

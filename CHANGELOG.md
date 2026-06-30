@@ -61,4 +61,9 @@
 - Add runtime toon material profiles, character outline geometry, Milkroom scene hierarchy grouping, rim light, side walls, and a blending table for stronger 3D room readability.
 - Rework the Milkroom toward the v2.0 full 3D toon diorama direction with RoomShell, WindowSet, FridgeSet, MilkShelfSet, BlendingTableSet, ChalkboardSet, Rug, CozyChair, Lamps, and Props groups.
 - Fix pink/magenta rendering by selecting shaders from the active render pipeline instead of forcing URP shaders when the project has no custom render pipeline assigned.
-- Move Collection back into the bottom action bar per the v2.0 UI instruction, while keeping Save/Load/Reset out of the care bar.
+- Update the Milkroom UI to the v2.1 layout: top menu contains 도감/꾸미기/설정, and the bottom action bar contains only 우유/조합/간식/놀이/청소/수면.
+- Add a top-menu controller with Collection and Decorate overlays, Settings modal routing, Esc close handling, and C/B/K/D shortcuts.
+- Add 1-6 keyboard shortcuts for direct care actions.
+- Hide late-game collection category/count text until special records are actually unlocked.
+- Limit base CheeseTama visible holes to 0-3 small marks and reserve the exact 7-hole constellation layout for Emmental CheeseTama.
+- Rename internal Milkroom grouping helpers from layer terminology to group terminology and attach a GlobalVolume component when the render-pipeline type is available.
