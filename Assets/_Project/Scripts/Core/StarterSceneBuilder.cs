@@ -14,6 +14,15 @@ namespace CheeseTama.Core
     {
         private const int RoundedUiSpriteSize = 32;
         private const int RoundedUiCornerRadius = 8;
+        private const float MilkroomSideMargin = 24f;
+        private const float MilkroomRightPanelWidth = 360f;
+        private const float TopHudTop = 16f;
+        private const float TopHudHeight = 82f;
+        private const float TopHudGap = 18f;
+        private const float TopMenuPadding = 12f;
+        private const float TopMenuButtonGap = 10f;
+        private const float TopMenuButtonTop = 14f;
+        private const float TopMenuButtonHeight = 54f;
 
         private static Texture2D roundedUiTexture;
         private static Sprite roundedUiSprite;
@@ -134,6 +143,16 @@ namespace CheeseTama.Core
             ApplyTopMenuButtonStyle(topCollectionButton);
             ApplyTopMenuButtonStyle(topDecorateButton);
             ApplyTopMenuButtonStyle(settingsButton);
+            ApplyMilkroomTopHudLayout(
+                topBar,
+                topMenu,
+                nameText,
+                levelText,
+                sessionText,
+                economyText,
+                topCollectionButton,
+                topDecorateButton,
+                settingsButton);
 
             var panel = GetOrCreateRightPanel(canvas.transform, "Status Panel", new Vector2(-24, -116), new Vector2(360, 620));
             if (panel.TryGetComponent(out Image panelImage))
@@ -2056,6 +2075,81 @@ namespace CheeseTama.Core
             rect.sizeDelta = size;
 
             ConfigureButtonVisuals(button, label, size);
+        }
+
+        private static void ApplyMilkroomTopHudLayout(
+            GameObject topBar,
+            GameObject topMenu,
+            Text nameText,
+            Text levelText,
+            Text sessionText,
+            Text economyText,
+            Button topCollectionButton,
+            Button topDecorateButton,
+            Button settingsButton)
+        {
+            var topBarRightOffset = MilkroomSideMargin + MilkroomRightPanelWidth + TopHudGap;
+            if (topBar != null && topBar.TryGetComponent(out RectTransform topBarRect))
+            {
+                ConfigureTopStretchRect(topBarRect, MilkroomSideMargin, topBarRightOffset, TopHudTop, TopHudHeight);
+            }
+
+            if (topMenu != null && topMenu.TryGetComponent(out RectTransform topMenuRect))
+            {
+                ConfigureTopRightRect(topMenuRect, MilkroomSideMargin, TopHudTop, MilkroomRightPanelWidth, TopHudHeight);
+            }
+
+            ConfigureTopLeftRect(nameText != null ? nameText.GetComponent<RectTransform>() : null, 24f, 17f, 280f, 48f);
+            ConfigureTopLeftRect(levelText != null ? levelText.GetComponent<RectTransform>() : null, 330f, 17f, 190f, 48f);
+            ConfigureTopStretchRect(sessionText != null ? sessionText.GetComponent<RectTransform>() : null, 548f, 448f, 17f, 48f);
+            ConfigureTopRightRect(economyText != null ? economyText.GetComponent<RectTransform>() : null, 24f, 17f, 400f, 48f);
+
+            var buttonWidth = (MilkroomRightPanelWidth - (TopMenuPadding * 2f) - (TopMenuButtonGap * 2f)) / 3f;
+            ConfigureTopLeftRect(topCollectionButton != null ? topCollectionButton.GetComponent<RectTransform>() : null, TopMenuPadding, TopMenuButtonTop, buttonWidth, TopMenuButtonHeight);
+            ConfigureTopLeftRect(topDecorateButton != null ? topDecorateButton.GetComponent<RectTransform>() : null, TopMenuPadding + buttonWidth + TopMenuButtonGap, TopMenuButtonTop, buttonWidth, TopMenuButtonHeight);
+            ConfigureTopLeftRect(settingsButton != null ? settingsButton.GetComponent<RectTransform>() : null, TopMenuPadding + ((buttonWidth + TopMenuButtonGap) * 2f), TopMenuButtonTop, buttonWidth, TopMenuButtonHeight);
+        }
+
+        private static void ConfigureTopLeftRect(RectTransform rect, float left, float top, float width, float height)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(left, -top);
+            rect.sizeDelta = new Vector2(width, height);
+        }
+
+        private static void ConfigureTopRightRect(RectTransform rect, float right, float top, float width, float height)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-right, -top);
+            rect.sizeDelta = new Vector2(width, height);
+        }
+
+        private static void ConfigureTopStretchRect(RectTransform rect, float left, float right, float top, float height)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.offsetMin = new Vector2(left, -top - height);
+            rect.offsetMax = new Vector2(-right, -top);
         }
 
         private static void ConfigureCareButton(
