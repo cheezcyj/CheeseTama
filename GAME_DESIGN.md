@@ -76,6 +76,7 @@
 - GLB가 아닌 레퍼런스 기반 소품은 `CheeseTama > 밀크룸 소품 프리팹 생성` 메뉴로 프리미티브 기반 프리팹을 생성해 저장할 수 있습니다.
 - 프리팹 내부 실제 모델 자식은 `GeneratedModel`, `Fridge_Model`, `MilkShelf_Model`, `CozyChair_Model`, `Window_Model`, `Rug_Model`, `DresserTable_Model`, `Chalkboard_Model`처럼 명확한 이름을 사용합니다.
 - 새 정리 소품을 추가하면 `MilkroomThemeController`가 해당 렌더러의 재질을 덮어쓰지 않도록 보존 규칙에 포함합니다.
+- 프리미티브 기반 임시 소품도 단순 큐브 배치로 끝내지 않고, 레퍼런스의 실루엣과 역할이 읽히도록 주름, 테두리, 손잡이, 스티치, 낙서, 작은 보조 소품을 여러 파츠로 나눠 구성합니다.
 - Play Mode에서 색상, 밝기, 위치, 카메라 가림, 콘솔 오류를 확인한 뒤 저장합니다.
 
 ## 현재 구현 범위
