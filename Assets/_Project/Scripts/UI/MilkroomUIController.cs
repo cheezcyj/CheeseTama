@@ -137,15 +137,15 @@ namespace CheeseTama.UI
 
             SetText(nameText, current.name);
             SetText(levelText, $"레벨 {current.level} ({current.levelProgress}%)");
-            SetText(formText, $"형태: {FormatFormName(current.form)}");
-            SetText(conditionText, $"컨디션: {FormatCondition(current)}");
-            SetText(hungerText, $"포만감: {current.stats.hunger}");
-            SetText(moodText, $"기분: {current.stats.mood}");
-            SetText(cleanlinessText, $"청결: {current.stats.cleanliness}");
-            SetText(sleepinessText, $"졸림: {current.stats.sleepiness}");
-            SetText(healthText, $"건강: {current.stats.health}");
-            SetText(affectionText, $"애정: {current.stats.affection}");
-            SetText(maturationText, $"성숙도: {current.stats.maturation}");
+            SetText(formText, $"형태  {FormatFormName(current.form)}");
+            SetText(conditionText, $"상태  {FormatCondition(current)}");
+            SetText(hungerText, FormatStatLine("포만감", current.stats.hunger));
+            SetText(moodText, FormatStatLine("기분", current.stats.mood));
+            SetText(cleanlinessText, FormatStatLine("청결", current.stats.cleanliness));
+            SetText(sleepinessText, FormatStatLine("졸림", current.stats.sleepiness));
+            SetText(healthText, FormatStatLine("건강", current.stats.health));
+            SetText(affectionText, $"애정  {current.stats.affection}");
+            SetText(maturationText, $"성숙도  {current.stats.maturation}");
             SetText(hatchProgressText, FormatHatchProgress(current));
             SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "기본 우유"));
             SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
@@ -155,7 +155,7 @@ namespace CheeseTama.UI
             SetText(sessionText, FormatSession(currentSave));
             SetText(economyText, FormatEconomy(currentSave));
             SetText(careTipText, FormatCareTip(currentSave, current));
-            SetText(lastSavedText, $"마지막 저장: {FormatIso(current.lastSavedAtIso)}");
+            SetText(lastSavedText, $"마지막 저장  {FormatIso(current.lastSavedAtIso)}");
         }
 
         public void ShowMessage(string message)
@@ -205,10 +205,15 @@ namespace CheeseTama.UI
         {
             if (tama.isHatched)
             {
-                return "부화: 깨어남";
+                return "부화 상태  깨어남";
             }
 
-            return $"부화: {HatchingSystem.GetHatchProgressPercent(tama)}%";
+            return $"부화 진행  {HatchingSystem.GetHatchProgressPercent(tama)}%";
+        }
+
+        private static string FormatStatLine(string label, int value)
+        {
+            return $"{label}  {Mathf.Clamp(value, 0, 100)}/100";
         }
 
         private static string FormatFormName(string form)
@@ -231,17 +236,17 @@ namespace CheeseTama.UI
             var entry = FindMilkGrowthEntry(saveData, milkId);
             if (entry == null)
             {
-                return $"{displayName}: 레벨 0 (0점)";
+                return $"{displayName}  Lv.0 / 0점";
             }
 
-            return $"{displayName}: 레벨 {entry.growthLevel} ({entry.growthPoints}점)";
+            return $"{displayName}  Lv.{entry.growthLevel} / {entry.growthPoints}점";
         }
 
         private static string FormatStarMilkGrowthLine(CheeseTamaSaveData saveData)
         {
             if (saveData == null || saveData.unlocks == null || !saveData.unlocks.starMilkUnlocked)
             {
-                return "별빛 우유: 잠김";
+                return "별빛 우유  잠김";
             }
 
             return FormatMilkGrowthLine(saveData, "star_milk", "별빛 우유");
@@ -270,7 +275,7 @@ namespace CheeseTama.UI
             var starMilkState = saveData != null && saveData.unlocks != null && saveData.unlocks.starMilkUnlocked
                 ? "별빛 우유 해금"
                 : "별빛 우유 잠김";
-            return $"해금: {starMilkState}";
+            return $"해금  {starMilkState}";
         }
 
         private static string FormatCareSummary(CheeseTamaSaveData saveData)
@@ -278,10 +283,10 @@ namespace CheeseTama.UI
             var history = saveData?.careHistory;
             if (history == null)
             {
-                return "돌봄: 0 | 놀이 0 청소 0 휴식 0";
+                return "돌봄 누적  0회\n놀이 0  청소 0  휴식 0";
             }
 
-            return $"돌봄: {history.totalCareActions} | 놀이 {history.playSessions} 청소 {history.cleanings} 휴식 {history.rests}";
+            return $"돌봄 누적  {history.totalCareActions}회\n놀이 {history.playSessions}  청소 {history.cleanings}  휴식 {history.rests}";
         }
 
         private static string FormatDailyRoutine(CheeseTamaSaveData saveData)
@@ -289,10 +294,10 @@ namespace CheeseTama.UI
             var daily = saveData?.dailyCare;
             if (daily == null)
             {
-                return "오늘: 우유 0/1 놀이 0/1 청소 0/1 휴식 0/1";
+                return "오늘 루틴\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1";
             }
 
-            return $"오늘: 우유 {ClampGoal(daily.milkFeeds)}/1 놀이 {ClampGoal(daily.playSessions)}/1 청소 {ClampGoal(daily.cleanings)}/1 휴식 {ClampGoal(daily.rests)}/1";
+            return $"오늘 루틴\n우유 {ClampGoal(daily.milkFeeds)}/1  놀이 {ClampGoal(daily.playSessions)}/1\n청소 {ClampGoal(daily.cleanings)}/1  휴식 {ClampGoal(daily.rests)}/1";
         }
 
         private static string FormatSession(CheeseTamaSaveData saveData)
@@ -321,40 +326,40 @@ namespace CheeseTama.UI
         {
             if (tama == null || tama.stats == null)
             {
-                return "돌봄 팁: 치즈타마 데이터를 불러오세요.";
+                return "돌봄 팁\n치즈타마 데이터를 불러오세요.";
             }
 
             if (tama.stats.health < 35)
             {
-                return "돌봄 팁: 먼저 쉬게 하고 방을 청소하세요.";
+                return "돌봄 팁\n먼저 쉬게 하고 방을 청소하세요.";
             }
 
             if (tama.stats.hunger < 30)
             {
-                return "돌봄 팁: 우유나 간식을 주세요.";
+                return "돌봄 팁\n우유나 간식을 주세요.";
             }
 
             if (tama.stats.cleanliness < 35)
             {
-                return "돌봄 팁: 밀크룸을 청소하세요.";
+                return "돌봄 팁\n밀크룸을 청소하세요.";
             }
 
             if (tama.stats.sleepiness > 75)
             {
-                return "돌봄 팁: 따뜻한 빛 아래에서 쉬게 하세요.";
+                return "돌봄 팁\n따뜻한 빛 아래에서 쉬게 하세요.";
             }
 
             if (tama.stats.mood < 45)
             {
-                return "돌봄 팁: 놀아주거나 간식을 주세요.";
+                return "돌봄 팁\n놀아주거나 간식을 주세요.";
             }
 
             if (!tama.isHatched)
             {
                 var hatchProgress = HatchingSystem.GetHatchProgressPercent(tama);
                 return hatchProgress >= 75
-                    ? "돌봄 팁: 부화가 가까워졌습니다."
-                    : "돌봄 팁: 우유를 먹이면 성장합니다.";
+                    ? "돌봄 팁\n부화가 가까워졌습니다."
+                    : "돌봄 팁\n우유를 먹이면 성장합니다.";
             }
 
             if (saveData != null
@@ -362,21 +367,21 @@ namespace CheeseTama.UI
                 && saveData.unlocks.starMilkUnlocked
                 && FindMilkGrowthEntry(saveData, "star_milk") == null)
             {
-                return "돌봄 팁: 별빛 우유를 시도해 보세요.";
+                return "돌봄 팁\n별빛 우유를 시도해 보세요.";
             }
 
             if (saveData != null
                 && saveData.dailyCare != null
                 && !IsDailyRoutineComplete(saveData.dailyCare))
             {
-                return $"돌봄 팁: {FormatNextDailyRoutineStep(saveData.dailyCare)}";
+                return $"돌봄 팁\n{FormatNextDailyRoutineStep(saveData.dailyCare)}";
             }
 
             if (saveData != null
                 && saveData.milkroomSession != null
                 && saveData.milkroomSession.currentSessionSeconds < 300)
             {
-                return "돌봄 팁: 우유 방울 보상을 위해 5분까지 머물러 보세요.";
+                return "돌봄 팁\n우유 방울 보상을 위해 5분까지 머물러 보세요.";
             }
 
             if (tama.stats.hunger >= 70
@@ -385,10 +390,10 @@ namespace CheeseTama.UI
                 && tama.stats.sleepiness <= 35
                 && tama.stats.health >= 80)
             {
-                return "돌봄 팁: 안정적인 상태입니다.";
+                return "돌봄 팁\n안정적인 상태입니다.";
             }
 
-            return "돌봄 팁: 천천히 리듬을 유지하세요.";
+            return "돌봄 팁\n천천히 리듬을 유지하세요.";
         }
 
         private static string FormatDuration(int seconds)

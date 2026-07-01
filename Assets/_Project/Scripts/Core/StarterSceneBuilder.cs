@@ -117,7 +117,12 @@ namespace CheeseTama.Core
             SetButtonLabel(topDecorateButton, "꾸미기");
             SetButtonLabel(settingsButton, "설정");
 
-            var panel = GetOrCreatePanel(canvas.transform, "Status Panel", new Vector2(24, -116), new Vector2(350, 620));
+            var panel = GetOrCreateRightPanel(canvas.transform, "Status Panel", new Vector2(-24, -116), new Vector2(360, 620));
+            if (panel.TryGetComponent(out Image panelImage))
+            {
+                panelImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+            }
+
             var panelTransform = panel.transform;
             RemoveChildIfExists(panelTransform, "Milk Growth Text");
             RemoveChildIfExists(panelTransform, "Name Text");
@@ -131,51 +136,54 @@ namespace CheeseTama.Core
             RemoveChildIfExists(panelTransform, "Economy Text");
             RemoveChildIfExists(panelTransform, "Message Text");
 
-            GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 18, TextAnchor.UpperLeft, new Vector2(18, -16), new Vector2(300, 28));
-            var formText = GetOrCreateText(panelTransform, "Form Text", "형태: 알", 15, TextAnchor.UpperLeft, new Vector2(18, -58), new Vector2(300, 24));
-            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "컨디션: 따뜻함", 15, TextAnchor.UpperLeft, new Vector2(18, -86), new Vector2(300, 24));
-            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "애정: 10", 15, TextAnchor.UpperLeft, new Vector2(18, -124), new Vector2(300, 24));
-            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "성숙도: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -152), new Vector2(300, 24));
-            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "부화: 0%", 15, TextAnchor.UpperLeft, new Vector2(18, -180), new Vector2(300, 24));
-            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "기본 우유: 레벨 0 (0점)", 15, TextAnchor.UpperLeft, new Vector2(18, -220), new Vector2(310, 24));
-            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "별빛 우유: 잠김", 15, TextAnchor.UpperLeft, new Vector2(18, -248), new Vector2(310, 24));
-            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "해금: 별빛 우유 잠김", 15, TextAnchor.UpperLeft, new Vector2(18, -276), new Vector2(310, 24));
-            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "돌봄: 0 | 놀이 0 청소 0 휴식 0", 13, TextAnchor.UpperLeft, new Vector2(18, -318), new Vector2(310, 24));
-            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "오늘: 우유 0/1 놀이 0/1 청소 0/1 휴식 0/1", 13, TextAnchor.UpperLeft, new Vector2(18, -346), new Vector2(310, 24));
-            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "돌봄 팁: 우유를 먹여 성장시켜 주세요.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장: 없음", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
+            var detailTitleText = GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(316, 34));
+            detailTitleText.fontStyle = FontStyle.Bold;
+            var formText = GetOrCreateText(panelTransform, "Form Text", "형태  알", 17, TextAnchor.UpperLeft, new Vector2(22, -66), new Vector2(316, 28));
+            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "상태  따뜻함", 17, TextAnchor.UpperLeft, new Vector2(22, -98), new Vector2(316, 28));
+            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "애정  10", 17, TextAnchor.UpperLeft, new Vector2(22, -146), new Vector2(316, 28));
+            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "성숙도  0", 17, TextAnchor.UpperLeft, new Vector2(22, -178), new Vector2(316, 28));
+            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "부화 진행  0%", 17, TextAnchor.UpperLeft, new Vector2(22, -210), new Vector2(316, 28));
+            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "기본 우유  Lv.0 / 0점", 16, TextAnchor.UpperLeft, new Vector2(22, -262), new Vector2(316, 30));
+            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "별빛 우유  잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -294), new Vector2(316, 30));
+            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "해금  별빛 우유 잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -326), new Vector2(316, 30));
+            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "돌봄 누적  0회\n놀이 0  청소 0  휴식 0", 15, TextAnchor.UpperLeft, new Vector2(22, -382), new Vector2(316, 54));
+            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "오늘 루틴\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1", 15, TextAnchor.UpperLeft, new Vector2(22, -446), new Vector2(316, 64));
+            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "돌봄 팁\n우유를 먹여 성장시켜 주세요.", 15, TextAnchor.UpperLeft, new Vector2(22, -526), new Vector2(316, 48));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장  없음", 14, TextAnchor.UpperLeft, new Vector2(22, -578), new Vector2(316, 24));
 
-            var statBar = GetOrCreateRightPanel(canvas.transform, "Stat Bar", new Vector2(-24, -116), new Vector2(250, 252));
+            var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(24, -116), new Vector2(350, 396));
             if (statBar.TryGetComponent(out Image statBarImage))
             {
-                statBarImage.color = new Color(1f, 0.98f, 0.9f, 0.86f);
+                statBarImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
             }
 
             var statBarTransform = statBar.transform;
-            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감: 80", 15, TextAnchor.MiddleLeft, new Vector2(22, -22), new Vector2(206, 32));
-            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분: 70", 15, TextAnchor.MiddleLeft, new Vector2(22, -66), new Vector2(206, 32));
-            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결: 90", 15, TextAnchor.MiddleLeft, new Vector2(22, -110), new Vector2(206, 32));
-            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림: 20", 15, TextAnchor.MiddleLeft, new Vector2(22, -154), new Vector2(206, 32));
-            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강: 100", 15, TextAnchor.MiddleLeft, new Vector2(22, -198), new Vector2(206, 32));
+            var statTitleText = GetOrCreateText(statBarTransform, "Stat Title Text", "상태 수치", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(306, 34));
+            statTitleText.fontStyle = FontStyle.Bold;
+            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감  80/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -76), new Vector2(306, 46));
+            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분  70/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -136), new Vector2(306, 46));
+            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결  90/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -196), new Vector2(306, 46));
+            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림  20/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -256), new Vector2(306, 46));
+            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강  100/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -316), new Vector2(306, 46));
 
-            var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 198), new Vector2(980, 72));
+            var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 118), new Vector2(980, 72));
             if (messageBar.TryGetComponent(out Image messageBarImage))
             {
                 messageBarImage.color = new Color(1f, 0.93f, 0.68f, 0.98f);
             }
 
-            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "돌봄 준비 완료.", 19, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
+            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "돌봄 준비 완료.", 21, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
             messageText.fontStyle = FontStyle.Bold;
             messageText.color = new Color(0.28f, 0.18f, 0.08f);
 
             // 도감 이벤트 메시지 바 — 상태메시지 바(Message Bar) 바로 위에 배치.
-            var eventMessageBar = GetOrCreateBottomPanel(canvas.transform, "Event Message Bar", new Vector2(0, 276), new Vector2(980, 64));
+            var eventMessageBar = GetOrCreateBottomPanel(canvas.transform, "Event Message Bar", new Vector2(0, 198), new Vector2(980, 64));
             if (eventMessageBar.TryGetComponent(out Image eventMessageBarImage))
             {
                 eventMessageBarImage.color = new Color(0.86f, 0.92f, 1f, 0.98f);
             }
 
-            var eventMessageText = GetOrCreateText(eventMessageBar.transform, "Event Message Text", "이벤트 대기 중.", 18, TextAnchor.MiddleLeft, new Vector2(24, -12), new Vector2(932, 40));
+            var eventMessageText = GetOrCreateText(eventMessageBar.transform, "Event Message Text", "이벤트 대기 중.", 20, TextAnchor.MiddleLeft, new Vector2(24, -12), new Vector2(932, 40));
             eventMessageText.fontStyle = FontStyle.Bold;
             eventMessageText.color = new Color(0.16f, 0.24f, 0.42f);
             eventMessageBar.SetActive(false);
@@ -424,13 +432,13 @@ namespace CheeseTama.Core
 
             var previewTransform = previewPanel.transform;
             GetOrCreateText(previewTransform, "Decorate Theme Text", "따뜻한 아침 밀크룸", 18, TextAnchor.UpperLeft, new Vector2(22, -22), new Vector2(420, 32));
-            GetOrCreateText(previewTransform, "Decorate Theme Detail Text", "크림색 벽 / 따뜻한 나무 / 부드러운 러그 / 우유 선반 / 포근한 아침빛", 14, TextAnchor.UpperLeft, new Vector2(22, -64), new Vector2(620, 32));
+            GetOrCreateText(previewTransform, "Decorate Theme Detail Text", "크림색 벽 / 정돈된 바닥 / 냉장고 / 원목 의자 / 포근한 아침빛", 14, TextAnchor.UpperLeft, new Vector2(22, -64), new Vector2(620, 32));
             GetOrCreateText(previewTransform, "Decorate Slot A Text", "조명", 16, TextAnchor.UpperLeft, new Vector2(22, -132), new Vector2(120, 26));
             GetOrCreateText(previewTransform, "Decorate Slot A Value Text", "따뜻한 햇살 + 부드러운 림라이트", 14, TextAnchor.UpperLeft, new Vector2(142, -132), new Vector2(460, 26));
             GetOrCreateText(previewTransform, "Decorate Slot B Text", "가구", 16, TextAnchor.UpperLeft, new Vector2(22, -188), new Vector2(120, 26));
-            GetOrCreateText(previewTransform, "Decorate Slot B Value Text", "냉장고 / 우유 선반 / 블렌딩 테이블 / 포근한 의자", 14, TextAnchor.UpperLeft, new Vector2(142, -188), new Vector2(500, 26));
+            GetOrCreateText(previewTransform, "Decorate Slot B Value Text", "냉장고 / 좌우반전 원목 의자", 14, TextAnchor.UpperLeft, new Vector2(142, -188), new Vector2(500, 26));
             GetOrCreateText(previewTransform, "Decorate Slot C Text", "소품", 16, TextAnchor.UpperLeft, new Vector2(22, -244), new Vector2(120, 26));
-            GetOrCreateText(previewTransform, "Decorate Slot C Value Text", "우유병 / 식물 / 칠판 / 별 램프 / 중앙 러그", 14, TextAnchor.UpperLeft, new Vector2(142, -244), new Vector2(500, 26));
+            GetOrCreateText(previewTransform, "Decorate Slot C Value Text", "창문·선반·러그·소품 장식은 제거됨", 14, TextAnchor.UpperLeft, new Vector2(142, -244), new Vector2(500, 26));
             GetOrCreateText(previewTransform, "Decorate Locked Text", "테마 교체 기능은 밀크룸 기본 비주얼 합격 후 확장합니다.", 14, TextAnchor.UpperLeft, new Vector2(22, -348), new Vector2(620, 42));
 
             overlay.SetActive(false);
@@ -810,30 +818,17 @@ namespace CheeseTama.Core
             root.position = Vector3.zero;
 
             var roomShell = CreateGroupRoot(root, "RoomShell");
-            var windowSet = CreateGroupRoot(root, "WindowSet");
             var fridgeSet = CreateGroupRoot(root, "FridgeSet");
-            var milkShelfSet = CreateGroupRoot(root, "MilkShelfSet");
-            var blendingTableSet = CreateGroupRoot(root, "BlendingTableSet");
-            var chalkboardSet = CreateGroupRoot(root, "ChalkboardSet");
-            var rug = CreateGroupRoot(root, "Rug");
+            var playArea = CreateGroupRoot(root, "PlayArea");
             var cozyChair = CreateGroupRoot(root, "CozyChair");
-            var lamps = CreateGroupRoot(root, "Lamps");
-            var props = CreateGroupRoot(root, "Props");
+            var foreground = CreateGroupRoot(root, "Foreground");
             var themeVfxRoot = CreateGroupRoot(root, "ThemeVFXRoot");
 
             CreateDioramaRoomShell(roomShell);
-            CreateDioramaWindowSet(windowSet);
             CreateDioramaFridgeSet(fridgeSet);
-            CreateDioramaMilkShelfSet(milkShelfSet);
-            CreateDioramaBlendingTableSet(blendingTableSet);
-            CreateDioramaChalkboardSet(chalkboardSet);
-            CreateDioramaRug(rug);
             CreateDioramaCozyChair(cozyChair);
-            CreateDioramaLamps(lamps);
-            CreateDioramaProps(props);
-            CreateAmbientThemeVfx(themeVfxRoot);
-            CreateGroupRoot(rug, "CheeseTamaAnchor").localPosition = new Vector3(0f, -0.28f, 0.05f);
-            AddMilkroomControllers(root, root, root, rug, props, themeVfxRoot);
+            CreateGroupRoot(playArea, "CheeseTamaAnchor").localPosition = new Vector3(0f, -0.28f, 0.05f);
+            AddMilkroomControllers(root, roomShell, root, playArea, foreground, themeVfxRoot);
             EnsureGeneratedMilkroomProps(root);
         }
 
@@ -843,7 +838,7 @@ namespace CheeseTama.Core
             const float floorTop = -2.13f;
 
             // Hide the legacy primitive prop groups that the generated meshes replace.
-            foreach (var groupName in new[] { "FridgeSet", "MilkShelfSet", "CozyChair" })
+            foreach (var groupName in new[] { "FridgeSet", "CozyChair" })
             {
                 var group = root.Find(groupName);
                 if (group != null)
@@ -854,10 +849,8 @@ namespace CheeseTama.Core
 
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Fridge.prefab", "Fridge_Model",
                 new Vector3(-1.75f, 0f, 2.35f), 2.1f, 180f, true, 0f, floorTop);
-            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/MilkShelf.prefab", "MilkShelf_Model",
-                new Vector3(3.0f, 0f, 2.2f), 1.5f, 200f, false, 0.3f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/CozyChair.prefab", "CozyChair_Model",
-                new Vector3(-3.1f, 0f, 0.2f), 1.7f, 210f, true, 0f, floorTop);
+                new Vector3(-3.1f, 0f, 0.2f), 1.7f, 150f, true, 0f, floorTop);
 #endif
         }
 
@@ -980,34 +973,6 @@ namespace CheeseTama.Core
             CreateDecorPart(root, "BackWall Baseboard", PrimitiveType.Cube, new Vector3(0f, -1.75f, 2.88f), new Vector3(8.6f, 0.16f, 0.12f), new Color(0.46f, 0.27f, 0.14f));
             CreateDecorPart(root, "LeftWall Baseboard", PrimitiveType.Cube, new Vector3(-4.36f, -1.75f, 1.35f), new Vector3(0.12f, 0.16f, 2.9f), new Color(0.46f, 0.27f, 0.14f));
             CreateDecorPart(root, "RightWall Baseboard", PrimitiveType.Cube, new Vector3(4.36f, -1.75f, 1.35f), new Vector3(0.12f, 0.16f, 2.9f), new Color(0.46f, 0.27f, 0.14f));
-            CreateDecorPart(root, "Ceiling Wood Beam", PrimitiveType.Cube, new Vector3(0f, 2.68f, 1.64f), new Vector3(8.85f, 0.22f, 0.22f), new Color(0.48f, 0.29f, 0.16f));
-            CreateDecorPart(root, "Warm Morning Wall Light", PrimitiveType.Sphere, new Vector3(-0.25f, 1.0f, 2.72f), new Vector3(3.8f, 2.05f, 0.1f), new Color(0.96f, 0.68f, 0.36f));
-            CreateDecorPart(root, "Left Ceiling Brace A", PrimitiveType.Cube, new Vector3(-4.06f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, -36f), new Color(0.55f, 0.33f, 0.17f));
-            CreateDecorPart(root, "Left Ceiling Brace B", PrimitiveType.Cube, new Vector3(-3.62f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, 36f), new Color(0.55f, 0.33f, 0.17f));
-            CreateDecorPart(root, "Right Ceiling Brace A", PrimitiveType.Cube, new Vector3(3.62f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, -36f), new Color(0.55f, 0.33f, 0.17f));
-            CreateDecorPart(root, "Right Ceiling Brace B", PrimitiveType.Cube, new Vector3(4.06f, 2.42f, 1.42f), new Vector3(0.18f, 0.72f, 0.18f), Quaternion.Euler(0f, 0f, 36f), new Color(0.55f, 0.33f, 0.17f));
-            CreateDecorPart(root, "Window Sunbeam Floor A", PrimitiveType.Cube, new Vector3(-0.28f, -2.04f, 0.24f), new Vector3(2.1f, 0.025f, 0.18f), Quaternion.Euler(0f, 28f, 0f), new Color(1f, 0.78f, 0.38f));
-            CreateDecorPart(root, "Window Sunbeam Floor B", PrimitiveType.Cube, new Vector3(0.78f, -2.035f, -0.18f), new Vector3(1.65f, 0.025f, 0.14f), Quaternion.Euler(0f, 28f, 0f), new Color(1f, 0.72f, 0.32f));
-
-            for (var i = 0; i < 7; i += 1)
-            {
-                var z = -0.82f + i * 0.48f;
-                CreateDecorPart(root, $"Floor Depth Plank {i + 1}", PrimitiveType.Cube, new Vector3(0f, -2.12f, z), new Vector3(8.65f, 0.028f, 0.035f), new Color(0.42f, 0.25f, 0.14f));
-            }
-
-            for (var i = 0; i < 9; i += 1)
-            {
-                var x = -4f + i;
-                CreateDecorPart(root, $"Floor Width Plank {i + 1}", PrimitiveType.Cube, new Vector3(x, -2.11f, 1.04f), new Vector3(0.03f, 0.03f, 3.35f), new Color(0.47f, 0.28f, 0.15f));
-            }
-
-            for (var i = 0; i < 18; i += 1)
-            {
-                var x = -4.1f + (i % 9) * 1.02f;
-                var y = -1.12f + (i / 9) * 2.15f + (i % 3) * 0.08f;
-                var scale = 0.035f + (i % 4) * 0.009f;
-                CreateDecorPart(root, $"Warm Plaster Speckle {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 2.72f), new Vector3(scale, scale * 0.65f, 0.015f), new Color(0.86f, 0.68f, 0.46f));
-            }
         }
 
         private static void CreateDioramaWindowSet(Transform root)
