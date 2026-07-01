@@ -1,5 +1,24 @@
 # 변경 기록
 
+## 0.2.2
+
+- 내부용 v2.1 기획안을 v2.0 원문 기반으로 다시 작성해 별빛 루트, 환상가루, 은닉형 후반 수집 콘텐츠, 데이터 구조, Codex 지침을 보존했습니다.
+- v2.1 기획안에 실제 Unity Assistant/Codex 작업 중 확정된 기술 스택, 폴더 구조, 생성형 GLB 에셋 파이프라인, UI/카메라/재질 검증 규칙을 추가했습니다.
+- README에서 로컬 작업 폴더와 실제 추적 저장소 경로처럼 공개 문서에 남기면 안 되는 개인 작업환경 정보를 제거했습니다.
+- GAME_DESIGN에서 로컬 절대 경로 대신 공개 가능한 레퍼런스 설명과 저장소 기준 폴더 규칙만 남기도록 정리했습니다.
+- 내부 기획안은 `.gitignore`로 계속 제외하고, 공개 Git 저장소에는 README/GAME_DESIGN/CHANGELOG 같은 공개 가능한 문서만 반영하도록 정리했습니다.
+
+## 0.2.1
+
+- Codex/Unity Assistant 작업 중 확정된 기술 스택, 폴더 구조, 생성 에셋 파이프라인, 운영 규칙을 공개 문서 범위에 맞춰 정리했습니다.
+- Unity 6, URP, uGUI, glTFast, Unity AI Assistant, AI Toolkit/GeneratedAssets, Tripo P1 기반 GLB 생성 흐름을 문서화했습니다.
+- `Assets/_Project`, `Assets/Characters`, `Assets/Environments/Milkroom/Props`, `GeneratedAssets`의 역할과 런타임 참조 규칙을 추가했습니다.
+- 생성형 3D 에셋은 `*_Ref.png`, `*_Assets/selected.glb`, `*.prefab` 구조로 정리한다는 규칙을 추가했습니다.
+- GLB/PBR 소품 재질을 플레이 모드 테마가 덮어쓰지 않도록 모델 자식 이름과 보존 규칙을 문서화했습니다.
+- `MilkroomCameraFramer`의 하단 UI 안전 영역 기준, 숨겨진 이벤트 메시지 바 제외, 디버그 카메라 제외 규칙을 문서화했습니다.
+- README, GAME_DESIGN, CHANGELOG의 문서 역할과 공개/내부 정보 노출 기준을 v2.1 기준으로 맞췄습니다.
+- 로컬 내부 기획안 파일이 공개 Git 저장소에 다시 올라가지 않도록 ignore 규칙을 추가했습니다.
+
 ## 0.2.0
 
 - `CheeseTama_최종기획안_Codex용_v2.0.md`와 캐릭터/밀크룸 레퍼런스 이미지를 기준으로 프로젝트 문서를 갱신했습니다.

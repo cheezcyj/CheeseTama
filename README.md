@@ -8,6 +8,7 @@
 
 - Unity 6 `6000.0.78f1` 기반 프로젝트
 - MIT 라이선스
+- URP, uGUI, glTFast 기반 3D/화면 프로토타입
 - 부트, 밀크룸, 도감, 개발자 씬 구성
 - 로컬 저장/불러오기/초기화
 - 밀크룸 체류 시간, 일일 루틴, 초기 재화, 도감 기록 프로토타입
@@ -19,6 +20,14 @@
 - 여러 화면 비율에서 하단 UI가 캐릭터와 방을 가리지 않도록 카메라 프레이밍 보정
 - 설정 데이터 관리, 도감/꾸미기 오버레이, 개발자 패널
 
+## 개발 기준
+
+- 주요 게임 코드는 `Assets/_Project/Scripts` 아래에서 도메인별로 관리합니다.
+- 생성형 캐릭터 에셋은 `Assets/Characters`, 밀크룸 소품은 `Assets/Environments/Milkroom/Props`에 정리합니다.
+- `GeneratedAssets`와 `Assets/AI Toolkit/Temp`는 생성 중간 산출물 보관용이며 런타임 기준 경로로 쓰지 않습니다.
+- GLB 소품의 PBR 재질은 플레이 모드 테마가 덮어쓰지 않게 유지합니다.
+- 내부 기획안과 로컬 작업 경로는 공개 README에 기록하지 않습니다.
+
 ## 비주얼 기준
 
 캐릭터는 말랑한 노란 치즈 생명체를 기준으로 합니다. 둥근 몸체, 큰 광택 눈, 작은 팔과 발, 복숭아빛 볼, 치즈 구멍, 부드러운 하이라이트가 핵심입니다.
@@ -29,7 +38,7 @@
 
 ## 실행 방법
 
-1. Unity Hub에서 `C:\Users\user\Desktop\CheeseTama` 폴더를 엽니다.
+1. Unity Hub에서 이 저장소 루트 폴더를 엽니다.
 2. Unity 상단 메뉴에서 새로고침을 실행합니다.
 3. 콘솔에 빨간 컴파일 오류가 없는지 확인합니다.
 4. Unity 상단 메뉴에서 `CheeseTama > 시작 씬 빌드`를 실행합니다.
@@ -54,15 +63,8 @@ dotnet restore CheeseTama.csproj
 dotnet build CheeseTama.csproj --no-restore
 ```
 
-## 작업 폴더
-
-- Unity 테스트용 백업/작업 폴더: `C:\Users\user\Desktop\CheeseTama`
-- GitHub 추적 저장소 폴더: `C:\Users\user\Documents\GitHub\CheeseTama`
-
-의미 있는 변경 후에는 작업 폴더 변경분을 추적 저장소에 반영하고, 한국어 커밋 메시지로 커밋/푸시합니다.
-
 ## 문서
 
-- `GAME_DESIGN.md`: 현재 구현 방향, v2.0 아트 기준, 테스트 규칙
+- `GAME_DESIGN.md`: 현재 구현 방향, v2.0 아트 기준, v2.1 기술/폴더/테스트 규칙
 - `CHANGELOG.md`: 변경 기록
 - `LICENSE`: MIT 라이선스

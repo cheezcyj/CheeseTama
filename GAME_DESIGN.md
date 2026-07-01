@@ -1,6 +1,6 @@
 # CheeseTama: The Milkroom 게임 기획 요약
 
-이 문서는 현재 Unity 프로토타입의 구현 방향, v2.0 아트 기준, 작업 규칙을 정리합니다. 전체 기획 원문은 `C:\Users\user\Downloads\CheeseTama_최종기획안_Codex용_v2.0.md`를 기준으로 합니다.
+이 문서는 현재 Unity 프로토타입의 구현 방향, v2.0 아트 기준, v2.1 기술/폴더/작업 규칙을 공개 저장소에 둘 수 있는 범위로 정리합니다. 전체 기획 원문은 별도 내부 기획안을 기준으로 하며, 공개 README에는 해금 전 후반 콘텐츠와 로컬 작업 경로를 노출하지 않습니다.
 
 ## 현재 방향
 
@@ -22,17 +22,60 @@
 
 캐릭터 레퍼런스:
 
-- 파일: `C:\Users\user\Downloads\01a4b77d-4c3e-4777-94cb-f79068187dfa.png`
+- 파일: 내부 캐릭터 디자인 포트폴리오 이미지
 - 목적: CheeseTama의 기본 형태, 성장 단계, 표정, 기능 액션, 재질, 색상, 크기 기준
 - 핵심 키워드: 말랑함, 치즈 질감, 둥근 실루엣, 큰 광택 눈, 복숭아빛 볼, 작은 팔/발, 얕은 치즈 구멍
 
 밀크룸 레퍼런스:
 
-- 파일: `C:\Users\user\Downloads\113edd63-1325-42c4-a45b-503a05787094.png`
+- 파일: 내부 밀크룸 배경 디자인 포트폴리오 이미지
 - 목적: 방 구성, 기능 존, 시간대/상태 변화, 소품, 색상 팔레트, 조명 기준
 - 핵심 키워드: 아늑함, 우유빛, 따뜻함, 목재 디오라마, 정면 고정 카메라, 기능 존 분리
 
 레퍼런스 이미지는 2D 배경판으로 사용하지 않습니다. 실제 3D 캐릭터, 소품, 방 모델링과 배치의 가이드로 사용합니다.
+
+## v2.1 기술 스택
+
+- Unity 6 `6000.0.78f1`
+- URP `17.0.4`
+- uGUI `2.0.0`
+- glTFast `6.19.0`
+- Input System `1.19.0`
+- Unity AI Assistant `2.13.0-pre.2`
+- Unity AI Inference `2.6.1`
+- Unity Test Framework `1.6.0`
+
+현재 UI는 uGUI 기반이며, `StarterSceneBuilder`가 주요 씬 오브젝트와 UI를 프로그램 방식으로 재구성합니다. 디자인이 고정되기 전까지는 빌더 기반 생성을 유지하고, 런타임에서 반복 참조할 아트 에셋만 프리팹으로 고정합니다.
+
+## v2.1 폴더 구조
+
+주요 Unity 폴더:
+
+- `Assets/_Project/Scripts`: 게임 코드 기본 위치
+- `Assets/_Project/Scripts/Core`: 부트스트랩, 씬 이름, 시작 씬 빌더
+- `Assets/_Project/Scripts/Gameplay`: 돌봄, 성장, 먹이, 상태, 해금 시스템
+- `Assets/_Project/Scripts/UI`: 밀크룸 UI, 도감, 설정, 개발자 패널
+- `Assets/_Project/Scripts/Environment`: 밀크룸 테마, 조명, 카메라 프레이밍, 소품 컨트롤
+- `Assets/_Project/Scripts/Collections`: 도감과 숨김 기록
+- `Assets/_Project/Scripts/Save`: 저장 데이터와 저장 관리자
+- `Assets/_Project/Scenes`: `Boot`, `Milkroom`, `Collection`, `Debug`
+- `Assets/Characters/CheeseTama`: 정리된 CheeseTama 캐릭터 에셋
+- `Assets/Environments/Milkroom/Props`: 정리된 밀크룸 GLB 소품
+- `GeneratedAssets`: AI 생성 원본/중간 산출물
+- `Assets/AI Toolkit/Temp`: Unity AI Toolkit 임시 산출물
+
+`GeneratedAssets`와 `Assets/AI Toolkit/Temp`는 원본 보관 성격입니다. 실제 런타임 참조는 정리된 `Assets/Characters` 또는 `Assets/Environments` 경로를 사용합니다.
+
+## v2.1 생성 에셋 규칙
+
+- 캐릭터 에셋은 `Assets/Characters/CheeseTama` 아래에 둡니다.
+- 밀크룸 소품은 `Assets/Environments/Milkroom/Props` 아래에 둡니다.
+- 레퍼런스 이미지는 `*_Ref.png`로 이름을 붙입니다.
+- GLB 원본 사용본은 `*_Assets/selected.glb`로 둡니다.
+- 씬에 배치할 단위는 `*.prefab`으로 감쌉니다.
+- 프리팹 내부 실제 모델 자식은 `GeneratedModel`, `Fridge_Model`, `MilkShelf_Model`, `CozyChair_Model`처럼 명확한 이름을 사용합니다.
+- 새 GLB 소품을 추가하면 `MilkroomThemeController`가 해당 렌더러의 PBR 재질을 덮어쓰지 않도록 보존 규칙에 포함합니다.
+- Play Mode에서 색상, 밝기, 위치, 카메라 가림, 콘솔 오류를 확인한 뒤 저장합니다.
 
 ## 현재 구현 범위
 
@@ -180,6 +223,15 @@ CheeseTama는 고정 카메라 디오라마 안의 풀 3D 스타일라이즈드 
 - `MilkroomCameraFramer`는 실제 표시 중인 하단 UI 바를 기준으로 여백을 계산합니다.
 - 숨겨진 이벤트 메시지 바는 카메라 리프트 계산에 포함하지 않습니다.
 - 빌더는 밀크룸 카메라에만 프레이머를 붙이고, 디버그 카메라에는 붙이지 않습니다.
+- 개발자 화면에서 방이 과하게 위로 올라가면 먼저 하단 UI 활성 상태, 참조 Canvas, 프레이머가 붙은 카메라를 확인합니다.
+
+## 재질과 조명 규칙
+
+- 절차적 밀크룸 오브젝트는 테마 팔레트로 색을 바꿀 수 있습니다.
+- GLB로 임포트한 캐릭터/소품은 원본 PBR 재질과 텍스처를 우선 보존합니다.
+- 플레이 모드에서 소품이 과하게 어두워지거나 색이 바뀌면 `MilkroomThemeController.ShouldPreserveImportedRenderer`를 먼저 확인합니다.
+- 냉장고, 우유 선반, 안락의자 등 생성형 GLB 소품은 테마 팔레트 대상에서 제외합니다.
+- Scene View가 아니라 Play Mode의 Game View 기준으로 최종 밝기와 구도를 판단합니다.
 
 ## 설정
 
@@ -210,12 +262,11 @@ CheeseTama는 고정 카메라 디오라마 안의 풀 3D 스타일라이즈드 
 
 ## 유니티 작업 메모
 
-- Unity 테스트용 백업/작업 폴더는 `C:\Users\user\Desktop\CheeseTama`입니다.
-- GitHub 추적 저장소 폴더는 `C:\Users\user\Documents\GitHub\CheeseTama`입니다.
+- 로컬 작업 경로와 개인 PC 경로는 공개 문서에 쓰지 않습니다.
 - 코드 변경 후 Unity에서 새로고침합니다.
 - `CheeseTama > 시작 씬 빌드`를 실행해 시작 씬 오브젝트를 재생성합니다.
 - `Milkroom` 씬을 열고 재생 버튼을 누릅니다.
-- 의미 있는 변경 후 작업 폴더 변경분을 추적 저장소에 복사하고 커밋/푸시합니다.
+- 의미 있는 변경 후 공개 가능한 변경분만 Git에 반영하고 커밋/푸시합니다.
 
 ## 빠른 테스트 목록
 
@@ -267,6 +318,8 @@ dotnet build CheeseTama.csproj --no-restore
 - 숨겨진 후반 콘텐츠는 해금 전 완전히 숨깁니다.
 - 레퍼런스 이미지는 3D 모델링/배치 가이드로 쓰고 평면 배경으로 붙이지 않습니다.
 - 생성형 GLB 소품의 PBR 재질을 플레이 모드 테마가 덮어쓰지 않게 합니다.
+- 원본 생성 결과는 `GeneratedAssets`에 보관하되 런타임 참조는 정리된 `Assets/...` 경로만 사용합니다.
+- README는 공개용 문서로 유지하고, 숨김 콘텐츠의 조건/개수/이름은 쓰지 않습니다.
 - 먹이 페널티는 영구 처벌처럼 느껴지지 않게 합니다.
 - PC 마우스 우선 조작을 기준으로 하되, 향후 입력 확장을 막지 않습니다.
 - Git 커밋 메시지는 한국어로 작성합니다.
