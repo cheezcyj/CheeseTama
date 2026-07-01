@@ -12,6 +12,12 @@ namespace CheeseTama.Core
 {
     public static class StarterSceneBuilder
     {
+        private const int RoundedUiSpriteSize = 32;
+        private const int RoundedUiCornerRadius = 8;
+
+        private static Texture2D roundedUiTexture;
+        private static Sprite roundedUiSprite;
+
         public static GameManager EnsureCoreSystems()
         {
             if (GameManager.Instance != null)
@@ -114,7 +120,7 @@ namespace CheeseTama.Core
             var topMenu = GetOrCreatePanel(canvas.transform, "Top Menu", new Vector2(1390, -16), new Vector2(486, 82));
             if (topMenu.TryGetComponent(out Image topMenuImage))
             {
-                topMenuImage.color = new Color(0.45f, 0.29f, 0.16f, 0.9f);
+                topMenuImage.color = new Color(1f, 0.95f, 0.78f, 0.28f);
             }
 
             var topMenuTransform = topMenu.transform;
@@ -147,6 +153,7 @@ namespace CheeseTama.Core
             RemoveChildIfExists(panelTransform, "Session Text");
             RemoveChildIfExists(panelTransform, "Economy Text");
             RemoveChildIfExists(panelTransform, "Message Text");
+            RemoveChildIfExists(panelTransform, "Care Tip Text");
 
             var detailTitleText = GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(316, 34));
             detailTitleText.fontStyle = FontStyle.Bold;
@@ -160,8 +167,7 @@ namespace CheeseTama.Core
             var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "해금  별빛 우유 잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -326), new Vector2(316, 30));
             var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "돌봄 누적  0회\n놀이 0  청소 0  휴식 0", 15, TextAnchor.UpperLeft, new Vector2(22, -382), new Vector2(316, 54));
             var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "오늘 루틴\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1", 15, TextAnchor.UpperLeft, new Vector2(22, -446), new Vector2(316, 64));
-            var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "돌봄 팁\n우유를 먹여 성장시켜 주세요.", 15, TextAnchor.UpperLeft, new Vector2(22, -526), new Vector2(316, 48));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장  없음", 14, TextAnchor.UpperLeft, new Vector2(22, -578), new Vector2(316, 24));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장  없음", 14, TextAnchor.UpperLeft, new Vector2(22, -536), new Vector2(316, 24));
 
             var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(24, -116), new Vector2(350, 396));
             if (statBar.TryGetComponent(out Image statBarImage))
@@ -178,7 +184,17 @@ namespace CheeseTama.Core
             var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림  20/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -256), new Vector2(306, 46));
             var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강  100/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -316), new Vector2(306, 46));
 
-            var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 118), new Vector2(980, 72));
+            var careTipPanel = GetOrCreatePanel(canvas.transform, "Care Tip Panel", new Vector2(24, -532), new Vector2(350, 118));
+            if (careTipPanel.TryGetComponent(out Image careTipPanelImage))
+            {
+                careTipPanelImage.color = new Color(1f, 0.96f, 0.8f, 0.92f);
+            }
+
+            var careTipText = GetOrCreateText(careTipPanel.transform, "Care Tip Text", "돌봄 팁\n우유를 먹여 성장시켜 주세요.", 17, TextAnchor.UpperLeft, new Vector2(22, -18), new Vector2(306, 78));
+            careTipText.fontStyle = FontStyle.Bold;
+            careTipText.color = new Color(0.28f, 0.18f, 0.08f);
+
+            var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 146), new Vector2(980, 72));
             if (messageBar.TryGetComponent(out Image messageBarImage))
             {
                 messageBarImage.color = new Color(1f, 0.93f, 0.68f, 0.98f);
@@ -189,7 +205,7 @@ namespace CheeseTama.Core
             messageText.color = new Color(0.28f, 0.18f, 0.08f);
 
             // 도감 이벤트 메시지 바 — 상태메시지 바(Message Bar) 바로 위에 배치.
-            var eventMessageBar = GetOrCreateBottomPanel(canvas.transform, "Event Message Bar", new Vector2(0, 198), new Vector2(980, 64));
+            var eventMessageBar = GetOrCreateBottomPanel(canvas.transform, "Event Message Bar", new Vector2(0, 226), new Vector2(980, 64));
             if (eventMessageBar.TryGetComponent(out Image eventMessageBarImage))
             {
                 eventMessageBarImage.color = new Color(0.86f, 0.92f, 1f, 0.98f);
@@ -232,7 +248,8 @@ namespace CheeseTama.Core
             var actionBar = GetOrCreateBottomPanel(canvas.transform, "Bottom Action Bar", new Vector2(0, 24), new Vector2(1240, 108));
             if (actionBar.TryGetComponent(out Image actionBarImage))
             {
-                actionBarImage.color = new Color(1f, 0.95f, 0.78f, 0.95f);
+                actionBarImage.color = new Color(1f, 1f, 1f, 0f);
+                actionBarImage.raycastTarget = false;
             }
 
             var actionBarTransform = actionBar.transform;
@@ -1674,6 +1691,7 @@ namespace CheeseTama.Core
 
             var image = panel.AddComponent<Image>();
             image.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+            ApplyRoundedImage(image);
             return panel;
         }
 
@@ -1693,6 +1711,7 @@ namespace CheeseTama.Core
                 }
 
                 image.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+                ApplyRoundedImage(image);
                 return existing.gameObject;
             }
 
@@ -1727,6 +1746,7 @@ namespace CheeseTama.Core
                 }
 
                 image.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+                ApplyRoundedImage(image);
                 return existing.gameObject;
             }
 
@@ -1738,6 +1758,7 @@ namespace CheeseTama.Core
 
             var newImage = panel.AddComponent<Image>();
             newImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+            ApplyRoundedImage(newImage);
             return panel;
         }
 
@@ -1766,6 +1787,7 @@ namespace CheeseTama.Core
                 }
 
                 image.color = new Color(1f, 0.98f, 0.9f, 0.86f);
+                ApplyRoundedImage(image);
                 return existing.gameObject;
             }
 
@@ -1777,6 +1799,7 @@ namespace CheeseTama.Core
 
             var newImage = panel.AddComponent<Image>();
             newImage.color = new Color(1f, 0.98f, 0.9f, 0.86f);
+            ApplyRoundedImage(newImage);
             return panel;
         }
 
@@ -1881,6 +1904,7 @@ namespace CheeseTama.Core
             inputObject.AddComponent<RectTransform>();
             var image = inputObject.AddComponent<Image>();
             image.color = new Color(1f, 0.98f, 0.9f);
+            ApplyRoundedImage(image);
 
             var input = inputObject.AddComponent<InputField>();
             var text = CreateText(inputObject.transform, "Text", string.Empty, 18, TextAnchor.MiddleLeft, new Vector2(12, 0), new Vector2(size.x - 24, size.y), false);
@@ -1909,6 +1933,7 @@ namespace CheeseTama.Core
             if (image != null)
             {
                 image.color = new Color(1f, 0.98f, 0.9f);
+                ApplyRoundedImage(image);
             }
 
             if (input.placeholder is Text placeholderText)
@@ -2102,6 +2127,7 @@ namespace CheeseTama.Core
             }
 
             image.color = new Color(0.96f, 0.78f, 0.35f);
+            ApplyRoundedImage(image);
             button.targetGraphic = image;
             button.transition = Selectable.Transition.ColorTint;
             var colors = button.colors;
@@ -2179,11 +2205,11 @@ namespace CheeseTama.Core
         {
             ApplyReadableButtonStyle(
                 button,
-                new Color(0.58f, 0.36f, 0.17f),
-                new Color(0.72f, 0.48f, 0.25f),
-                new Color(0.4f, 0.22f, 0.1f),
-                new Color(0.72f, 0.48f, 0.25f),
-                new Color(1f, 0.96f, 0.84f),
+                new Color(1f, 0.75f, 0.24f),
+                new Color(1f, 0.86f, 0.39f),
+                new Color(0.88f, 0.53f, 0.13f),
+                new Color(1f, 0.86f, 0.39f),
+                new Color(0.26f, 0.16f, 0.08f),
                 20,
                 15);
         }
@@ -2222,6 +2248,7 @@ namespace CheeseTama.Core
             }
 
             image.color = normal;
+            ApplyRoundedImage(image);
             button.targetGraphic = image;
             button.transition = Selectable.Transition.ColorTint;
 
@@ -2271,6 +2298,7 @@ namespace CheeseTama.Core
             if (image != null)
             {
                 image.color = new Color(0.84f, 0.35f, 0.29f);
+                ApplyRoundedImage(image);
             }
 
             var colors = button.colors;
@@ -2285,6 +2313,75 @@ namespace CheeseTama.Core
             {
                 label.color = new Color(1f, 0.96f, 0.9f);
             }
+        }
+
+        private static void ApplyRoundedImage(Image image)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.sprite = GetRoundedUiSprite();
+            image.type = Image.Type.Sliced;
+            image.preserveAspect = false;
+            image.pixelsPerUnitMultiplier = 1f;
+        }
+
+        private static Sprite GetRoundedUiSprite()
+        {
+            if (roundedUiSprite != null)
+            {
+                return roundedUiSprite;
+            }
+
+            roundedUiSprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/UISprite.psd");
+            if (roundedUiSprite != null)
+            {
+                return roundedUiSprite;
+            }
+
+            roundedUiTexture = new Texture2D(RoundedUiSpriteSize, RoundedUiSpriteSize, TextureFormat.RGBA32, false)
+            {
+                name = "CheeseTama Rounded UI Sprite",
+                hideFlags = HideFlags.HideAndDontSave,
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            for (var y = 0; y < RoundedUiSpriteSize; y++)
+            {
+                for (var x = 0; x < RoundedUiSpriteSize; x++)
+                {
+                    var alpha = GetRoundedRectAlpha(x, y);
+                    roundedUiTexture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+
+            roundedUiTexture.Apply(false, false);
+
+            var border = new Vector4(RoundedUiCornerRadius, RoundedUiCornerRadius, RoundedUiCornerRadius, RoundedUiCornerRadius);
+            roundedUiSprite = Sprite.Create(
+                roundedUiTexture,
+                new Rect(0, 0, RoundedUiSpriteSize, RoundedUiSpriteSize),
+                new Vector2(0.5f, 0.5f),
+                100f,
+                0,
+                SpriteMeshType.FullRect,
+                border);
+            roundedUiSprite.name = "CheeseTama Rounded UI Sprite";
+            roundedUiSprite.hideFlags = HideFlags.HideAndDontSave;
+            return roundedUiSprite;
+        }
+
+        private static float GetRoundedRectAlpha(int x, int y)
+        {
+            var radius = RoundedUiCornerRadius;
+            var size = RoundedUiSpriteSize;
+            var centerX = Mathf.Clamp(x, radius, size - radius - 1);
+            var centerY = Mathf.Clamp(y, radius, size - radius - 1);
+            var distance = Vector2.Distance(new Vector2(x, y), new Vector2(centerX, centerY));
+            return Mathf.Clamp01(radius + 0.5f - distance);
         }
 
         private static Font GetDefaultFont()
