@@ -436,9 +436,9 @@ namespace CheeseTama.Core
             GetOrCreateText(previewTransform, "Decorate Slot A Text", "조명", 16, TextAnchor.UpperLeft, new Vector2(22, -132), new Vector2(120, 26));
             GetOrCreateText(previewTransform, "Decorate Slot A Value Text", "따뜻한 햇살 + 부드러운 림라이트", 14, TextAnchor.UpperLeft, new Vector2(142, -132), new Vector2(460, 26));
             GetOrCreateText(previewTransform, "Decorate Slot B Text", "가구", 16, TextAnchor.UpperLeft, new Vector2(22, -188), new Vector2(120, 26));
-            GetOrCreateText(previewTransform, "Decorate Slot B Value Text", "냉장고 / 좌우반전 원목 의자", 14, TextAnchor.UpperLeft, new Vector2(142, -188), new Vector2(500, 26));
+            GetOrCreateText(previewTransform, "Decorate Slot B Value Text", "냉장고 / 우유병 선반 / 좌우반전 원목 의자", 14, TextAnchor.UpperLeft, new Vector2(142, -188), new Vector2(500, 26));
             GetOrCreateText(previewTransform, "Decorate Slot C Text", "소품", 16, TextAnchor.UpperLeft, new Vector2(22, -244), new Vector2(120, 26));
-            GetOrCreateText(previewTransform, "Decorate Slot C Value Text", "창문·선반·러그·소품 장식은 제거됨", 14, TextAnchor.UpperLeft, new Vector2(142, -244), new Vector2(500, 26));
+            GetOrCreateText(previewTransform, "Decorate Slot C Value Text", "창문·러그·자잘한 장식은 제거됨", 14, TextAnchor.UpperLeft, new Vector2(142, -244), new Vector2(500, 26));
             GetOrCreateText(previewTransform, "Decorate Locked Text", "테마 교체 기능은 밀크룸 기본 비주얼 합격 후 확장합니다.", 14, TextAnchor.UpperLeft, new Vector2(22, -348), new Vector2(620, 42));
 
             overlay.SetActive(false);
@@ -849,6 +849,8 @@ namespace CheeseTama.Core
 
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Fridge.prefab", "Fridge_Model",
                 new Vector3(-1.75f, 0f, 2.35f), 2.1f, 180f, true, 0f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/MilkShelf.prefab", "MilkShelf_Model",
+                new Vector3(2.65f, 0f, 2.2f), 1.3f, 190f, false, -0.35f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/CozyChair.prefab", "CozyChair_Model",
                 new Vector3(-3.1f, 0f, 0.2f), 1.7f, 150f, true, 0f, floorTop);
 #endif
@@ -966,13 +968,13 @@ namespace CheeseTama.Core
 
         private static void CreateDioramaRoomShell(Transform root)
         {
-            CreateDecorPart(root, "BackWall", PrimitiveType.Cube, new Vector3(0f, 0.42f, 3.1f), new Vector3(8.9f, 4.6f, 0.28f), new Color(0.86f, 0.72f, 0.54f));
-            CreateDecorPart(root, "LeftWall", PrimitiveType.Cube, new Vector3(-4.58f, 0.18f, 1.55f), new Vector3(0.3f, 4.25f, 3.35f), new Color(0.78f, 0.6f, 0.42f));
-            CreateDecorPart(root, "RightWall", PrimitiveType.Cube, new Vector3(4.58f, 0.18f, 1.55f), new Vector3(0.3f, 4.25f, 3.35f), new Color(0.78f, 0.6f, 0.42f));
-            CreateDecorPart(root, "Floor", PrimitiveType.Cube, new Vector3(0f, -2.28f, 1.2f), new Vector3(9.25f, 0.26f, 4.6f), new Color(0.5f, 0.29f, 0.14f));
-            CreateDecorPart(root, "BackWall Baseboard", PrimitiveType.Cube, new Vector3(0f, -1.75f, 2.88f), new Vector3(8.6f, 0.16f, 0.12f), new Color(0.46f, 0.27f, 0.14f));
-            CreateDecorPart(root, "LeftWall Baseboard", PrimitiveType.Cube, new Vector3(-4.36f, -1.75f, 1.35f), new Vector3(0.12f, 0.16f, 2.9f), new Color(0.46f, 0.27f, 0.14f));
-            CreateDecorPart(root, "RightWall Baseboard", PrimitiveType.Cube, new Vector3(4.36f, -1.75f, 1.35f), new Vector3(0.12f, 0.16f, 2.9f), new Color(0.46f, 0.27f, 0.14f));
+            CreateDecorPart(root, "BackWall", PrimitiveType.Cube, new Vector3(0f, -0.55f, 2.64f), new Vector3(7.9f, 3.15f, 0.24f), new Color(0.86f, 0.72f, 0.54f));
+            CreateDecorPart(root, "LeftWall", PrimitiveType.Cube, new Vector3(-4.02f, -0.55f, 0.84f), new Vector3(0.24f, 3.15f, 3.6f), new Color(0.78f, 0.6f, 0.42f));
+            CreateDecorPart(root, "RightWall", PrimitiveType.Cube, new Vector3(4.02f, -0.55f, 0.84f), new Vector3(0.24f, 3.15f, 3.6f), new Color(0.78f, 0.6f, 0.42f));
+            CreateDecorPart(root, "Floor", PrimitiveType.Cube, new Vector3(0f, -2.24f, 0.84f), new Vector3(7.9f, 0.22f, 3.6f), new Color(0.5f, 0.29f, 0.14f));
+            CreateDecorPart(root, "BackWall Baseboard", PrimitiveType.Cube, new Vector3(0f, -2.04f, 2.5f), new Vector3(7.65f, 0.18f, 0.1f), new Color(0.46f, 0.27f, 0.14f));
+            CreateDecorPart(root, "LeftWall Baseboard", PrimitiveType.Cube, new Vector3(-3.82f, -2.04f, 0.76f), new Vector3(0.1f, 0.18f, 3.35f), new Color(0.46f, 0.27f, 0.14f));
+            CreateDecorPart(root, "RightWall Baseboard", PrimitiveType.Cube, new Vector3(3.82f, -2.04f, 0.76f), new Vector3(0.1f, 0.18f, 3.35f), new Color(0.46f, 0.27f, 0.14f));
         }
 
         private static void CreateDioramaWindowSet(Transform root)
