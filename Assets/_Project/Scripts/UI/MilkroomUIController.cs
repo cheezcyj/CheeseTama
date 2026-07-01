@@ -144,15 +144,15 @@ namespace CheeseTama.UI
 
             SetText(nameText, current.name);
             SetText(levelText, $"레벨 {current.level} ({current.levelProgress}%)");
-            SetText(formText, $"형태  {FormatFormName(current.form)}");
-            SetText(conditionText, $"상태  {FormatCondition(current)}");
+            SetText(formText, FormatRecordLine("형태", FormatFormName(current.form)));
+            SetText(conditionText, FormatRecordLine("상태", FormatCondition(current)));
             SetText(hungerText, FormatStatLine("포만감", current.stats.hunger));
             SetText(moodText, FormatStatLine("기분", current.stats.mood));
             SetText(cleanlinessText, FormatStatLine("청결", current.stats.cleanliness));
             SetText(sleepinessText, FormatStatLine("졸림", current.stats.sleepiness));
             SetText(healthText, FormatStatLine("건강", current.stats.health));
-            SetText(affectionText, $"애정  {current.stats.affection}");
-            SetText(maturationText, $"성숙도  {current.stats.maturation}");
+            SetText(affectionText, FormatRecordLine("애정", current.stats.affection.ToString()));
+            SetText(maturationText, FormatRecordLine("성숙도", current.stats.maturation.ToString()));
             SetText(hatchProgressText, FormatHatchProgress(current));
             SetText(basicMilkGrowthText, FormatMilkGrowthLine(currentSave, "basic_milk", "기본 우유"));
             SetText(starMilkGrowthText, FormatStarMilkGrowthLine(currentSave));
@@ -162,7 +162,7 @@ namespace CheeseTama.UI
             SetText(sessionText, FormatSession(currentSave));
             SetText(economyText, FormatEconomy(currentSave));
             SetText(careTipText, FormatCareTip(currentSave, current));
-            SetText(lastSavedText, $"마지막 저장  {FormatIso(current.lastSavedAtIso)}");
+            SetText(lastSavedText, FormatRecordLine("마지막 저장", FormatIso(current.lastSavedAtIso)));
         }
 
         public void ShowMessage(string message)
@@ -282,10 +282,10 @@ namespace CheeseTama.UI
         {
             if (tama.isHatched)
             {
-                return "부화 상태  깨어남";
+                return FormatRecordLine("부화 상태", "깨어남");
             }
 
-            return $"부화 진행  {HatchingSystem.GetHatchProgressPercent(tama)}%";
+            return FormatRecordLine("부화 진행", $"{HatchingSystem.GetHatchProgressPercent(tama)}%");
         }
 
         private static string FormatStatLine(string label, int value)
@@ -313,17 +313,17 @@ namespace CheeseTama.UI
             var entry = FindMilkGrowthEntry(saveData, milkId);
             if (entry == null)
             {
-                return $"{displayName}  Lv.0 / 0점";
+                return FormatRecordLine(displayName, "Lv.0 / 0점");
             }
 
-            return $"{displayName}  Lv.{entry.growthLevel} / {entry.growthPoints}점";
+            return FormatRecordLine(displayName, $"Lv.{entry.growthLevel} / {entry.growthPoints}점");
         }
 
         private static string FormatStarMilkGrowthLine(CheeseTamaSaveData saveData)
         {
             if (saveData == null || saveData.unlocks == null || !saveData.unlocks.starMilkUnlocked)
             {
-                return "별빛 우유  잠김";
+                return FormatRecordLine("별빛 우유", "잠김");
             }
 
             return FormatMilkGrowthLine(saveData, "star_milk", "별빛 우유");
@@ -352,7 +352,7 @@ namespace CheeseTama.UI
             var starMilkState = saveData != null && saveData.unlocks != null && saveData.unlocks.starMilkUnlocked
                 ? "별빛 우유 해금"
                 : "별빛 우유 잠김";
-            return $"해금  {starMilkState}";
+            return FormatRecordLine("해금", starMilkState);
         }
 
         private static string FormatCareSummary(CheeseTamaSaveData saveData)
@@ -360,10 +360,10 @@ namespace CheeseTama.UI
             var history = saveData?.careHistory;
             if (history == null)
             {
-                return "돌봄 누적  0회\n놀이 0  청소 0  휴식 0";
+                return "<b>돌봄 누적</b>  0회\n놀이 0  청소 0  휴식 0";
             }
 
-            return $"돌봄 누적  {history.totalCareActions}회\n놀이 {history.playSessions}  청소 {history.cleanings}  휴식 {history.rests}";
+            return $"<b>돌봄 누적</b>  {history.totalCareActions}회\n놀이 {history.playSessions}  청소 {history.cleanings}  휴식 {history.rests}";
         }
 
         private static string FormatDailyRoutine(CheeseTamaSaveData saveData)
@@ -371,10 +371,15 @@ namespace CheeseTama.UI
             var daily = saveData?.dailyCare;
             if (daily == null)
             {
-                return "오늘 루틴\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1";
+                return "<b>오늘 루틴</b>\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1";
             }
 
-            return $"오늘 루틴\n우유 {ClampGoal(daily.milkFeeds)}/1  놀이 {ClampGoal(daily.playSessions)}/1\n청소 {ClampGoal(daily.cleanings)}/1  휴식 {ClampGoal(daily.rests)}/1";
+            return $"<b>오늘 루틴</b>\n우유 {ClampGoal(daily.milkFeeds)}/1  놀이 {ClampGoal(daily.playSessions)}/1\n청소 {ClampGoal(daily.cleanings)}/1  휴식 {ClampGoal(daily.rests)}/1";
+        }
+
+        private static string FormatRecordLine(string title, string value)
+        {
+            return $"<b>{title}</b>  {value}";
         }
 
         private static string FormatSession(CheeseTamaSaveData saveData)

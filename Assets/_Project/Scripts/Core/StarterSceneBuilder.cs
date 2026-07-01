@@ -174,30 +174,30 @@ namespace CheeseTama.Core
             RemoveChildIfExists(panelTransform, "Message Text");
             RemoveChildIfExists(panelTransform, "Care Tip Text");
 
-            var identitySection = GetOrCreatePanel(panelTransform, "Record Identity Section", new Vector2(12, -56), new Vector2(336, 82));
+            var identitySection = GetOrCreatePanel(panelTransform, "Record Identity Section", new Vector2(12, -58), new Vector2(336, 88));
             ApplyRecordSectionStyle(identitySection, new Color(1f, 0.95f, 0.78f, 0.55f));
-            var growthSection = GetOrCreatePanel(panelTransform, "Record Growth Section", new Vector2(12, -136), new Vector2(336, 106));
+            var growthSection = GetOrCreatePanel(panelTransform, "Record Growth Section", new Vector2(12, -158), new Vector2(336, 126));
             ApplyRecordSectionStyle(growthSection, new Color(0.96f, 0.9f, 0.76f, 0.5f));
-            var milkSection = GetOrCreatePanel(panelTransform, "Record Milk Section", new Vector2(12, -252), new Vector2(336, 106));
+            var milkSection = GetOrCreatePanel(panelTransform, "Record Milk Section", new Vector2(12, -296), new Vector2(336, 112));
             ApplyRecordSectionStyle(milkSection, new Color(1f, 0.95f, 0.78f, 0.55f));
-            var routineSection = GetOrCreatePanel(panelTransform, "Record Routine Section", new Vector2(12, -372), new Vector2(336, 138));
+            var routineSection = GetOrCreatePanel(panelTransform, "Record Routine Section", new Vector2(12, -420), new Vector2(336, 126));
             ApplyRecordSectionStyle(routineSection, new Color(0.96f, 0.9f, 0.76f, 0.5f));
-            var saveSection = GetOrCreatePanel(panelTransform, "Record Save Section", new Vector2(12, -520), new Vector2(336, 52));
+            var saveSection = GetOrCreatePanel(panelTransform, "Record Save Section", new Vector2(12, -558), new Vector2(336, 48));
             ApplyRecordSectionStyle(saveSection, new Color(1f, 0.95f, 0.78f, 0.45f));
 
             var detailTitleText = GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(316, 34));
             detailTitleText.fontStyle = FontStyle.Bold;
-            var formText = GetOrCreateText(panelTransform, "Form Text", "형태  알", 17, TextAnchor.UpperLeft, new Vector2(22, -66), new Vector2(316, 28));
-            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "상태  따뜻함", 17, TextAnchor.UpperLeft, new Vector2(22, -98), new Vector2(316, 28));
-            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "애정  10", 17, TextAnchor.UpperLeft, new Vector2(22, -146), new Vector2(316, 28));
-            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "성숙도  0", 17, TextAnchor.UpperLeft, new Vector2(22, -178), new Vector2(316, 28));
-            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "부화 진행  0%", 17, TextAnchor.UpperLeft, new Vector2(22, -210), new Vector2(316, 28));
-            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "기본 우유  Lv.0 / 0점", 16, TextAnchor.UpperLeft, new Vector2(22, -262), new Vector2(316, 30));
-            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "별빛 우유  잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -294), new Vector2(316, 30));
-            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "해금  별빛 우유 잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -326), new Vector2(316, 30));
-            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "돌봄 누적  0회\n놀이 0  청소 0  휴식 0", 15, TextAnchor.UpperLeft, new Vector2(22, -382), new Vector2(316, 54));
-            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "오늘 루틴\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1", 15, TextAnchor.UpperLeft, new Vector2(22, -446), new Vector2(316, 64));
-            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장  없음", 14, TextAnchor.UpperLeft, new Vector2(22, -536), new Vector2(316, 24));
+            var formText = GetOrCreateText(panelTransform, "Form Text", "<b>형태</b>  알", 17, TextAnchor.UpperLeft, new Vector2(22, -72), new Vector2(316, 30));
+            var conditionText = GetOrCreateText(panelTransform, "Condition Text", "<b>상태</b>  따뜻함", 17, TextAnchor.UpperLeft, new Vector2(22, -112), new Vector2(316, 30));
+            var affectionText = GetOrCreateText(panelTransform, "Affection Text", "<b>애정</b>  10", 17, TextAnchor.UpperLeft, new Vector2(22, -174), new Vector2(316, 30));
+            var maturationText = GetOrCreateText(panelTransform, "Maturation Text", "<b>성숙도</b>  0", 17, TextAnchor.UpperLeft, new Vector2(22, -214), new Vector2(316, 30));
+            var hatchProgressText = GetOrCreateText(panelTransform, "Hatch Progress Text", "<b>부화 진행</b>  0%", 17, TextAnchor.UpperLeft, new Vector2(22, -254), new Vector2(316, 30));
+            var basicMilkGrowthText = GetOrCreateText(panelTransform, "Basic Milk Growth Text", "<b>기본 우유</b>  Lv.0 / 0점", 16, TextAnchor.UpperLeft, new Vector2(22, -312), new Vector2(316, 30));
+            var starMilkGrowthText = GetOrCreateText(panelTransform, "Star Milk Growth Text", "<b>별빛 우유</b>  잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -348), new Vector2(316, 30));
+            var unlockText = GetOrCreateText(panelTransform, "Unlock Text", "<b>해금</b>  별빛 우유 잠김", 16, TextAnchor.UpperLeft, new Vector2(22, -384), new Vector2(316, 30));
+            var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "<b>돌봄 누적</b>  0회\n놀이 0  청소 0  휴식 0", 15, TextAnchor.UpperLeft, new Vector2(22, -436), new Vector2(316, 42));
+            var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "<b>오늘 루틴</b>\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1", 15, TextAnchor.UpperLeft, new Vector2(22, -486), new Vector2(316, 58));
+            var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "<b>마지막 저장</b>  없음", 14, TextAnchor.UpperLeft, new Vector2(22, -570), new Vector2(316, 24));
             ApplyRecordLineStyle(formText);
             ApplyRecordLineStyle(conditionText);
             ApplyRecordLineStyle(affectionText);
@@ -2355,8 +2355,10 @@ namespace CheeseTama.Core
                 return;
             }
 
-            label.fontStyle = FontStyle.Bold;
+            label.supportRichText = true;
+            label.fontStyle = FontStyle.Normal;
             label.color = new Color(0.25f, 0.17f, 0.09f);
+            label.lineSpacing = 1.12f;
         }
 
         private static void ApplyTopInfoTextStyle(Text label, int maxFontSize)
