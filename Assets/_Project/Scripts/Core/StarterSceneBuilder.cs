@@ -300,7 +300,7 @@ namespace CheeseTama.Core
             var milkButton = GetOrCreateButton(actionBarTransform, "Milk Button", "우유", new Vector2(-460, 25), new Vector2(156, 58));
             ConfigureCareButton(milkButton, MilkroomCareAction.FeedMilk, controller, visualController);
 
-            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "조합", new Vector2(-276, 25), new Vector2(156, 58));
+            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "요리", new Vector2(-276, 25), new Vector2(156, 58));
             ConfigureCareButton(blendButton, MilkroomCareAction.Blend, controller, visualController);
 
             var snackButton = GetOrCreateButton(actionBarTransform, "Snack Button", "간식", new Vector2(-92, 25), new Vector2(156, 58));
@@ -316,7 +316,7 @@ namespace CheeseTama.Core
             ConfigureCareButton(sleepButton, MilkroomCareAction.Rest, controller, visualController);
 
             SetButtonLabel(milkButton, "우유");
-            SetButtonLabel(blendButton, "조합");
+            SetButtonLabel(blendButton, "요리");
             SetButtonLabel(snackButton, "간식");
             SetButtonLabel(playButton, "놀이");
             SetButtonLabel(cleanButton, "청소");

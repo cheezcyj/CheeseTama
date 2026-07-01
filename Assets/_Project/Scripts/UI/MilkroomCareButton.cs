@@ -136,7 +136,7 @@ namespace CheeseTama.UI
             {
                 manager.RegisterCareAction("blend");
                 PersistAfterInteraction(manager);
-                Refresh("조합 테이블이 따뜻하게 준비되고 있습니다.", manager, false, "happy_wiggle");
+                Refresh("요리 테이블이 따뜻하게 준비되고 있습니다.", manager, false, "happy_wiggle");
                 return;
             }
 
