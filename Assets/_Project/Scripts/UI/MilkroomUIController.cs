@@ -36,6 +36,10 @@ namespace CheeseTama.UI
         private CheeseTamaModel current;
         private CheeseTamaSaveData currentSave;
         private float presenceTickAccumulator;
+        private CanvasGroup eventMessageCanvasGroup;
+        private float eventMessageFadeTarget;
+
+        private const float EventMessageFadeSeconds = 0.45f;
 
         public void Configure(
             Text nameLabel,
@@ -85,10 +89,13 @@ namespace CheeseTama.UI
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
             eventMessageText = eventMessageLabel;
+            EnsureEventMessageCanvasGroup();
         }
 
         private void Update()
         {
+            UpdateEventMessageFade();
+
             if (currentSave == null || GameManager.Instance == null)
             {
                 return;
@@ -172,14 +179,84 @@ namespace CheeseTama.UI
 
             var hasMessage = !string.IsNullOrWhiteSpace(message);
             var bar = eventMessageText.transform.parent;
-            if (bar != null)
-            {
-                bar.gameObject.SetActive(hasMessage);
-            }
+            EnsureEventMessageCanvasGroup();
 
             if (hasMessage)
             {
+                if (bar != null)
+                {
+                    bar.gameObject.SetActive(true);
+                }
+
+                eventMessageFadeTarget = 1f;
+                if (eventMessageCanvasGroup != null)
+                {
+                    eventMessageCanvasGroup.alpha = 1f;
+                    eventMessageCanvasGroup.interactable = false;
+                    eventMessageCanvasGroup.blocksRaycasts = false;
+                }
+
                 eventMessageText.text = message;
+                return;
+            }
+
+            eventMessageFadeTarget = 0f;
+            if (bar != null && !bar.gameObject.activeSelf)
+            {
+                bar.gameObject.SetActive(false);
+            }
+        }
+
+        private void EnsureEventMessageCanvasGroup()
+        {
+            if (eventMessageText == null)
+            {
+                eventMessageCanvasGroup = null;
+                eventMessageFadeTarget = 0f;
+                return;
+            }
+
+            var bar = eventMessageText.transform.parent;
+            if (bar == null)
+            {
+                eventMessageCanvasGroup = null;
+                eventMessageFadeTarget = 0f;
+                return;
+            }
+
+            if (!bar.TryGetComponent(out eventMessageCanvasGroup))
+            {
+                eventMessageCanvasGroup = bar.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            var active = bar.gameObject.activeSelf;
+            eventMessageFadeTarget = active ? 1f : 0f;
+            eventMessageCanvasGroup.alpha = active ? 1f : 0f;
+            eventMessageCanvasGroup.interactable = false;
+            eventMessageCanvasGroup.blocksRaycasts = false;
+        }
+
+        private void UpdateEventMessageFade()
+        {
+            if (eventMessageCanvasGroup == null)
+            {
+                return;
+            }
+
+            var currentAlpha = eventMessageCanvasGroup.alpha;
+            if (!Mathf.Approximately(currentAlpha, eventMessageFadeTarget))
+            {
+                var step = Time.unscaledDeltaTime / Mathf.Max(0.01f, EventMessageFadeSeconds);
+                eventMessageCanvasGroup.alpha = Mathf.MoveTowards(currentAlpha, eventMessageFadeTarget, step);
+            }
+
+            if (eventMessageFadeTarget <= 0f && eventMessageCanvasGroup.alpha <= 0.001f)
+            {
+                var bar = eventMessageCanvasGroup.transform;
+                if (bar != null && bar.gameObject.activeSelf)
+                {
+                    bar.gameObject.SetActive(false);
+                }
             }
         }
 
@@ -326,40 +403,40 @@ namespace CheeseTama.UI
         {
             if (tama == null || tama.stats == null)
             {
-                return "돌봄 팁\n치즈타마 데이터를 불러오세요.";
+                return "치즈타마 데이터를 불러오세요.";
             }
 
             if (tama.stats.health < 35)
             {
-                return "돌봄 팁\n먼저 쉬게 하고 방을 청소하세요.";
+                return "먼저 쉬게 하고 방을 청소하세요.";
             }
 
             if (tama.stats.hunger < 30)
             {
-                return "돌봄 팁\n우유나 간식을 주세요.";
+                return "우유나 간식을 주세요.";
             }
 
             if (tama.stats.cleanliness < 35)
             {
-                return "돌봄 팁\n밀크룸을 청소하세요.";
+                return "밀크룸을 청소하세요.";
             }
 
             if (tama.stats.sleepiness > 75)
             {
-                return "돌봄 팁\n따뜻한 빛 아래에서 쉬게 하세요.";
+                return "따뜻한 빛 아래에서 쉬게 하세요.";
             }
 
             if (tama.stats.mood < 45)
             {
-                return "돌봄 팁\n놀아주거나 간식을 주세요.";
+                return "놀아주거나 간식을 주세요.";
             }
 
             if (!tama.isHatched)
             {
                 var hatchProgress = HatchingSystem.GetHatchProgressPercent(tama);
                 return hatchProgress >= 75
-                    ? "돌봄 팁\n부화가 가까워졌습니다."
-                    : "돌봄 팁\n우유를 먹이면 성장합니다.";
+                    ? "부화가 가까워졌습니다."
+                    : "우유를 먹이면 성장합니다.";
             }
 
             if (saveData != null
@@ -367,21 +444,21 @@ namespace CheeseTama.UI
                 && saveData.unlocks.starMilkUnlocked
                 && FindMilkGrowthEntry(saveData, "star_milk") == null)
             {
-                return "돌봄 팁\n별빛 우유를 시도해 보세요.";
+                return "별빛 우유를 시도해 보세요.";
             }
 
             if (saveData != null
                 && saveData.dailyCare != null
                 && !IsDailyRoutineComplete(saveData.dailyCare))
             {
-                return $"돌봄 팁\n{FormatNextDailyRoutineStep(saveData.dailyCare)}";
+                return FormatNextDailyRoutineStep(saveData.dailyCare);
             }
 
             if (saveData != null
                 && saveData.milkroomSession != null
                 && saveData.milkroomSession.currentSessionSeconds < 300)
             {
-                return "돌봄 팁\n우유 방울 보상을 위해 5분까지 머물러 보세요.";
+                return "우유 방울 보상을 위해 5분까지 머물러 보세요.";
             }
 
             if (tama.stats.hunger >= 70
@@ -390,10 +467,10 @@ namespace CheeseTama.UI
                 && tama.stats.sleepiness <= 35
                 && tama.stats.health >= 80)
             {
-                return "돌봄 팁\n안정적인 상태입니다.";
+                return "안정적인 상태입니다.";
             }
 
-            return "돌봄 팁\n천천히 리듬을 유지하세요.";
+            return "천천히 리듬을 유지하세요.";
         }
 
         private static string FormatDuration(int seconds)

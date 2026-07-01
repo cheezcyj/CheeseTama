@@ -174,6 +174,17 @@ namespace CheeseTama.Core
             RemoveChildIfExists(panelTransform, "Message Text");
             RemoveChildIfExists(panelTransform, "Care Tip Text");
 
+            var identitySection = GetOrCreatePanel(panelTransform, "Record Identity Section", new Vector2(12, -56), new Vector2(336, 82));
+            ApplyRecordSectionStyle(identitySection, new Color(1f, 0.95f, 0.78f, 0.55f));
+            var growthSection = GetOrCreatePanel(panelTransform, "Record Growth Section", new Vector2(12, -136), new Vector2(336, 106));
+            ApplyRecordSectionStyle(growthSection, new Color(0.96f, 0.9f, 0.76f, 0.5f));
+            var milkSection = GetOrCreatePanel(panelTransform, "Record Milk Section", new Vector2(12, -252), new Vector2(336, 106));
+            ApplyRecordSectionStyle(milkSection, new Color(1f, 0.95f, 0.78f, 0.55f));
+            var routineSection = GetOrCreatePanel(panelTransform, "Record Routine Section", new Vector2(12, -372), new Vector2(336, 138));
+            ApplyRecordSectionStyle(routineSection, new Color(0.96f, 0.9f, 0.76f, 0.5f));
+            var saveSection = GetOrCreatePanel(panelTransform, "Record Save Section", new Vector2(12, -520), new Vector2(336, 52));
+            ApplyRecordSectionStyle(saveSection, new Color(1f, 0.95f, 0.78f, 0.45f));
+
             var detailTitleText = GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(316, 34));
             detailTitleText.fontStyle = FontStyle.Bold;
             var formText = GetOrCreateText(panelTransform, "Form Text", "형태  알", 17, TextAnchor.UpperLeft, new Vector2(22, -66), new Vector2(316, 28));
@@ -187,6 +198,17 @@ namespace CheeseTama.Core
             var careSummaryText = GetOrCreateText(panelTransform, "Care Summary Text", "돌봄 누적  0회\n놀이 0  청소 0  휴식 0", 15, TextAnchor.UpperLeft, new Vector2(22, -382), new Vector2(316, 54));
             var dailyRoutineText = GetOrCreateText(panelTransform, "Daily Routine Text", "오늘 루틴\n우유 0/1  놀이 0/1\n청소 0/1  휴식 0/1", 15, TextAnchor.UpperLeft, new Vector2(22, -446), new Vector2(316, 64));
             var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장  없음", 14, TextAnchor.UpperLeft, new Vector2(22, -536), new Vector2(316, 24));
+            ApplyRecordLineStyle(formText);
+            ApplyRecordLineStyle(conditionText);
+            ApplyRecordLineStyle(affectionText);
+            ApplyRecordLineStyle(maturationText);
+            ApplyRecordLineStyle(hatchProgressText);
+            ApplyRecordLineStyle(basicMilkGrowthText);
+            ApplyRecordLineStyle(starMilkGrowthText);
+            ApplyRecordLineStyle(unlockText);
+            ApplyRecordLineStyle(careSummaryText);
+            ApplyRecordLineStyle(dailyRoutineText);
+            ApplyRecordLineStyle(lastSavedText);
 
             var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(24, -116), new Vector2(350, 396));
             if (statBar.TryGetComponent(out Image statBarImage))
@@ -209,8 +231,9 @@ namespace CheeseTama.Core
                 careTipPanelImage.color = new Color(1f, 0.96f, 0.8f, 0.92f);
             }
 
-            var careTipText = GetOrCreateText(careTipPanel.transform, "Care Tip Text", "돌봄 팁\n우유를 먹여 성장시켜 주세요.", 17, TextAnchor.UpperLeft, new Vector2(22, -18), new Vector2(306, 78));
-            careTipText.fontStyle = FontStyle.Bold;
+            var careTipTitleText = GetOrCreateText(careTipPanel.transform, "Care Tip Title Text", "돌봄 팁", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(306, 34));
+            careTipTitleText.fontStyle = FontStyle.Bold;
+            var careTipText = GetOrCreateText(careTipPanel.transform, "Care Tip Text", "우유를 먹여 성장시켜 주세요.", 20, TextAnchor.MiddleLeft, new Vector2(22, -76), new Vector2(306, 46));
             careTipText.color = new Color(0.28f, 0.18f, 0.08f);
 
             var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 146), new Vector2(980, 72));
@@ -219,7 +242,7 @@ namespace CheeseTama.Core
                 messageBarImage.color = new Color(1f, 0.93f, 0.68f, 0.98f);
             }
 
-            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "돌봄 준비 완료.", 21, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
+            var messageText = GetOrCreateText(messageBar.transform, "Message Text", "돌봄 준비 완료.", 24, TextAnchor.MiddleLeft, new Vector2(24, -14), new Vector2(932, 44));
             messageText.fontStyle = FontStyle.Bold;
             messageText.color = new Color(0.28f, 0.18f, 0.08f);
 
@@ -2277,6 +2300,33 @@ namespace CheeseTama.Core
             label.resizeTextForBestFit = true;
             label.resizeTextMinSize = 11;
             label.resizeTextMaxSize = 16;
+        }
+
+        private static void ApplyRecordSectionStyle(GameObject section, Color color)
+        {
+            if (section == null)
+            {
+                return;
+            }
+
+            section.transform.SetAsFirstSibling();
+            if (section.TryGetComponent(out Image image))
+            {
+                image.color = color;
+                image.raycastTarget = false;
+                ApplyRoundedImage(image);
+            }
+        }
+
+        private static void ApplyRecordLineStyle(Text label)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            label.fontStyle = FontStyle.Bold;
+            label.color = new Color(0.25f, 0.17f, 0.09f);
         }
 
         private static void ApplyTopInfoTextStyle(Text label, int maxFontSize)
