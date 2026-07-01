@@ -145,13 +145,18 @@ namespace CheeseTama.Core
             var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "돌봄 팁: 우유를 먹여 성장시켜 주세요.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
             var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장: 없음", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
 
-            var statBar = GetOrCreateBottomPanel(canvas.transform, "Stat Bar", new Vector2(0, 118), new Vector2(980, 74));
+            var statBar = GetOrCreateRightPanel(canvas.transform, "Stat Bar", new Vector2(-24, -116), new Vector2(250, 252));
+            if (statBar.TryGetComponent(out Image statBarImage))
+            {
+                statBarImage.color = new Color(1f, 0.98f, 0.9f, 0.86f);
+            }
+
             var statBarTransform = statBar.transform;
-            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감: 80", 15, TextAnchor.MiddleCenter, new Vector2(24, -20), new Vector2(170, 32));
-            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분: 70", 15, TextAnchor.MiddleCenter, new Vector2(214, -20), new Vector2(170, 32));
-            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결: 90", 15, TextAnchor.MiddleCenter, new Vector2(404, -20), new Vector2(170, 32));
-            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림: 20", 15, TextAnchor.MiddleCenter, new Vector2(594, -20), new Vector2(170, 32));
-            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강: 100", 15, TextAnchor.MiddleCenter, new Vector2(784, -20), new Vector2(170, 32));
+            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감: 80", 15, TextAnchor.MiddleLeft, new Vector2(22, -22), new Vector2(206, 32));
+            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분: 70", 15, TextAnchor.MiddleLeft, new Vector2(22, -66), new Vector2(206, 32));
+            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결: 90", 15, TextAnchor.MiddleLeft, new Vector2(22, -110), new Vector2(206, 32));
+            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림: 20", 15, TextAnchor.MiddleLeft, new Vector2(22, -154), new Vector2(206, 32));
+            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강: 100", 15, TextAnchor.MiddleLeft, new Vector2(22, -198), new Vector2(206, 32));
 
             var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 198), new Vector2(980, 72));
             if (messageBar.TryGetComponent(out Image messageBarImage))
@@ -698,7 +703,7 @@ namespace CheeseTama.Core
 
             keyLight.type = LightType.Directional;
             keyLight.color = new Color(1f, 0.96f, 0.86f);
-            keyLight.intensity = 0.58f;
+            keyLight.intensity = 1.05f;
             keyObject.transform.rotation = Quaternion.Euler(48, -32, 0);
 
             var fillObject = GameObject.Find("Milkroom Fill Light");
@@ -715,7 +720,7 @@ namespace CheeseTama.Core
 
             fillLight.type = LightType.Directional;
             fillLight.color = new Color(0.76f, 0.92f, 1f);
-            fillLight.intensity = 0.16f;
+            fillLight.intensity = 0.42f;
             fillObject.transform.rotation = Quaternion.Euler(25, 145, 0);
 
             var rimObject = GameObject.Find("Milkroom Rim Light");
@@ -732,7 +737,7 @@ namespace CheeseTama.Core
 
             rimLight.type = LightType.Directional;
             rimLight.color = new Color(1f, 0.78f, 0.34f);
-            rimLight.intensity = 0.2f;
+            rimLight.intensity = 0.36f;
             rimObject.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
 
             var volumeObject = GameObject.Find("GlobalVolume");
@@ -744,7 +749,7 @@ namespace CheeseTama.Core
             ConfigureGlobalVolumeIfAvailable(volumeObject);
 
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.38f, 0.31f, 0.24f);
+            RenderSettings.ambientLight = new Color(0.72f, 0.63f, 0.52f);
         }
 
         private static void ConfigureGlobalVolumeIfAvailable(GameObject volumeObject)
@@ -1751,6 +1756,45 @@ namespace CheeseTama.Core
             rect.anchorMin = new Vector2(0.5f, 0);
             rect.anchorMax = new Vector2(0.5f, 0);
             rect.pivot = new Vector2(0.5f, 0);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = size;
+        }
+
+        private static GameObject GetOrCreateRightPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
+        {
+            var existing = parent.Find(name);
+            if (existing != null)
+            {
+                if (existing.TryGetComponent(out RectTransform rect))
+                {
+                    ConfigureRightPanelRect(rect, anchoredPosition, size);
+                }
+
+                if (!existing.TryGetComponent(out Image image))
+                {
+                    image = existing.gameObject.AddComponent<Image>();
+                }
+
+                image.color = new Color(1f, 0.98f, 0.9f, 0.86f);
+                return existing.gameObject;
+            }
+
+            var panel = new GameObject(name);
+            panel.transform.SetParent(parent, false);
+
+            var newRect = panel.AddComponent<RectTransform>();
+            ConfigureRightPanelRect(newRect, anchoredPosition, size);
+
+            var newImage = panel.AddComponent<Image>();
+            newImage.color = new Color(1f, 0.98f, 0.9f, 0.86f);
+            return panel;
+        }
+
+        private static void ConfigureRightPanelRect(RectTransform rect, Vector2 anchoredPosition, Vector2 size)
+        {
+            rect.anchorMin = new Vector2(1, 1);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.pivot = new Vector2(1, 1);
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = size;
         }

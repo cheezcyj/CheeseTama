@@ -3,7 +3,7 @@ using UnityEngine;
 namespace CheeseTama.Environment
 {
     // Keeps the CheeseTama character and milkroom visible above the bottom UI
-    // bars (care buttons, stat bar, status/event message bars) at any aspect ratio.
+    // bars (care buttons and the always-visible status message bar) at any aspect ratio.
     //
     // The milkroom camera is perspective with a fixed vertical FOV, so a world
     // point's vertical screen position is invariant to aspect ratio; the only
@@ -129,9 +129,7 @@ namespace CheeseTama.Environment
             var canvasRoot = referenceCanvas.transform;
             var top = 0f;
             top = Mathf.Max(top, GetVisibleBottomPanelTop(canvasRoot, "Bottom Action Bar"));
-            top = Mathf.Max(top, GetVisibleBottomPanelTop(canvasRoot, "Stat Bar"));
             top = Mathf.Max(top, GetVisibleBottomPanelTop(canvasRoot, "Message Bar"));
-            top = Mathf.Max(top, GetVisibleBottomPanelTop(canvasRoot, "Event Message Bar"));
             return top > 0f ? top : Mathf.Max(0f, uiSafeReferenceHeight);
         }
 
