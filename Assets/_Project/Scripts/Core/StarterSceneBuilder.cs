@@ -92,30 +92,42 @@ namespace CheeseTama.Core
 
             RemoveMilkroomPrototypeButtons(canvas.transform);
 
-            var topBar = GetOrCreatePanel(canvas.transform, "Top Status Bar", new Vector2(24, -18), new Vector2(1872, 78));
+            var topBar = GetOrCreatePanel(canvas.transform, "Top Status Bar", new Vector2(24, -16), new Vector2(1348, 82));
+            if (topBar.TryGetComponent(out Image topBarImage))
+            {
+                topBarImage.color = new Color(1f, 0.96f, 0.82f, 0.94f);
+            }
+
             var topBarTransform = topBar.transform;
-            var nameText = GetOrCreateText(topBarTransform, "Name Text", "CheeseTama", 22, TextAnchor.MiddleLeft, new Vector2(22, -14), new Vector2(250, 34));
-            var levelText = GetOrCreateText(topBarTransform, "Level Text", "레벨 1 (0%)", 18, TextAnchor.MiddleLeft, new Vector2(300, -14), new Vector2(230, 34));
-            var sessionText = GetOrCreateText(topBarTransform, "Session Text", "세션: 00:00 | 오늘 00:00", 15, TextAnchor.MiddleLeft, new Vector2(560, -14), new Vector2(390, 34));
-            var economyText = GetOrCreateText(topBarTransform, "Economy Text", "보유: 코인 0 방울 0 조각 0", 15, TextAnchor.MiddleLeft, new Vector2(940, -14), new Vector2(430, 34));
+            var nameText = GetOrCreateText(topBarTransform, "Name Text", "CheeseTama", 28, TextAnchor.MiddleLeft, new Vector2(24, -17), new Vector2(280, 48));
+            var levelText = GetOrCreateText(topBarTransform, "Level Text", "레벨 1 (0%)", 22, TextAnchor.MiddleLeft, new Vector2(330, -17), new Vector2(190, 48));
+            var sessionText = GetOrCreateText(topBarTransform, "Session Text", "세션 00:00   오늘 00:00", 19, TextAnchor.MiddleLeft, new Vector2(548, -17), new Vector2(300, 48));
+            var economyText = GetOrCreateText(topBarTransform, "Economy Text", "코인 0   방울 0   조각 0", 19, TextAnchor.MiddleLeft, new Vector2(872, -17), new Vector2(430, 48));
+            ApplyTopInfoTextStyle(nameText, 28);
+            ApplyTopInfoTextStyle(levelText, 22);
+            ApplyTopInfoTextStyle(sessionText, 19);
+            ApplyTopInfoTextStyle(economyText, 19);
             RemoveChildIfExists(topBarTransform, "Top Collection Button");
             RemoveChildIfExists(topBarTransform, "Top Decorate Button");
             RemoveChildIfExists(topBarTransform, "Settings Button");
 
-            var topMenu = GetOrCreatePanel(canvas.transform, "Top Menu", new Vector2(1428, -28), new Vector2(448, 56));
+            var topMenu = GetOrCreatePanel(canvas.transform, "Top Menu", new Vector2(1390, -16), new Vector2(486, 82));
             if (topMenu.TryGetComponent(out Image topMenuImage))
             {
-                topMenuImage.color = new Color(1f, 0.98f, 0.9f, 0.72f);
+                topMenuImage.color = new Color(0.45f, 0.29f, 0.16f, 0.9f);
             }
 
             var topMenuTransform = topMenu.transform;
-            var topCollectionButton = GetOrCreateTopLeftButton(topMenuTransform, "Top Collection Button", "도감", new Vector2(10, -7), new Vector2(128, 42));
-            var topDecorateButton = GetOrCreateTopLeftButton(topMenuTransform, "Top Decorate Button", "꾸미기", new Vector2(158, -7), new Vector2(128, 42));
-            var settingsButton = GetOrCreateTopLeftButton(topMenuTransform, "Settings Button", "설정", new Vector2(306, -7), new Vector2(128, 42));
+            var topCollectionButton = GetOrCreateTopLeftButton(topMenuTransform, "Top Collection Button", "도감", new Vector2(16, -14), new Vector2(142, 54));
+            var topDecorateButton = GetOrCreateTopLeftButton(topMenuTransform, "Top Decorate Button", "꾸미기", new Vector2(172, -14), new Vector2(142, 54));
+            var settingsButton = GetOrCreateTopLeftButton(topMenuTransform, "Settings Button", "설정", new Vector2(328, -14), new Vector2(142, 54));
 
             SetButtonLabel(topCollectionButton, "도감");
             SetButtonLabel(topDecorateButton, "꾸미기");
             SetButtonLabel(settingsButton, "설정");
+            ApplyTopMenuButtonStyle(topCollectionButton);
+            ApplyTopMenuButtonStyle(topDecorateButton);
+            ApplyTopMenuButtonStyle(settingsButton);
 
             var panel = GetOrCreateRightPanel(canvas.transform, "Status Panel", new Vector2(-24, -116), new Vector2(360, 620));
             if (panel.TryGetComponent(out Image panelImage))
@@ -217,26 +229,31 @@ namespace CheeseTama.Core
             controller.ShowMessage("돌봄 준비 완료.");
             visualController.Bind(manager.CurrentTama);
 
-            var actionBar = GetOrCreateBottomPanel(canvas.transform, "Bottom Action Bar", new Vector2(0, 28), new Vector2(1220, 84));
+            var actionBar = GetOrCreateBottomPanel(canvas.transform, "Bottom Action Bar", new Vector2(0, 24), new Vector2(1240, 108));
+            if (actionBar.TryGetComponent(out Image actionBarImage))
+            {
+                actionBarImage.color = new Color(1f, 0.95f, 0.78f, 0.95f);
+            }
+
             var actionBarTransform = actionBar.transform;
             RemoveChildIfExists(actionBarTransform, "Collection Button");
 
-            var milkButton = GetOrCreateButton(actionBarTransform, "Milk Button", "우유", new Vector2(-425, 20));
+            var milkButton = GetOrCreateButton(actionBarTransform, "Milk Button", "우유", new Vector2(-460, 25), new Vector2(156, 58));
             ConfigureCareButton(milkButton, MilkroomCareAction.FeedMilk, controller, visualController);
 
-            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "조합", new Vector2(-255, 20));
+            var blendButton = GetOrCreateButton(actionBarTransform, "Blend Button", "조합", new Vector2(-276, 25), new Vector2(156, 58));
             ConfigureCareButton(blendButton, MilkroomCareAction.Blend, controller, visualController);
 
-            var snackButton = GetOrCreateButton(actionBarTransform, "Snack Button", "간식", new Vector2(-85, 20));
+            var snackButton = GetOrCreateButton(actionBarTransform, "Snack Button", "간식", new Vector2(-92, 25), new Vector2(156, 58));
             ConfigureCareButton(snackButton, MilkroomCareAction.FeedSnack, controller, visualController);
 
-            var playButton = GetOrCreateButton(actionBarTransform, "Play Button", "놀이", new Vector2(85, 20));
+            var playButton = GetOrCreateButton(actionBarTransform, "Play Button", "놀이", new Vector2(92, 25), new Vector2(156, 58));
             ConfigureCareButton(playButton, MilkroomCareAction.Play, controller, visualController);
 
-            var cleanButton = GetOrCreateButton(actionBarTransform, "Clean Button", "청소", new Vector2(255, 20));
+            var cleanButton = GetOrCreateButton(actionBarTransform, "Clean Button", "청소", new Vector2(276, 25), new Vector2(156, 58));
             ConfigureCareButton(cleanButton, MilkroomCareAction.Clean, controller, visualController);
 
-            var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "수면", new Vector2(425, 20));
+            var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "수면", new Vector2(460, 25), new Vector2(156, 58));
             ConfigureCareButton(sleepButton, MilkroomCareAction.Rest, controller, visualController);
 
             SetButtonLabel(milkButton, "우유");
@@ -245,6 +262,12 @@ namespace CheeseTama.Core
             SetButtonLabel(playButton, "놀이");
             SetButtonLabel(cleanButton, "청소");
             SetButtonLabel(sleepButton, "수면");
+            ApplyCareButtonStyle(milkButton);
+            ApplyCareButtonStyle(blendButton);
+            ApplyCareButtonStyle(snackButton);
+            ApplyCareButtonStyle(playButton);
+            ApplyCareButtonStyle(cleanButton);
+            ApplyCareButtonStyle(sleepButton);
 
             var actionBarController = actionBar.GetComponent<BottomActionBarController>();
             if (actionBarController == null)
@@ -1926,30 +1949,40 @@ namespace CheeseTama.Core
 
         private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
         {
+            return CreateButton(parent, name, label, anchoredPosition, new Vector2(136, 44));
+        }
+
+        private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size)
+        {
             var buttonObject = new GameObject(name);
             buttonObject.transform.SetParent(parent, false);
 
             var rect = buttonObject.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(136, 44);
+            rect.sizeDelta = size;
 
             var image = buttonObject.AddComponent<Image>();
             var button = buttonObject.AddComponent<Button>();
             button.targetGraphic = image;
 
-            ConfigureButton(button, label, anchoredPosition);
+            ConfigureButton(button, label, anchoredPosition, size);
             return button;
         }
 
         private static Button GetOrCreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
         {
+            return GetOrCreateButton(parent, name, label, anchoredPosition, new Vector2(136, 44));
+        }
+
+        private static Button GetOrCreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size)
+        {
             var existing = parent.Find(name);
             if (existing != null && existing.TryGetComponent(out Button existingButton))
             {
-                ConfigureButton(existingButton, label, anchoredPosition);
+                ConfigureButton(existingButton, label, anchoredPosition, size);
                 return existingButton;
             }
 
-            return CreateButton(parent, name, label, anchoredPosition);
+            return CreateButton(parent, name, label, anchoredPosition, size);
         }
 
         private static Button CreateTopLeftButton(
@@ -2046,12 +2079,17 @@ namespace CheeseTama.Core
 
         private static void ConfigureButton(Button button, string label, Vector2 anchoredPosition)
         {
+            ConfigureButton(button, label, anchoredPosition, new Vector2(136, 44));
+        }
+
+        private static void ConfigureButton(Button button, string label, Vector2 anchoredPosition, Vector2 size)
+        {
             var rect = button.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 0);
             rect.anchorMax = new Vector2(0.5f, 0);
             rect.pivot = new Vector2(0.5f, 0);
             rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = new Vector2(136, 44);
+            rect.sizeDelta = size;
 
             ConfigureButtonVisuals(button, label, rect.sizeDelta);
         }
@@ -2119,6 +2157,107 @@ namespace CheeseTama.Core
             label.resizeTextForBestFit = true;
             label.resizeTextMinSize = 11;
             label.resizeTextMaxSize = 16;
+        }
+
+        private static void ApplyTopInfoTextStyle(Text label, int maxFontSize)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            label.fontStyle = FontStyle.Bold;
+            label.color = new Color(0.23f, 0.14f, 0.07f);
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = Mathf.Max(14, maxFontSize - 6);
+            label.resizeTextMaxSize = maxFontSize;
+            label.horizontalOverflow = HorizontalWrapMode.Overflow;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private static void ApplyTopMenuButtonStyle(Button button)
+        {
+            ApplyReadableButtonStyle(
+                button,
+                new Color(0.58f, 0.36f, 0.17f),
+                new Color(0.72f, 0.48f, 0.25f),
+                new Color(0.4f, 0.22f, 0.1f),
+                new Color(0.72f, 0.48f, 0.25f),
+                new Color(1f, 0.96f, 0.84f),
+                20,
+                15);
+        }
+
+        private static void ApplyCareButtonStyle(Button button)
+        {
+            ApplyReadableButtonStyle(
+                button,
+                new Color(1f, 0.75f, 0.24f),
+                new Color(1f, 0.86f, 0.39f),
+                new Color(0.88f, 0.53f, 0.13f),
+                new Color(1f, 0.86f, 0.39f),
+                new Color(0.26f, 0.16f, 0.08f),
+                21,
+                15);
+        }
+
+        private static void ApplyReadableButtonStyle(
+            Button button,
+            Color normal,
+            Color highlighted,
+            Color pressed,
+            Color selected,
+            Color labelColor,
+            int labelMaxFontSize,
+            int labelMinFontSize)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (!button.TryGetComponent(out Image image))
+            {
+                image = button.gameObject.AddComponent<Image>();
+            }
+
+            image.color = normal;
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+
+            var colors = button.colors;
+            colors.normalColor = normal;
+            colors.highlightedColor = highlighted;
+            colors.pressedColor = pressed;
+            colors.selectedColor = selected;
+            colors.disabledColor = new Color(0.72f, 0.66f, 0.56f, 0.72f);
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+
+            var labelTransform = button.transform.Find("Label");
+            if (labelTransform == null || !labelTransform.TryGetComponent(out Text label))
+            {
+                return;
+            }
+
+            var labelRect = label.GetComponent<RectTransform>();
+            var buttonRect = button.GetComponent<RectTransform>();
+            if (labelRect != null && buttonRect != null)
+            {
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.pivot = new Vector2(0.5f, 0.5f);
+                labelRect.anchoredPosition = Vector2.zero;
+                labelRect.offsetMin = new Vector2(10f, 4f);
+                labelRect.offsetMax = new Vector2(-10f, -4f);
+            }
+
+            label.fontStyle = FontStyle.Bold;
+            label.color = labelColor;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = labelMinFontSize;
+            label.resizeTextMaxSize = labelMaxFontSize;
         }
 
         private static void ApplyDangerButtonStyle(Button button)

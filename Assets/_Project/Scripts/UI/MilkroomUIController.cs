@@ -305,10 +305,10 @@ namespace CheeseTama.UI
             var session = saveData?.milkroomSession;
             if (session == null)
             {
-                return "세션: 00:00 | 오늘 00:00";
+                return "세션 00:00   오늘 00:00";
             }
 
-            return $"세션: {FormatDuration(session.currentSessionSeconds)} | 오늘 {FormatDuration(session.todaySeconds)}";
+            return $"세션 {FormatDuration(session.currentSessionSeconds)}   오늘 {FormatDuration(session.todaySeconds)}";
         }
 
         private static string FormatEconomy(CheeseTamaSaveData saveData)
@@ -316,10 +316,10 @@ namespace CheeseTama.UI
             var economy = saveData?.economy;
             if (economy == null)
             {
-                return "보유: 코인 0 방울 0 조각 0";
+                return "코인 0   방울 0   조각 0";
             }
 
-            return $"보유: 코인 {economy.milkCoins} 방울 {economy.milkDrops} 조각 {economy.collectionFragments}";
+            return $"코인 {economy.milkCoins}   방울 {economy.milkDrops}   조각 {economy.collectionFragments}";
         }
 
         private static string FormatCareTip(CheeseTamaSaveData saveData, CheeseTamaModel tama)
