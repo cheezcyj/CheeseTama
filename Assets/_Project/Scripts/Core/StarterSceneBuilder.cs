@@ -375,13 +375,28 @@ namespace CheeseTama.Core
 
             var panel = GetOrCreatePanel(canvas.transform, "Collection Records Panel", new Vector2(24, -180), new Vector2(640, 620));
             var panelTransform = panel.transform;
-            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "우유 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -16), new Vector2(600, 72));
-            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "진화 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -96), new Vector2(600, 72));
-            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "이벤트 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(16, -176), new Vector2(600, 210));
-            var hiddenText = GetOrCreateText(panelTransform, "Hidden Records Text", string.Empty, 16, TextAnchor.UpperLeft, new Vector2(16, -396), new Vector2(600, 92));
-            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "우유를 먹이고 부화시키면 이곳에 기록이 추가됩니다.", 14, TextAnchor.UpperLeft, new Vector2(16, -496), new Vector2(600, 64));
+            var milkTabButton = GetOrCreateTopLeftButton(panelTransform, "Milk Records Tab Button", "우유", new Vector2(16, -16), new Vector2(138, 40));
+            var evolutionTabButton = GetOrCreateTopLeftButton(panelTransform, "Evolution Records Tab Button", "진화", new Vector2(166, -16), new Vector2(138, 40));
+            var eventTabButton = GetOrCreateTopLeftButton(panelTransform, "Event Records Tab Button", "이벤트", new Vector2(316, -16), new Vector2(138, 40));
+            var hiddenTabButton = GetOrCreateTopLeftButton(panelTransform, "Hidden Records Tab Button", "특별", new Vector2(466, -16), new Vector2(138, 40));
+            ApplyCollectionTabButtonStyle(milkTabButton, evolutionTabButton, eventTabButton, hiddenTabButton);
 
-            controller.Configure(milkText, evolutionText, eventText, hiddenText, messageText);
+            var milkText = GetOrCreateText(panelTransform, "Milk Records Text", "우유 기록: 0", 17, TextAnchor.UpperLeft, new Vector2(18, -76), new Vector2(604, 430));
+            var evolutionText = GetOrCreateText(panelTransform, "Evolution Records Text", "진화 기록: 0", 17, TextAnchor.UpperLeft, new Vector2(18, -76), new Vector2(604, 430));
+            var eventText = GetOrCreateText(panelTransform, "Event Records Text", "이벤트 기록: 0", 17, TextAnchor.UpperLeft, new Vector2(18, -76), new Vector2(604, 430));
+            var hiddenText = GetOrCreateText(panelTransform, "Hidden Records Text", "특별 기록: 0", 17, TextAnchor.UpperLeft, new Vector2(18, -76), new Vector2(604, 430));
+            var messageText = GetOrCreateText(panelTransform, "Collection Message Text", "우유를 먹이고 부화시키면 이곳에 기록이 추가됩니다.", 14, TextAnchor.UpperLeft, new Vector2(18, -542), new Vector2(604, 48));
+
+            controller.Configure(
+                milkText,
+                evolutionText,
+                eventText,
+                hiddenText,
+                messageText,
+                milkTabButton,
+                evolutionTabButton,
+                eventTabButton,
+                hiddenTabButton);
             controller.Bind(manager.CurrentSave);
 
             var backButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "밀크룸", new Vector2(0, 36));
@@ -475,10 +490,16 @@ namespace CheeseTama.Core
             }
 
             var recordsTransform = recordsPanel.transform;
-            var milkText = GetOrCreateText(recordsTransform, "Milk Records Text", "우유 기록: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -18), new Vector2(314, 136));
-            var evolutionText = GetOrCreateText(recordsTransform, "Evolution Records Text", "진화 기록: 0", 15, TextAnchor.UpperLeft, new Vector2(350, -18), new Vector2(314, 136));
-            var eventText = GetOrCreateText(recordsTransform, "Event Records Text", "이벤트 기록: 0", 15, TextAnchor.UpperLeft, new Vector2(18, -168), new Vector2(646, 190));
-            var hiddenText = GetOrCreateText(recordsTransform, "Hidden Records Text", string.Empty, 15, TextAnchor.UpperLeft, new Vector2(18, -372), new Vector2(646, 72));
+            var milkTabButton = GetOrCreateTopLeftButton(recordsTransform, "Milk Records Tab Button", "우유", new Vector2(18, -18), new Vector2(154, 38));
+            var evolutionTabButton = GetOrCreateTopLeftButton(recordsTransform, "Evolution Records Tab Button", "진화", new Vector2(182, -18), new Vector2(154, 38));
+            var eventTabButton = GetOrCreateTopLeftButton(recordsTransform, "Event Records Tab Button", "이벤트", new Vector2(346, -18), new Vector2(154, 38));
+            var hiddenTabButton = GetOrCreateTopLeftButton(recordsTransform, "Hidden Records Tab Button", "특별", new Vector2(510, -18), new Vector2(154, 38));
+            ApplyCollectionTabButtonStyle(milkTabButton, evolutionTabButton, eventTabButton, hiddenTabButton);
+
+            var milkText = GetOrCreateText(recordsTransform, "Milk Records Text", "우유 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(18, -72), new Vector2(646, 350));
+            var evolutionText = GetOrCreateText(recordsTransform, "Evolution Records Text", "진화 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(18, -72), new Vector2(646, 350));
+            var eventText = GetOrCreateText(recordsTransform, "Event Records Text", "이벤트 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(18, -72), new Vector2(646, 350));
+            var hiddenText = GetOrCreateText(recordsTransform, "Hidden Records Text", "특별 기록: 0", 16, TextAnchor.UpperLeft, new Vector2(18, -72), new Vector2(646, 350));
             var messageText = GetOrCreateText(recordsTransform, "Collection Message Text", "우유를 먹이고 부화시키면 이곳에 기록이 추가됩니다.", 14, TextAnchor.UpperLeft, new Vector2(18, -444), new Vector2(646, 28));
 
             collectionController = overlay.GetComponent<CollectionUIController>();
@@ -487,7 +508,16 @@ namespace CheeseTama.Core
                 collectionController = overlay.AddComponent<CollectionUIController>();
             }
 
-            collectionController.Configure(milkText, evolutionText, eventText, hiddenText, messageText);
+            collectionController.Configure(
+                milkText,
+                evolutionText,
+                eventText,
+                hiddenText,
+                messageText,
+                milkTabButton,
+                evolutionTabButton,
+                eventTabButton,
+                hiddenTabButton);
             collectionController.Bind(saveData);
             overlay.SetActive(false);
             return overlay;
@@ -2369,6 +2399,27 @@ namespace CheeseTama.Core
                 new Color(0.26f, 0.16f, 0.08f),
                 21,
                 15);
+        }
+
+        private static void ApplyCollectionTabButtonStyle(params Button[] buttons)
+        {
+            if (buttons == null)
+            {
+                return;
+            }
+
+            foreach (var button in buttons)
+            {
+                ApplyReadableButtonStyle(
+                    button,
+                    new Color(1f, 0.9f, 0.62f, 0.88f),
+                    new Color(1f, 0.84f, 0.36f),
+                    new Color(0.88f, 0.53f, 0.13f),
+                    new Color(1f, 0.74f, 0.24f),
+                    new Color(0.26f, 0.16f, 0.08f),
+                    17,
+                    12);
+            }
         }
 
         private static void ApplyReadableButtonStyle(

@@ -13,8 +13,14 @@ namespace CheeseTama.UI
         [SerializeField] private Text eventText;
         [SerializeField] private Text hiddenText;
         [SerializeField] private Text messageText;
+        [SerializeField] private Button milkTabButton;
+        [SerializeField] private Button evolutionTabButton;
+        [SerializeField] private Button eventTabButton;
+        [SerializeField] private Button hiddenTabButton;
 
         private readonly HiddenCollectionSystem hiddenCollectionSystem = new HiddenCollectionSystem();
+        private CollectionRecordTab activeTab = CollectionRecordTab.Milk;
+        private bool tabsEnabled;
 
         public void Configure(
             Text milkLabel,
@@ -23,11 +29,36 @@ namespace CheeseTama.UI
             Text hiddenLabel,
             Text messageLabel)
         {
+            Configure(milkLabel, evolutionLabel, eventLabel, hiddenLabel, messageLabel, null, null, null, null);
+        }
+
+        public void Configure(
+            Text milkLabel,
+            Text evolutionLabel,
+            Text eventLabel,
+            Text hiddenLabel,
+            Text messageLabel,
+            Button milkTab,
+            Button evolutionTab,
+            Button eventTab,
+            Button hiddenTab)
+        {
             milkText = milkLabel;
             evolutionText = evolutionLabel;
             eventText = eventLabel;
             hiddenText = hiddenLabel;
             messageText = messageLabel;
+            milkTabButton = milkTab;
+            evolutionTabButton = evolutionTab;
+            eventTabButton = eventTab;
+            hiddenTabButton = hiddenTab;
+            tabsEnabled = milkTabButton != null
+                && evolutionTabButton != null
+                && eventTabButton != null
+                && hiddenTabButton != null;
+
+            ConfigureTabButtons();
+            ShowTab(activeTab);
         }
 
         public void Bind(CheeseTamaSaveData saveData)
@@ -37,8 +68,9 @@ namespace CheeseTama.UI
                 SetText(milkText, "우유 기록: 0");
                 SetText(evolutionText, "진화 기록: 0");
                 SetText(eventText, "이벤트 기록: 0");
-                SetText(hiddenText, string.Empty);
+                SetText(hiddenText, "특별 기록: 0\n- 아직 없음");
                 SetText(messageText, "도감 데이터를 불러오지 못했습니다.");
+                ShowTab(activeTab);
                 return;
             }
 
@@ -48,6 +80,7 @@ namespace CheeseTama.UI
             SetText(eventText, FormatRecordList("이벤트 기록", saveData.collections.events, FormatKnownRecordName));
             SetText(hiddenText, FormatHiddenRecordList(saveData.collections.hiddenUnlockedOnly));
             SetText(messageText, "우유를 먹이고 부화시키면 이곳에 기록됩니다.");
+            ShowTab(activeTab);
         }
 
         public HiddenCollectionDefinition[] GetVisibleHiddenCards(
@@ -87,7 +120,7 @@ namespace CheeseTama.UI
         {
             if (records == null || records.Count == 0)
             {
-                return string.Empty;
+                return "특별 기록: 0\n- 아직 없음";
             }
 
             var labels = new string[records.Count];
@@ -353,12 +386,105 @@ namespace CheeseTama.UI
             return iso.Length > 10 ? iso.Substring(0, 10) : iso;
         }
 
+        private void ConfigureTabButtons()
+        {
+            ConfigureTabButton(milkTabButton, CollectionRecordTab.Milk);
+            ConfigureTabButton(evolutionTabButton, CollectionRecordTab.Evolution);
+            ConfigureTabButton(eventTabButton, CollectionRecordTab.Event);
+            ConfigureTabButton(hiddenTabButton, CollectionRecordTab.Hidden);
+        }
+
+        private void ConfigureTabButton(Button button, CollectionRecordTab tab)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => ShowTab(tab));
+        }
+
+        private void ShowTab(CollectionRecordTab tab)
+        {
+            activeTab = tab;
+            if (!tabsEnabled)
+            {
+                SetTextVisible(milkText, true);
+                SetTextVisible(evolutionText, true);
+                SetTextVisible(eventText, true);
+                SetTextVisible(hiddenText, true);
+                return;
+            }
+
+            SetTextVisible(milkText, tab == CollectionRecordTab.Milk);
+            SetTextVisible(evolutionText, tab == CollectionRecordTab.Evolution);
+            SetTextVisible(eventText, tab == CollectionRecordTab.Event);
+            SetTextVisible(hiddenText, tab == CollectionRecordTab.Hidden);
+            UpdateTabVisuals();
+        }
+
+        private void UpdateTabVisuals()
+        {
+            UpdateTabVisual(milkTabButton, activeTab == CollectionRecordTab.Milk);
+            UpdateTabVisual(evolutionTabButton, activeTab == CollectionRecordTab.Evolution);
+            UpdateTabVisual(eventTabButton, activeTab == CollectionRecordTab.Event);
+            UpdateTabVisual(hiddenTabButton, activeTab == CollectionRecordTab.Hidden);
+        }
+
+        private static void UpdateTabVisual(Button button, bool selected)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (button.TryGetComponent(out Image image))
+            {
+                image.color = selected
+                    ? new Color(1f, 0.74f, 0.24f, 1f)
+                    : new Color(1f, 0.9f, 0.62f, 0.88f);
+            }
+
+            var colors = button.colors;
+            colors.normalColor = selected
+                ? new Color(1f, 0.74f, 0.24f, 1f)
+                : new Color(1f, 0.9f, 0.62f, 0.88f);
+            colors.highlightedColor = new Color(1f, 0.84f, 0.36f, 1f);
+            colors.pressedColor = new Color(0.88f, 0.53f, 0.13f, 1f);
+            colors.selectedColor = colors.normalColor;
+            button.colors = colors;
+
+            var labelTransform = button.transform.Find("Label");
+            if (labelTransform != null && labelTransform.TryGetComponent(out Text label))
+            {
+                label.fontStyle = selected ? FontStyle.Bold : FontStyle.Normal;
+                label.color = new Color(0.26f, 0.16f, 0.08f);
+            }
+        }
+
+        private static void SetTextVisible(Text target, bool visible)
+        {
+            if (target != null)
+            {
+                target.gameObject.SetActive(visible);
+            }
+        }
+
         private static void SetText(Text target, string value)
         {
             if (target != null)
             {
                 target.text = value;
             }
+        }
+
+        private enum CollectionRecordTab
+        {
+            Milk,
+            Evolution,
+            Event,
+            Hidden
         }
     }
 }
