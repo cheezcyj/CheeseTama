@@ -2532,12 +2532,6 @@ namespace CheeseTama.Core
                 return roundedUiSprite;
             }
 
-            roundedUiSprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/UISprite.psd");
-            if (roundedUiSprite != null)
-            {
-                return roundedUiSprite;
-            }
-
             roundedUiTexture = new Texture2D(RoundedUiSpriteSize, RoundedUiSpriteSize, TextureFormat.RGBA32, false)
             {
                 name = "CheeseTama Rounded UI Sprite",

@@ -28,6 +28,7 @@
 - 생성형 캐릭터 에셋은 `Assets/Characters`, 밀크룸 소품은 `Assets/Environments/Milkroom/Props`에 정리합니다.
 - `GeneratedAssets`와 `Assets/AI Toolkit/Temp`는 생성 중간 산출물 보관용이며 런타임 기준 경로로 쓰지 않습니다.
 - GLB 소품의 PBR 재질은 플레이 모드 테마가 덮어쓰지 않게 유지합니다.
+- UI 패널과 버튼의 둥근 배경은 Unity 내장 PSD 리소스에 의존하지 않고 런타임 생성 스프라이트를 사용합니다.
 - 내부 기획안과 로컬 작업 경로는 공개 README에 기록하지 않습니다.
 
 ## 비주얼 기준
