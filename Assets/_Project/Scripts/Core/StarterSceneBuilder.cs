@@ -225,15 +225,15 @@ namespace CheeseTama.Core
             var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림  20/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -256), new Vector2(306, 46));
             var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강  100/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -316), new Vector2(306, 46));
 
-            var careTipPanel = GetOrCreatePanel(canvas.transform, "Care Tip Panel", new Vector2(24, -532), new Vector2(350, 118));
+            var careTipPanel = GetOrCreatePanel(canvas.transform, "Care Tip Panel", new Vector2(24, -532), new Vector2(350, 104));
             if (careTipPanel.TryGetComponent(out Image careTipPanelImage))
             {
                 careTipPanelImage.color = new Color(1f, 0.96f, 0.8f, 0.92f);
             }
 
-            var careTipTitleText = GetOrCreateText(careTipPanel.transform, "Care Tip Title Text", "돌봄 팁", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(306, 34));
+            var careTipTitleText = GetOrCreateText(careTipPanel.transform, "Care Tip Title Text", "돌봄 팁", 22, TextAnchor.UpperLeft, new Vector2(22, -16), new Vector2(306, 30));
             careTipTitleText.fontStyle = FontStyle.Bold;
-            var careTipText = GetOrCreateText(careTipPanel.transform, "Care Tip Text", "우유를 먹여 성장시켜 주세요.", 20, TextAnchor.MiddleLeft, new Vector2(22, -76), new Vector2(306, 46));
+            var careTipText = GetOrCreateText(careTipPanel.transform, "Care Tip Text", "우유를 먹여 성장시켜 주세요.", 20, TextAnchor.MiddleLeft, new Vector2(22, -58), new Vector2(306, 38));
             careTipText.color = new Color(0.28f, 0.18f, 0.08f);
 
             var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 146), new Vector2(980, 72));
