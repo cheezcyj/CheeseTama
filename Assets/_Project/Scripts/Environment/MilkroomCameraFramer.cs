@@ -31,7 +31,7 @@ namespace CheeseTama.Environment
         [SerializeField] private float contentPlaneZ = 0.08f;
 
         // Extra clearance above the bar, as a fraction of screen height.
-        [SerializeField] private float extraClearanceFraction = 0.02f;
+        [SerializeField] private float extraClearanceFraction = 0.035f;
 
         [SerializeField] private float maxLift = 4f;
         [SerializeField] private float smoothing = 10f;
