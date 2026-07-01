@@ -60,7 +60,7 @@
 - `Assets/_Project/Scripts/Save`: 저장 데이터와 저장 관리자
 - `Assets/_Project/Scenes`: `Boot`, `Milkroom`, `Collection`, `Debug`
 - `Assets/Characters/CheeseTama`: 정리된 CheeseTama 캐릭터 에셋
-- `Assets/Environments/Milkroom/Props`: 정리된 밀크룸 GLB 소품
+- `Assets/Environments/Milkroom/Props`: 정리된 밀크룸 GLB/프리팹 소품
 - `GeneratedAssets`: AI 생성 원본/중간 산출물
 - `Assets/AI Toolkit/Temp`: Unity AI Toolkit 임시 산출물
 
@@ -73,8 +73,9 @@
 - 레퍼런스 이미지는 `*_Ref.png`로 이름을 붙입니다.
 - GLB 원본 사용본은 `*_Assets/selected.glb`로 둡니다.
 - 씬에 배치할 단위는 `*.prefab`으로 감쌉니다.
-- 프리팹 내부 실제 모델 자식은 `GeneratedModel`, `Fridge_Model`, `MilkShelf_Model`, `CozyChair_Model`처럼 명확한 이름을 사용합니다.
-- 새 GLB 소품을 추가하면 `MilkroomThemeController`가 해당 렌더러의 PBR 재질을 덮어쓰지 않도록 보존 규칙에 포함합니다.
+- GLB가 아닌 레퍼런스 기반 소품은 `CheeseTama > 밀크룸 소품 프리팹 생성` 메뉴로 프리미티브 기반 프리팹을 생성해 저장할 수 있습니다.
+- 프리팹 내부 실제 모델 자식은 `GeneratedModel`, `Fridge_Model`, `MilkShelf_Model`, `CozyChair_Model`, `Window_Model`, `Rug_Model`, `DresserTable_Model`, `Chalkboard_Model`처럼 명확한 이름을 사용합니다.
+- 새 정리 소품을 추가하면 `MilkroomThemeController`가 해당 렌더러의 재질을 덮어쓰지 않도록 보존 규칙에 포함합니다.
 - Play Mode에서 색상, 밝기, 위치, 카메라 가림, 콘솔 오류를 확인한 뒤 저장합니다.
 
 ## 현재 구현 범위
@@ -91,7 +92,7 @@
 - 우유 방울 잡기 프로토타입
 - 돌봄 기반 무작위 이벤트와 짧은 반응 연출
 - 생성형 3D CheeseTama 캐릭터 프리팹
-- GLB 기반 냉장고, 우유 선반, 안락의자 등 밀크룸 소품
+- GLB 기반 냉장고, 우유 선반, 안락의자와 프리미티브 기반 창문, 러그, 수납장탁자, 칠판 등 밀크룸 소품
 - 이벤트 메시지 바와 상태 메시지 바 분리
 - 화면 비율 대응 카메라 프레이밍 보정
 
@@ -154,7 +155,9 @@ CheeseTama는 고정 카메라 디오라마 안의 풀 3D 스타일라이즈드 
 - 휴식 의자
 - 러그
 - 식물
-- 수납장/선반
+- 수납장탁자/선반
+- 창문
+- 칠판
 
 분위기 변형:
 

@@ -965,6 +965,14 @@ namespace CheeseTama.Core
                 new Vector3(2.65f, 0f, 2.2f), 1.3f, 190f, false, -0.35f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/CozyChair.prefab", "CozyChair_Model",
                 new Vector3(-3.1f, 0f, 0.2f), 1.7f, 150f, true, 0f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Window.prefab", "Window_Model",
+                new Vector3(0.1f, 0f, 2.42f), 1.38f, 0f, false, -0.5f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Rug.prefab", "Rug_Model",
+                new Vector3(0.15f, 0f, 0.28f), 0.22f, 0f, true, 0f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/DresserTable.prefab", "DresserTable_Model",
+                new Vector3(3.03f, 0f, 1.18f), 1.25f, 0f, true, 0f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Chalkboard.prefab", "Chalkboard_Model",
+                new Vector3(-2.78f, 0f, 2.41f), 0.9f, 0f, false, 0.05f, floorTop);
 #endif
         }
 

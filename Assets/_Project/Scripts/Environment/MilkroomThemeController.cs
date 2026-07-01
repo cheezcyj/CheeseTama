@@ -95,7 +95,11 @@ namespace CheeseTama.Environment
                 if (objectName == "GeneratedModel"
                     || objectName == "Fridge_Model"
                     || objectName == "MilkShelf_Model"
-                    || objectName == "CozyChair_Model")
+                    || objectName == "CozyChair_Model"
+                    || objectName == "Window_Model"
+                    || objectName == "Rug_Model"
+                    || objectName == "DresserTable_Model"
+                    || objectName == "Chalkboard_Model")
                 {
                     return true;
                 }
