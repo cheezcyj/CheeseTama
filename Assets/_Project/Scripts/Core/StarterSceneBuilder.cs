@@ -145,7 +145,7 @@ namespace CheeseTama.Core
             var careTipText = GetOrCreateText(panelTransform, "Care Tip Text", "돌봄 팁: 우유를 먹여 성장시켜 주세요.", 13, TextAnchor.UpperLeft, new Vector2(18, -388), new Vector2(310, 48));
             var lastSavedText = GetOrCreateText(panelTransform, "Last Saved Text", "마지막 저장: 없음", 13, TextAnchor.UpperLeft, new Vector2(18, -450), new Vector2(310, 24));
 
-            var statBar = GetOrCreatePanel(canvas.transform, "Stat Bar", new Vector2(470, -846), new Vector2(980, 74));
+            var statBar = GetOrCreateBottomPanel(canvas.transform, "Stat Bar", new Vector2(0, 118), new Vector2(980, 74));
             var statBarTransform = statBar.transform;
             var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감: 80", 15, TextAnchor.MiddleCenter, new Vector2(24, -20), new Vector2(170, 32));
             var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분: 70", 15, TextAnchor.MiddleCenter, new Vector2(214, -20), new Vector2(170, 32));
@@ -153,7 +153,7 @@ namespace CheeseTama.Core
             var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림: 20", 15, TextAnchor.MiddleCenter, new Vector2(594, -20), new Vector2(170, 32));
             var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강: 100", 15, TextAnchor.MiddleCenter, new Vector2(784, -20), new Vector2(170, 32));
 
-            var messageBar = GetOrCreatePanel(canvas.transform, "Message Bar", new Vector2(470, -750), new Vector2(980, 72));
+            var messageBar = GetOrCreateBottomPanel(canvas.transform, "Message Bar", new Vector2(0, 198), new Vector2(980, 72));
             if (messageBar.TryGetComponent(out Image messageBarImage))
             {
                 messageBarImage.color = new Color(1f, 0.93f, 0.68f, 0.98f);
@@ -162,6 +162,18 @@ namespace CheeseTama.Core
             var messageText = GetOrCreateText(messageBar.transform, "Message Text", "돌봄 준비 완료.", 19, TextAnchor.MiddleLeft, new Vector2(24, -16), new Vector2(932, 40));
             messageText.fontStyle = FontStyle.Bold;
             messageText.color = new Color(0.28f, 0.18f, 0.08f);
+
+            // 도감 이벤트 메시지 바 — 상태메시지 바(Message Bar) 바로 위에 배치.
+            var eventMessageBar = GetOrCreateBottomPanel(canvas.transform, "Event Message Bar", new Vector2(0, 276), new Vector2(980, 64));
+            if (eventMessageBar.TryGetComponent(out Image eventMessageBarImage))
+            {
+                eventMessageBarImage.color = new Color(0.86f, 0.92f, 1f, 0.98f);
+            }
+
+            var eventMessageText = GetOrCreateText(eventMessageBar.transform, "Event Message Text", "이벤트 대기 중.", 18, TextAnchor.MiddleLeft, new Vector2(24, -12), new Vector2(932, 40));
+            eventMessageText.fontStyle = FontStyle.Bold;
+            eventMessageText.color = new Color(0.16f, 0.24f, 0.42f);
+            eventMessageBar.SetActive(false);
 
             controller.Configure(
                 nameText,
@@ -185,13 +197,14 @@ namespace CheeseTama.Core
                 economyText,
                 careTipText,
                 lastSavedText,
-                messageText);
+                messageText,
+                eventMessageText);
             manager.RefreshDerivedCollectionRecords();
             controller.Bind(manager.CurrentSave);
             controller.ShowMessage("돌봄 준비 완료.");
             visualController.Bind(manager.CurrentTama);
 
-            var actionBar = GetOrCreatePanel(canvas.transform, "Bottom Action Bar", new Vector2(350, -968), new Vector2(1220, 84));
+            var actionBar = GetOrCreateBottomPanel(canvas.transform, "Bottom Action Bar", new Vector2(0, 28), new Vector2(1220, 84));
             var actionBarTransform = actionBar.transform;
             RemoveChildIfExists(actionBarTransform, "Collection Button");
 
@@ -286,6 +299,7 @@ namespace CheeseTama.Core
             manager.RefreshDerivedCollectionRecords();
             EnsureCamera("Debug Camera");
             EnsureLight();
+            EnsureMilkroomBackground();
             EnsureEventSystem();
             var visualController = EnsureCheeseTamaPlaceholder();
             var canvas = EnsureCanvas("Debug Canvas");
@@ -632,14 +646,27 @@ namespace CheeseTama.Core
             camera.gameObject.name = name == "Milkroom Camera" ? "MainCamera" : name;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.96f, 0.92f, 0.84f);
-            if (name == "Milkroom Camera")
+            if (name == "Milkroom Camera" || name == "Debug Camera")
             {
                 camera.orthographic = false;
-                camera.fieldOfView = 28f;
+                camera.fieldOfView = 33f;
                 camera.nearClipPlane = 0.1f;
                 camera.farClipPlane = 40f;
-                camera.transform.position = new Vector3(0f, 0.0f, -8.6f);
+                camera.transform.position = new Vector3(0f, -0.48f, -11.8f);
                 camera.transform.rotation = Quaternion.identity;
+
+                if (name == "Milkroom Camera" && camera.GetComponent<MilkroomCameraFramer>() == null)
+                {
+                    camera.gameObject.AddComponent<MilkroomCameraFramer>();
+                }
+                else if (name == "Debug Camera")
+                {
+                    var framer = camera.GetComponent<MilkroomCameraFramer>();
+                    if (framer != null)
+                    {
+                        DestroyObjectSafely(framer);
+                    }
+                }
             }
             else
             {
@@ -671,7 +698,7 @@ namespace CheeseTama.Core
 
             keyLight.type = LightType.Directional;
             keyLight.color = new Color(1f, 0.96f, 0.86f);
-            keyLight.intensity = 1.2f;
+            keyLight.intensity = 0.58f;
             keyObject.transform.rotation = Quaternion.Euler(48, -32, 0);
 
             var fillObject = GameObject.Find("Milkroom Fill Light");
@@ -688,7 +715,7 @@ namespace CheeseTama.Core
 
             fillLight.type = LightType.Directional;
             fillLight.color = new Color(0.76f, 0.92f, 1f);
-            fillLight.intensity = 0.5f;
+            fillLight.intensity = 0.16f;
             fillObject.transform.rotation = Quaternion.Euler(25, 145, 0);
 
             var rimObject = GameObject.Find("Milkroom Rim Light");
@@ -705,7 +732,7 @@ namespace CheeseTama.Core
 
             rimLight.type = LightType.Directional;
             rimLight.color = new Color(1f, 0.78f, 0.34f);
-            rimLight.intensity = 0.48f;
+            rimLight.intensity = 0.2f;
             rimObject.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
 
             var volumeObject = GameObject.Find("GlobalVolume");
@@ -717,7 +744,7 @@ namespace CheeseTama.Core
             ConfigureGlobalVolumeIfAvailable(volumeObject);
 
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.78f, 0.66f, 0.5f);
+            RenderSettings.ambientLight = new Color(0.38f, 0.31f, 0.24f);
         }
 
         private static void ConfigureGlobalVolumeIfAvailable(GameObject volumeObject)
@@ -787,7 +814,6 @@ namespace CheeseTama.Core
             var cozyChair = CreateGroupRoot(root, "CozyChair");
             var lamps = CreateGroupRoot(root, "Lamps");
             var props = CreateGroupRoot(root, "Props");
-            var referenceComposition = CreateGroupRoot(root, "ReferenceComposition");
             var themeVfxRoot = CreateGroupRoot(root, "ThemeVFXRoot");
 
             CreateDioramaRoomShell(roomShell);
@@ -800,11 +826,93 @@ namespace CheeseTama.Core
             CreateDioramaCozyChair(cozyChair);
             CreateDioramaLamps(lamps);
             CreateDioramaProps(props);
-            CreateReferenceMilkroomComposition(referenceComposition);
             CreateAmbientThemeVfx(themeVfxRoot);
             CreateGroupRoot(rug, "CheeseTamaAnchor").localPosition = new Vector3(0f, -0.28f, 0.05f);
             AddMilkroomControllers(root, root, root, rug, props, themeVfxRoot);
+            EnsureGeneratedMilkroomProps(root);
         }
+
+        private static void EnsureGeneratedMilkroomProps(Transform root)
+        {
+#if UNITY_EDITOR
+            const float floorTop = -2.13f;
+
+            // Hide the legacy primitive prop groups that the generated meshes replace.
+            foreach (var groupName in new[] { "FridgeSet", "MilkShelfSet", "CozyChair" })
+            {
+                var group = root.Find(groupName);
+                if (group != null)
+                {
+                    group.gameObject.SetActive(false);
+                }
+            }
+
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Fridge.prefab", "Fridge_Model",
+                new Vector3(-1.75f, 0f, 2.35f), 2.1f, 180f, true, 0f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/MilkShelf.prefab", "MilkShelf_Model",
+                new Vector3(3.0f, 0f, 2.2f), 1.5f, 200f, false, 0.3f, floorTop);
+            PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/CozyChair.prefab", "CozyChair_Model",
+                new Vector3(-3.1f, 0f, 0.2f), 1.7f, 210f, true, 0f, floorTop);
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static void PlaceGeneratedProp(
+            Transform parent,
+            string prefabPath,
+            string instanceName,
+            Vector3 xzAnchor,
+            float targetHeight,
+            float yaw,
+            bool onFloor,
+            float centerY,
+            float floorTop)
+        {
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                return;
+            }
+
+            var existing = parent.Find(instanceName);
+            if (existing != null)
+            {
+                Object.DestroyImmediate(existing.gameObject);
+            }
+
+            var go = (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(prefab);
+            go.name = instanceName;
+            go.transform.SetParent(parent, false);
+            go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            go.transform.localScale = Vector3.one;
+
+            var renderers = go.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+            {
+                return;
+            }
+
+            var bounds = renderers[0].bounds;
+            foreach (var r in renderers)
+            {
+                bounds.Encapsulate(r.bounds);
+            }
+
+            var scale = targetHeight / Mathf.Max(0.001f, bounds.size.y);
+            go.transform.localScale = Vector3.one * scale;
+
+            bounds = renderers[0].bounds;
+            foreach (var r in renderers)
+            {
+                bounds.Encapsulate(r.bounds);
+            }
+
+            var posY = onFloor
+                ? go.transform.position.y + (floorTop - bounds.min.y)
+                : go.transform.position.y + (centerY - bounds.center.y);
+            go.transform.position = new Vector3(xzAnchor.x, posY, xzAnchor.z);
+        }
+#endif
 
         private static Transform CreateGroupRoot(Transform parent, string name)
         {
@@ -1338,10 +1446,42 @@ namespace CheeseTama.Core
             {
                 renderer.shadowCastingMode = ShouldCastDecorShadow(name) ? ShadowCastingMode.On : ShadowCastingMode.Off;
                 renderer.receiveShadows = !name.Contains("Glow") && !name.Contains("Sparkle") && !name.Contains("Rain");
-                PaintDecorRenderer(renderer, color);
+                PaintDecorRenderer(renderer, AdjustMilkroomDecorColor(name, color));
             }
 
             return part.transform;
+        }
+
+        private static Color AdjustMilkroomDecorColor(string objectName, Color color)
+        {
+            var adjusted = color;
+            var isGlow = objectName.Contains("Glow") || objectName.Contains("Sun") || objectName.Contains("Bulb");
+            var isGlass = objectName.Contains("Glass") || objectName.Contains("Bottle") || objectName.Contains("Window Sky");
+            var isWood = objectName.Contains("Wood") || objectName.Contains("Floor") || objectName.Contains("Shelf") || objectName.Contains("Dresser") || objectName.Contains("Chair") || objectName.Contains("Table") || objectName.Contains("Frame");
+
+            if (isGlow)
+            {
+                adjusted = Color.Lerp(adjusted, new Color(0.86f, 0.56f, 0.24f, color.a), 0.28f) * 0.68f;
+            }
+            else if (isGlass)
+            {
+                adjusted = Color.Lerp(adjusted, new Color(0.58f, 0.74f, 0.82f, color.a), 0.18f) * 0.82f;
+            }
+            else if (isWood)
+            {
+                adjusted = Color.Lerp(adjusted, new Color(0.45f, 0.25f, 0.12f, color.a), 0.18f) * 0.86f;
+            }
+            else if (Mathf.Max(color.r, color.g, color.b) > 0.9f)
+            {
+                adjusted = Color.Lerp(adjusted, new Color(0.88f, 0.78f, 0.58f, color.a), 0.22f) * 0.82f;
+            }
+            else
+            {
+                adjusted *= 0.88f;
+            }
+
+            adjusted.a = color.a;
+            return adjusted;
         }
 
         private static void CreateWorldLabel(Transform parent, string name, string text, Vector3 localPosition, float characterSize, Color color)
@@ -1393,14 +1533,14 @@ namespace CheeseTama.Core
             if (existing != null)
             {
                 existing.name = "CheeseTamaRoot";
-                existing.transform.position = new Vector3(0f, -1.26f, 0.08f);
-                existing.transform.localScale = new Vector3(1.2f, 1.2f, 1.08f);
+                existing.transform.position = new Vector3(0f, -1.34f, 0.08f);
+                existing.transform.localScale = Vector3.one;
                 return GetOrCreateVisualController(existing);
             }
 
             var egg = new GameObject("CheeseTamaRoot");
-            egg.transform.position = new Vector3(0f, -1.26f, 0.08f);
-            egg.transform.localScale = new Vector3(1.2f, 1.2f, 1.08f);
+            egg.transform.position = new Vector3(0f, -1.34f, 0.08f);
+            egg.transform.localScale = Vector3.one;
 
             return GetOrCreateVisualController(egg);
         }
@@ -1413,7 +1553,58 @@ namespace CheeseTama.Core
                 controller = target.AddComponent<CheeseTamaVisualController>();
             }
 
+            EnsureGeneratedCharacterModel(target, controller);
             return controller;
+        }
+
+        private const string CheeseTamaModelPrefabPath = "Assets/Characters/CheeseTama/CheeseTama_Model.prefab";
+        private const float CheeseTamaModelYaw = 270f;
+        private const float CheeseTamaModelScale = 1.7f;
+
+        private static void EnsureGeneratedCharacterModel(GameObject root, CheeseTamaVisualController controller)
+        {
+#if UNITY_EDITOR
+            // Remove any legacy procedural rig children.
+            var toRemove = new System.Collections.Generic.List<GameObject>();
+            foreach (Transform child in root.transform)
+            {
+                if (child.name != "GeneratedModel")
+                {
+                    toRemove.Add(child.gameObject);
+                }
+            }
+
+            foreach (var g in toRemove)
+            {
+                Object.DestroyImmediate(g);
+            }
+
+            var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(CheeseTamaModelPrefabPath);
+            if (modelPrefab == null)
+            {
+                return;
+            }
+
+            var modelTransform = root.transform.Find("GeneratedModel");
+            if (modelTransform == null)
+            {
+                var model = (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(modelPrefab);
+                model.name = "GeneratedModel";
+                model.transform.SetParent(root.transform, false);
+                modelTransform = model.transform;
+            }
+
+            modelTransform.localPosition = Vector3.zero;
+            modelTransform.localRotation = Quaternion.Euler(0f, CheeseTamaModelYaw, 0f);
+            modelTransform.localScale = Vector3.one * CheeseTamaModelScale;
+
+            var so = new UnityEditor.SerializedObject(controller);
+            so.FindProperty("modelPrefab").objectReferenceValue = modelPrefab;
+            so.FindProperty("modelInstance").objectReferenceValue = modelTransform;
+            so.FindProperty("modelYawDegrees").floatValue = CheeseTamaModelYaw;
+            so.FindProperty("modelScale").floatValue = CheeseTamaModelScale;
+            so.ApplyModifiedProperties();
+#endif
         }
 
         private static Canvas EnsureCanvas(string name)
@@ -1518,6 +1709,48 @@ namespace CheeseTama.Core
             rect.anchorMin = new Vector2(0, 1);
             rect.anchorMax = new Vector2(0, 1);
             rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = size;
+        }
+
+        // Anchors a panel to the bottom-center of the screen so it stays pinned to the
+        // bottom edge regardless of the game's aspect ratio. This keeps the care buttons,
+        // stat values and status message from drifting over the character / milkroom.
+        private static GameObject GetOrCreateBottomPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
+        {
+            var existing = parent.Find(name);
+            if (existing != null)
+            {
+                if (existing.TryGetComponent(out RectTransform rect))
+                {
+                    ConfigureBottomPanelRect(rect, anchoredPosition, size);
+                }
+
+                if (!existing.TryGetComponent(out Image image))
+                {
+                    image = existing.gameObject.AddComponent<Image>();
+                }
+
+                image.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+                return existing.gameObject;
+            }
+
+            var panel = new GameObject(name);
+            panel.transform.SetParent(parent, false);
+
+            var newRect = panel.AddComponent<RectTransform>();
+            ConfigureBottomPanelRect(newRect, anchoredPosition, size);
+
+            var newImage = panel.AddComponent<Image>();
+            newImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
+            return panel;
+        }
+
+        private static void ConfigureBottomPanelRect(RectTransform rect, Vector2 anchoredPosition, Vector2 size)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0);
+            rect.anchorMax = new Vector2(0.5f, 0);
+            rect.pivot = new Vector2(0.5f, 0);
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = size;
         }

@@ -42,3 +42,8 @@ Desktop.ini
 # Unity crash/debug output
 sysinfo.txt
 *.stackdump
+
+# AI/tooling temporary generated assets
+/GeneratedAssets/
+/Assets/AI Toolkit/
+/Assets/AI Toolkit.meta

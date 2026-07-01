@@ -23,26 +23,26 @@ namespace CheeseTama.Environment
             CacheSceneReferences();
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = palette.Ambient;
+            RenderSettings.ambientLight = Color.Lerp(palette.Ambient, new Color(0.18f, 0.14f, 0.1f), 0.22f);
 
             if (keyLight != null)
             {
-                keyLight.color = Color.Lerp(palette.Glow, Color.white, 0.24f);
-                keyLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 1.15f : 1.35f;
+                keyLight.color = Color.Lerp(palette.Glow, Color.white, 0.12f);
+                keyLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.72f : 0.82f;
                 keyLight.transform.position = new Vector3(-2.2f, 3.2f, -2.8f);
                 keyLight.transform.rotation = Quaternion.Euler(52f, -28f, 0f);
             }
 
             if (fillLight != null)
             {
-                fillLight.color = Color.Lerp(palette.WindowSky, Color.white, 0.2f);
-                fillLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.55f : 0.72f;
+                fillLight.color = Color.Lerp(palette.WindowSky, Color.white, 0.12f);
+                fillLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.28f : 0.3f;
             }
 
             if (rimLight != null)
             {
                 rimLight.color = Color.Lerp(palette.Celestial, new Color(1f, 0.82f, 0.38f), 0.35f);
-                rimLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.72f : 0.62f;
+                rimLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.4f : 0.34f;
                 rimLight.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
             }
 

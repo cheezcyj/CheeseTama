@@ -31,6 +31,7 @@ namespace CheeseTama.UI
         [SerializeField] private Text careTipText;
         [SerializeField] private Text lastSavedText;
         [SerializeField] private Text messageText;
+        [SerializeField] private Text eventMessageText;
 
         private CheeseTamaModel current;
         private CheeseTamaSaveData currentSave;
@@ -58,7 +59,8 @@ namespace CheeseTama.UI
             Text economyLabel,
             Text careTipLabel,
             Text lastSavedLabel,
-            Text messageLabel)
+            Text messageLabel,
+            Text eventMessageLabel = null)
         {
             nameText = nameLabel;
             levelText = levelLabel;
@@ -82,6 +84,7 @@ namespace CheeseTama.UI
             careTipText = careTipLabel;
             lastSavedText = lastSavedLabel;
             messageText = messageLabel;
+            eventMessageText = eventMessageLabel;
         }
 
         private void Update()
@@ -158,6 +161,26 @@ namespace CheeseTama.UI
         public void ShowMessage(string message)
         {
             SetText(messageText, message);
+        }
+
+        public void ShowEventMessage(string message)
+        {
+            if (eventMessageText == null)
+            {
+                return;
+            }
+
+            var hasMessage = !string.IsNullOrWhiteSpace(message);
+            var bar = eventMessageText.transform.parent;
+            if (bar != null)
+            {
+                bar.gameObject.SetActive(hasMessage);
+            }
+
+            if (hasMessage)
+            {
+                eventMessageText.text = message;
+            }
         }
 
         private static void SetText(Text target, string value)

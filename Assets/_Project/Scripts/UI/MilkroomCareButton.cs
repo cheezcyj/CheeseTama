@@ -120,7 +120,7 @@ namespace CheeseTama.UI
                 manager.RegisterCareAction("wait_hour", timeResult.applied ? timeResult.hours : 1);
                 var timeEvent = RegisterRandomEvent(manager);
                 PersistAfterInteraction(manager);
-                Refresh(CombineMessages(timeResult.ToSummary("밀크룸에서"), timeEvent.message), manager, false, timeEvent.eventId);
+                Refresh(timeResult.ToSummary("밀크룸에서"), manager, false, timeEvent.eventId, timeEvent.message);
                 return;
             }
 
@@ -152,10 +152,11 @@ namespace CheeseTama.UI
             var eventResult = careResult.hatched ? CareEventResult.None() : RegisterRandomEvent(manager);
             PersistCareResult(manager, careResult);
             Refresh(
-                CombineMessages(CombineMessages(CombineMessages(careResult.message, routineMessage), discoveryMessage), eventResult.message),
+                CombineMessages(CombineMessages(careResult.message, routineMessage), discoveryMessage),
                 manager,
                 careResult.hatched,
-                eventResult.eventId);
+                eventResult.eventId,
+                eventResult.message);
         }
 
         private CareActionResult RunCareAction(GameManager manager)
@@ -328,10 +329,11 @@ namespace CheeseTama.UI
             return milkId == StarMilkId ? "별빛 우유" : "기본 우유";
         }
 
-        private void Refresh(string message, GameManager manager, bool celebrate, string eventId = "")
+        private void Refresh(string message, GameManager manager, bool celebrate, string eventId = "", string eventMessage = "")
         {
             uiController.Bind(manager.CurrentSave);
             uiController.ShowMessage(message);
+            uiController.ShowEventMessage(eventMessage);
 
             var visual = ResolveVisualController();
             if (visual != null)

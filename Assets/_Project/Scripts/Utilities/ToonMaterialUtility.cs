@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -37,6 +40,12 @@ namespace CheeseTama.Utilities
                 return;
             }
 
+            if (!Application.isPlaying)
+            {
+                ApplyEditModeMaterial(renderer, profile, color);
+                return;
+            }
+
             renderer.sharedMaterial = GetMaterial(profile);
             propertyBlock ??= new MaterialPropertyBlock();
             renderer.GetPropertyBlock(propertyBlock);
@@ -57,6 +66,15 @@ namespace CheeseTama.Utilities
             if (objectName.Contains("Eye") || objectName.Contains("Mouth") || objectName.Contains("Cheek") || objectName.Contains("Face"))
             {
                 return ToonMaterialProfile.CharacterFace;
+            }
+
+            if (objectName == "Body"
+                || objectName.Contains("Soft Arm")
+                || objectName.Contains("Little Foot")
+                || objectName.Contains("Top Curl")
+                || objectName.Contains("Crown"))
+            {
+                return ToonMaterialProfile.CharacterBody;
             }
 
             if (objectName.Contains("Highlight") || objectName.Contains("Sparkle"))
@@ -91,6 +109,69 @@ namespace CheeseTama.Utilities
 
             return ToonMaterialProfile.EnvironmentMatte;
         }
+
+        private static void ApplyEditModeMaterial(Renderer renderer, ToonMaterialProfile profile, Color color)
+        {
+#if UNITY_EDITOR
+            renderer.sharedMaterial = GetOrCreateEditorMaterial(profile, color);
+            renderer.SetPropertyBlock(null);
+#else
+            var material = renderer.sharedMaterial;
+            if (material == null || !material.name.StartsWith($"M_Scene_{profile}_") || material.hideFlags == HideFlags.DontSave)
+            {
+                material = new Material(FindLitShader())
+                {
+                    name = $"M_Scene_{profile}_{renderer.name}",
+                    hideFlags = HideFlags.None
+                };
+                ConfigureMaterial(material, profile);
+                renderer.sharedMaterial = material;
+            }
+
+            SetMaterialColors(material, profile, color);
+            renderer.SetPropertyBlock(null);
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static Material GetOrCreateEditorMaterial(ToonMaterialProfile profile, Color color)
+        {
+            EnsureEditorMaterialFolder();
+            var colorKey = ColorUtility.ToHtmlStringRGBA(color);
+            var path = $"Assets/_Project/Art/GeneratedMaterials/M_Scene_{profile}_{colorKey}.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(FindLitShader())
+                {
+                    name = $"M_Scene_{profile}_{colorKey}",
+                    hideFlags = HideFlags.None
+                };
+                ConfigureMaterial(material, profile);
+                SetMaterialColors(material, profile, color);
+                AssetDatabase.CreateAsset(material, path);
+                return material;
+            }
+
+            ConfigureMaterial(material, profile);
+            SetMaterialColors(material, profile, color);
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static void EnsureEditorMaterialFolder()
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/_Project/Art"))
+            {
+                AssetDatabase.CreateFolder("Assets/_Project", "Art");
+            }
+
+            if (!AssetDatabase.IsValidFolder("Assets/_Project/Art/GeneratedMaterials"))
+            {
+                AssetDatabase.CreateFolder("Assets/_Project/Art", "GeneratedMaterials");
+            }
+        }
+#endif
 
         private static Material GetMaterial(ToonMaterialProfile profile)
         {
@@ -149,6 +230,29 @@ namespace CheeseTama.Utilities
             }
         }
 
+        private static void SetMaterialColors(Material material, ToonMaterialProfile profile, Color color)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (material.HasProperty(BaseColorId))
+            {
+                material.SetColor(BaseColorId, color);
+            }
+
+            if (material.HasProperty(ColorId))
+            {
+                material.SetColor(ColorId, color);
+            }
+
+            if (material.HasProperty(EmissionColorId))
+            {
+                material.SetColor(EmissionColorId, GetEmissionColor(profile, color));
+            }
+        }
+
         private static float GetSmoothness(ToonMaterialProfile profile)
         {
             return profile switch
@@ -180,8 +284,8 @@ namespace CheeseTama.Utilities
         {
             return profile switch
             {
-                ToonMaterialProfile.EnvironmentGlow => color * 0.28f,
-                ToonMaterialProfile.CharacterHighlight => color * 0.12f,
+                ToonMaterialProfile.EnvironmentGlow => color * 0.1f,
+                ToonMaterialProfile.CharacterHighlight => color * 0.06f,
                 _ => Color.black
             };
         }

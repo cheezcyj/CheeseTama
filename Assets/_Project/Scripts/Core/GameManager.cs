@@ -57,6 +57,9 @@ namespace CheeseTama.Core
 
         public void LoadOrCreateGame()
         {
+            dataRegistry = dataRegistry != null ? dataRegistry : GetComponent<DataRegistry>();
+            saveManager = saveManager != null ? saveManager : GetComponent<SaveManager>();
+
             if (saveManager == null)
             {
                 Debug.LogWarning("저장 관리자가 없습니다. 런타임 저장 데이터를 불러오지 못했습니다.");

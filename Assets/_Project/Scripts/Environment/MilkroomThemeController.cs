@@ -77,8 +77,33 @@ namespace CheeseTama.Environment
             var renderers = groupRoot.GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in renderers)
             {
+                if (ShouldPreserveImportedRenderer(renderer))
+                {
+                    continue;
+                }
+
                 PaintRenderer(renderer, ResolveColor(renderer.name, palette));
             }
+        }
+
+        private static bool ShouldPreserveImportedRenderer(Renderer renderer)
+        {
+            var current = renderer != null ? renderer.transform : null;
+            while (current != null)
+            {
+                var objectName = current.name;
+                if (objectName == "GeneratedModel"
+                    || objectName == "Fridge_Model"
+                    || objectName == "MilkShelf_Model"
+                    || objectName == "CozyChair_Model")
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
         }
 
         private Color ResolveColor(string objectName, MilkroomThemePalette palette)
@@ -103,7 +128,7 @@ namespace CheeseTama.Environment
                 return objectName.Contains("Paw") ? palette.RugMark : palette.Rug;
             }
 
-            if (objectName.Contains("Window Sky"))
+            if (objectName.Contains("Window Sky") || objectName.Contains("WindowGlass") || objectName.Contains("Window Arch Inner Cut"))
             {
                 return palette.WindowSky;
             }
@@ -353,27 +378,27 @@ namespace CheeseTama.Environment
                     new Color(0.44f, 0.5f, 0.56f),
                     new Color(0.68f, 0.74f, 0.78f)),
                 _ => new MilkroomThemePalette(
-                    new Color(0.82f, 0.61f, 0.42f),
-                    new Color(1f, 0.82f, 0.48f),
-                    new Color(0.58f, 0.34f, 0.18f),
-                    new Color(0.42f, 0.24f, 0.13f),
-                    new Color(0.92f, 0.82f, 0.63f),
-                    new Color(0.84f, 0.7f, 0.5f),
-                    new Color(0.64f, 0.83f, 0.95f),
-                    new Color(1f, 0.86f, 0.38f),
-                    new Color(0.96f, 0.98f, 1f),
-                    new Color(1f, 0.91f, 0.76f),
-                    new Color(0.84f, 0.94f, 0.98f),
-                    new Color(0.47f, 0.72f, 0.9f),
-                    new Color(0.38f, 0.64f, 0.38f),
-                    new Color(1f, 0.72f, 0.18f),
-                    new Color(0.85f, 0.48f, 0.09f),
-                    new Color(0.68f, 0.42f, 0.22f),
-                    new Color(0.18f, 0.28f, 0.21f),
-                    new Color(1f, 0.95f, 0.84f),
+                    new Color(0.78f, 0.58f, 0.38f),
+                    new Color(0.98f, 0.68f, 0.34f),
+                    new Color(0.5f, 0.29f, 0.15f),
                     new Color(0.32f, 0.18f, 0.1f),
-                    new Color(0.86f, 0.74f, 0.56f),
-                    new Color(0.96f, 0.92f, 0.84f))
+                    new Color(0.86f, 0.74f, 0.54f),
+                    new Color(0.68f, 0.54f, 0.36f),
+                    new Color(0.58f, 0.78f, 0.92f),
+                    new Color(1f, 0.72f, 0.28f),
+                    new Color(0.88f, 0.94f, 0.98f),
+                    new Color(0.92f, 0.8f, 0.62f),
+                    new Color(0.8f, 0.9f, 0.94f),
+                    new Color(0.38f, 0.65f, 0.82f),
+                    new Color(0.32f, 0.58f, 0.32f),
+                    new Color(1f, 0.64f, 0.14f),
+                    new Color(0.78f, 0.4f, 0.07f),
+                    new Color(0.58f, 0.34f, 0.17f),
+                    new Color(0.12f, 0.22f, 0.17f),
+                    new Color(0.88f, 0.82f, 0.68f),
+                    new Color(0.28f, 0.16f, 0.08f),
+                    new Color(0.66f, 0.54f, 0.38f),
+                    new Color(0.94f, 0.88f, 0.78f))
             };
         }
     }
