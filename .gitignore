@@ -1,0 +1,86 @@
+# Unity generated folders
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+
+# Unity exports and crash output
+*.unitypackage
+*.apk
+*.aab
+*.app
+sysinfo.txt
+*.stackdump
+
+# IDE generated files
+/.vs/
+/.vscode/
+/.idea/
+*.booproj
+*.csproj
+*.sln
+*.slnx
+*.pidb
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.suo
+*.user
+*.userprefs
+*.DotSettings.user
+_ReSharper*/
+
+# OS files and local package caches
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+/.pnpm-store/
+
+# Local AI tooling and generated source material
+/GeneratedAssets/
+/Assets/AI Toolkit/
+/Assets/AI Toolkit.meta
+/ProjectSettings/AI.Assistant/
+
+# Maintainer-only documents and samples
+/Docs/Internal/
+/GAME_DESIGN.md
+/CHANGELOG.md
+/Assets/_Project/Docs/
+/Assets/_Project/Docs.meta
+/Assets/_Project/Data/JsonSamples/HiddenCollection.internal.sample.json
+/Assets/_Project/Data/JsonSamples/HiddenCollection.internal.sample.json.meta
+/Assets/_Project/Art/Characters/CheeseTama/ART_DIRECTION.md
+/Assets/_Project/Art/Characters/CheeseTama/ART_DIRECTION.md.meta
+/Assets/_Project/Art/Environments/Milkroom/MILKROOM_ART_DIRECTION.md
+/Assets/_Project/Art/Environments/Milkroom/MILKROOM_ART_DIRECTION.md.meta
+/Assets/_Project/Art/UI/UI_STYLE_GUIDE.md
+/Assets/_Project/Art/UI/UI_STYLE_GUIDE.md.meta
+
+# Prevent accidental publication of future internal records
+**/*기획안*
+**/*작업기록*
+**/*작업일지*
+**/*worklog*
+**/*internal*
+*.docx
+
+# Secrets and signing credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.keystore
+*.jks
+credentials*.json
+secrets*.json
