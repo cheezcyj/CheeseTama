@@ -1,7 +1,11 @@
+using CheeseTama.Audio;
 using CheeseTama.Data;
 using CheeseTama.Environment;
+using CheeseTama.Gameplay.Autonomy;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Decorations;
 using CheeseTama.Gameplay.Milk;
+using CheeseTama.Gameplay.MiniGames;
 using CheeseTama.Gameplay.Snacks;
 using CheeseTama.Save;
 using CheeseTama.UI;
@@ -44,6 +48,7 @@ namespace CheeseTama.Core
                     GameManager.Instance.LoadOrCreateGame();
                 }
 
+                EnsureAudioController(GameManager.Instance);
                 return GameManager.Instance;
             }
 
@@ -55,13 +60,32 @@ namespace CheeseTama.Core
                     existing.LoadOrCreateGame();
                 }
 
+                EnsureAudioController(existing);
                 return existing;
             }
 
             var core = new GameObject("CoreSystems");
             core.AddComponent<DataRegistry>();
             core.AddComponent<SaveManager>();
-            return core.AddComponent<GameManager>();
+            var manager = core.AddComponent<GameManager>();
+            EnsureAudioController(manager);
+            return manager;
+        }
+
+        private static void EnsureAudioController(GameManager manager)
+        {
+            if (manager == null)
+            {
+                return;
+            }
+
+            var audioController = manager.GetComponent<CheeseTamaAudioController>();
+            if (audioController == null)
+            {
+                audioController = manager.gameObject.AddComponent<CheeseTamaAudioController>();
+            }
+
+            audioController.BindManager(manager);
         }
 
         public static void BuildForScene(string sceneName)
@@ -81,6 +105,11 @@ namespace CheeseTama.Core
             else if (sceneName == SceneNames.Debug)
             {
                 BuildDebugScene();
+            }
+
+            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                EnsureUiButtonSounds(canvas.transform);
             }
         }
 
@@ -111,6 +140,11 @@ namespace CheeseTama.Core
             RemoveLegacyMilkroomPanelObjects(canvas.transform);
             ReapplyRoundedImages(canvas.transform);
 
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            RemoveChildIfExists(canvas.transform, "Dev Panel");
+            RemoveChildIfExists(canvas.transform, "Dev Mode Toggle Button");
+#endif
+
             var manager = EnsureCoreSystems();
             if (manager.CurrentSave == null)
             {
@@ -120,17 +154,70 @@ namespace CheeseTama.Core
             ApplySavedMilkroomTheme(manager);
             controller.Bind(manager.CurrentSave);
             controller.ShowMessage("돌봄 준비 완료.");
-            RefreshExistingGameSettingsPanels();
 
             var visualController = Object.FindFirstObjectByType<CheeseTamaVisualController>();
             if (visualController != null)
             {
+                AlignCheeseTamaRestingPosition(visualController);
                 visualController.Bind(manager.CurrentTama);
+            }
+
+            var existingSettingsButton = canvas.transform.Find("Top Menu/Settings Button")?.GetComponent<Button>();
+            if (existingSettingsButton != null)
+            {
+                BuildMilkroomSettings(
+                    canvas.transform,
+                    existingSettingsButton,
+                    controller,
+                    visualController,
+                    out var settingsLastSavedText);
+                controller.SetLastSavedText(settingsLastSavedText);
+            }
+            else
+            {
+                return false;
             }
 
             Object.FindFirstObjectByType<MilkPanelController>()?.Close();
             Object.FindFirstObjectByType<CookingPanelController>()?.Close();
             Object.FindFirstObjectByType<SnackPanelController>()?.Close();
+            EnsureCheeseTamaProfileMenuShell(canvas.transform);
+            EnsureMilkroomStatGauges(canvas.transform, controller);
+            EnsureCheeseTamaNameDialog(canvas.transform, controller);
+            EnsureFirstMeetingOnboarding(canvas.transform, controller, visualController);
+            EnsureNewGameSetup(canvas.transform, controller, visualController);
+            EnsureMilkBlendingPanel(canvas.transform, controller, visualController);
+            EnsureCookingChoicePanel(canvas.transform);
+            EnsureSaveRecoveryNotice(canvas.transform);
+            EnsureReturnSummary(canvas.transform);
+            EnsureGrowthMilestone(canvas.transform, controller, visualController);
+            EnsureEvolutionMilestone(canvas.transform, controller, visualController);
+            EnsureGrowthJourney(canvas.transform);
+            EnsureMilkDropMiniGame(canvas.transform, controller, visualController);
+            EnsureBouncyJumpMiniGame(canvas.transform, controller, visualController);
+            EnsurePlayChoicePanel(canvas.transform);
+            EnsureCleaningMiniGame(canvas.transform, controller, visualController);
+            EnsureCareEventCard(canvas.transform, visualController);
+            EnsureNpcVisitCard(canvas.transform);
+            EnsureSleepSchedulePanel(canvas.transform, controller, visualController);
+            EnsureDecorationShop(canvas.transform);
+            EnsureDecorationRoomPresenter();
+            EnsureMilkroomAtmosphere(canvas.transform, manager.CurrentTama);
+            EnsureCheeseTamaPetInteraction(canvas.transform, controller, visualController);
+            EnsureCheeseTamaSpeechBubble(canvas.transform, visualController);
+            EnsureAutonomousLife(canvas.transform, visualController);
+            RemoveNormalEvolutionVisualAccents(visualController);
+            EnsureLateGameFeatures(canvas.transform, controller, visualController);
+            EnsureCheeseStarDelivery(canvas.transform);
+            EnsureMemoryJournal(canvas.transform);
+            EnsureFantasyPowderHiddenRecipes(canvas.transform);
+            EnsureFirstDayJourney(canvas.transform);
+            EnsureCheeseTamaProfileMenu(canvas.transform);
+            if (!EnsureInputBindingsPanel(canvas.transform))
+            {
+                return false;
+            }
+            EnsureUiButtonSounds(canvas.transform);
             return true;
         }
 
@@ -155,8 +242,11 @@ namespace CheeseTama.Core
             var visualController = Object.FindFirstObjectByType<CheeseTamaVisualController>();
             if (visualController != null)
             {
+                AlignCheeseTamaRestingPosition(visualController);
                 visualController.Bind(manager.CurrentTama);
             }
+
+            EnsureUiButtonSounds(canvas.transform);
 
             return true;
         }
@@ -199,6 +289,7 @@ namespace CheeseTama.Core
                 return false;
             }
 
+            AlignCheeseTamaRestingPosition(visualController);
             EnsureGeneratedCharacterModel(root, visualController);
             var previewSave = LoadEditorPreviewSave();
             if (previewSave == null)
@@ -370,7 +461,7 @@ namespace CheeseTama.Core
             SetButtonIcon(topDecorateButton, "decorate");
             SetButtonIcon(settingsButton, "settings");
 
-            var panel = GetOrCreateRightPanel(canvas.transform, "Status Panel", new Vector2(-24, -116), new Vector2(360, 510));
+            var panel = GetOrCreateRightPanel(canvas.transform, "Status Panel", new Vector2(-24, -116), new Vector2(360, 524));
             if (panel.TryGetComponent(out Image panelImage))
             {
                 panelImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
@@ -412,7 +503,7 @@ namespace CheeseTama.Core
             ApplyRecordSectionStyle(growthSection, recordSecondaryColor);
             var careSummarySection = GetOrCreatePanel(panelTransform, "Record Care Summary Section", new Vector2(12, -296), new Vector2(336, 80));
             ApplyRecordSectionStyle(careSummarySection, recordPrimaryColor);
-            var dailyRoutineSection = GetOrCreatePanel(panelTransform, "Record Daily Routine Section", new Vector2(12, -388), new Vector2(336, 100));
+            var dailyRoutineSection = GetOrCreatePanel(panelTransform, "Record Daily Routine Section", new Vector2(12, -388), new Vector2(336, 124));
             ApplyRecordSectionStyle(dailyRoutineSection, recordSecondaryColor);
 
             var detailTitleText = GetOrCreateText(panelTransform, "Detail Title Text", "밀크룸 기록", 22, TextAnchor.UpperLeft, new Vector2(22, -20), new Vector2(316, 34));
@@ -423,7 +514,7 @@ namespace CheeseTama.Core
             var maturationText = GetOrCreateText(growthSection.transform, "Maturation Text", "<b>성숙도</b>  0", 17, TextAnchor.MiddleLeft, new Vector2(10, -48), new Vector2(316, 30));
             var hatchProgressText = GetOrCreateText(growthSection.transform, "Hatch Progress Text", "<b>부화 진행</b>  0%", 17, TextAnchor.MiddleLeft, new Vector2(10, -86), new Vector2(316, 30));
             var careSummaryText = GetOrCreateText(careSummarySection.transform, "Care Summary Text", "<b>돌봄 누적</b>  0회" + RecordDetailVerticalGap + "놀이 0  청소 0  휴식 0", 16, TextAnchor.MiddleLeft, new Vector2(10, -13), new Vector2(316, 54));
-            var dailyRoutineText = GetOrCreateText(dailyRoutineSection.transform, "Daily Routine Text", "<b>오늘 루틴</b>" + RecordDetailVerticalGap + "먹기 0/3  요리 0/2\n놀이 0/3  청소 0/2  휴식 0/2", 16, TextAnchor.MiddleLeft, new Vector2(10, -13), new Vector2(316, 74));
+            var dailyRoutineText = GetOrCreateText(dailyRoutineSection.transform, "Daily Routine Text", "<b>오늘 루틴</b>" + RecordDetailVerticalGap + "먹기 0/3  요리 0/2\n놀이 0/3  청소 0/2  휴식 0/2\n<size=14>완료 보상  코인 20 · 우유방울 5 · 도감조각 1</size>", 16, TextAnchor.MiddleLeft, new Vector2(10, -13), new Vector2(316, 98));
             ApplyRecordLineStyle(formText);
             ApplyRecordLineStyle(conditionText);
             ApplyRecordLineStyle(affectionText);
@@ -441,11 +532,11 @@ namespace CheeseTama.Core
             var statBarTransform = statBar.transform;
             var statTitleText = GetOrCreateText(statBarTransform, "Stat Title Text", "상태 수치", 22, TextAnchor.UpperLeft, new Vector2(22, -27), new Vector2(306, 34));
             statTitleText.fontStyle = FontStyle.Bold;
-            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감  80/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -83), new Vector2(306, 46));
-            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분  70/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -143), new Vector2(306, 46));
-            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결  90/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -203), new Vector2(306, 46));
-            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림  20/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -263), new Vector2(306, 46));
-            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강  100/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -323), new Vector2(306, 46));
+            var hungerText = GetOrCreateText(statBarTransform, "Hunger Text", "포만감  80/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -72), new Vector2(306, 30));
+            var moodText = GetOrCreateText(statBarTransform, "Mood Text", "기분  70/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -132), new Vector2(306, 30));
+            var cleanlinessText = GetOrCreateText(statBarTransform, "Cleanliness Text", "청결  90/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -192), new Vector2(306, 30));
+            var sleepinessText = GetOrCreateText(statBarTransform, "Sleepiness Text", "졸림  20/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -252), new Vector2(306, 30));
+            var healthText = GetOrCreateText(statBarTransform, "Health Text", "건강  100/100", 20, TextAnchor.MiddleLeft, new Vector2(22, -312), new Vector2(306, 30));
 
             var careTipPanel = GetOrCreatePanel(canvas.transform, "Care Tip Panel", new Vector2(24, -532), new Vector2(350, 104));
             if (careTipPanel.TryGetComponent(out Image careTipPanelImage))
@@ -556,7 +647,7 @@ namespace CheeseTama.Core
             ConfigureCareButton(cleanButton, MilkroomCareAction.Clean, controller, visualController);
 
             var sleepButton = GetOrCreateButton(actionBarTransform, "Sleep Button", "휴식하기", new Vector2(460, 25), new Vector2(156, 58));
-            ConfigureCareButton(sleepButton, MilkroomCareAction.Rest, controller, visualController);
+            ConfigureCareButton(sleepButton, MilkroomCareAction.SleepSchedule, controller, visualController);
 
             SetButtonLabel(milkButton, "우유주기");
             SetButtonLabel(blendButton, "요리하기");
@@ -604,6 +695,40 @@ namespace CheeseTama.Core
                 decorateOverlay,
                 settingsModal,
                 null);
+            EnsureCheeseTamaProfileMenuShell(canvas.transform);
+            EnsureMilkroomStatGauges(canvas.transform, controller);
+            EnsureCheeseTamaNameDialog(canvas.transform, controller);
+            EnsureFirstMeetingOnboarding(canvas.transform, controller, visualController);
+            EnsureNewGameSetup(canvas.transform, controller, visualController);
+            EnsureMilkBlendingPanel(canvas.transform, controller, visualController);
+            EnsureCookingChoicePanel(canvas.transform);
+            EnsureSaveRecoveryNotice(canvas.transform);
+            EnsureReturnSummary(canvas.transform);
+            EnsureGrowthMilestone(canvas.transform, controller, visualController);
+            EnsureEvolutionMilestone(canvas.transform, controller, visualController);
+            EnsureGrowthJourney(canvas.transform);
+            EnsureMilkDropMiniGame(canvas.transform, controller, visualController);
+            EnsureBouncyJumpMiniGame(canvas.transform, controller, visualController);
+            EnsurePlayChoicePanel(canvas.transform);
+            EnsureCleaningMiniGame(canvas.transform, controller, visualController);
+            EnsureCareEventCard(canvas.transform, visualController);
+            EnsureNpcVisitCard(canvas.transform);
+            EnsureSleepSchedulePanel(canvas.transform, controller, visualController);
+            EnsureDecorationShop(canvas.transform);
+            EnsureDecorationRoomPresenter();
+            EnsureMilkroomAtmosphere(canvas.transform, manager.CurrentTama);
+            EnsureCheeseTamaPetInteraction(canvas.transform, controller, visualController);
+            EnsureCheeseTamaSpeechBubble(canvas.transform, visualController);
+            EnsureAutonomousLife(canvas.transform, visualController);
+            RemoveNormalEvolutionVisualAccents(visualController);
+            EnsureLateGameFeatures(canvas.transform, controller, visualController);
+            EnsureCheeseStarDelivery(canvas.transform);
+            EnsureMemoryJournal(canvas.transform);
+            EnsureFantasyPowderHiddenRecipes(canvas.transform);
+            EnsureFirstDayJourney(canvas.transform);
+            EnsureCheeseTamaProfileMenu(canvas.transform);
+            EnsureInputBindingsPanel(canvas.transform);
+            EnsureUiButtonSounds(canvas.transform);
             OrganizeMilkroomSceneHierarchy();
         }
 
@@ -819,7 +944,7 @@ namespace CheeseTama.Core
             var stateText = GetOrCreateText(overlayTransform, "Decorate Overlay State Text", "현재 테마: 따뜻한 아침 밀크룸", 15, TextAnchor.UpperLeft, new Vector2(28, -72), new Vector2(420, 28));
             closeButton = GetOrCreateTopLeftButton(overlayTransform, "Close Decorate Button", "닫기", new Vector2(596, -20), new Vector2(116, 40));
 
-            var previewPanel = GetOrCreatePanel(overlayTransform, "Decorate Preview Panel", new Vector2(24, -122), new Vector2(692, 448));
+            var previewPanel = GetOrCreatePanel(overlayTransform, "Decorate Preview Panel", new Vector2(24, -122), new Vector2(692, 432));
             if (previewPanel.TryGetComponent(out Image previewImage))
             {
                 previewImage.color = new Color(1f, 0.94f, 0.78f, 0.42f);
@@ -1223,6 +1348,3459 @@ namespace CheeseTama.Core
                 collectionController);
         }
 
+        private static void EnsureCheeseTamaProfileMenuShell(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var topBar = canvasTransform.Find("Top Status Bar");
+            if (topBar != null)
+            {
+                var profileButton = GetOrCreateTopLeftButton(
+                    topBar,
+                    "CheeseTama Profile Button",
+                    string.Empty,
+                    new Vector2(18f, -13f),
+                    new Vector2(56f, 56f));
+                ApplyCareButtonStyle(profileButton);
+                var profileBackground = profileButton.targetGraphic as Image
+                    ?? profileButton.GetComponent<Image>();
+                if (profileBackground != null)
+                {
+                    ApplyRoundedImage(profileBackground);
+                    profileBackground.color = new Color(1f, 0.67f, 0.12f, 1f);
+                    profileBackground.raycastTarget = true;
+                }
+
+                var mask = profileButton.GetComponent<Mask>() ?? profileButton.gameObject.AddComponent<Mask>();
+                mask.showMaskGraphic = true;
+                var portraitTransform = profileButton.transform.Find("Profile Portrait Image");
+                Image portraitImage;
+                if (portraitTransform == null)
+                {
+                    var portraitObject = new GameObject("Profile Portrait Image", typeof(RectTransform));
+                    portraitObject.transform.SetParent(profileButton.transform, false);
+                    portraitTransform = portraitObject.transform;
+                    portraitImage = portraitObject.AddComponent<Image>();
+                }
+                else
+                {
+                    portraitImage = portraitTransform.GetComponent<Image>()
+                        ?? portraitTransform.gameObject.AddComponent<Image>();
+                }
+
+                var portraitRect = portraitTransform.GetComponent<RectTransform>();
+                portraitRect.anchorMin = Vector2.zero;
+                portraitRect.anchorMax = Vector2.one;
+                portraitRect.offsetMin = new Vector2(4f, 4f);
+                portraitRect.offsetMax = new Vector2(-4f, -4f);
+                portraitImage.preserveAspect = true;
+                portraitImage.raycastTarget = false;
+                portraitTransform.SetAsLastSibling();
+
+                var nameRect = topBar.Find("Name Text") as RectTransform;
+                ConfigureTopLeftRect(nameRect, 92f, 17f, 212f, 48f);
+                if (nameRect != null && nameRect.TryGetComponent(out Text nameText))
+                {
+                    nameText.resizeTextForBestFit = true;
+                    nameText.resizeTextMinSize = 18;
+                    nameText.resizeTextMaxSize = 28;
+                }
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                CheeseTamaProfileMenuController.OverlayObjectName,
+                new Color(0.08f, 0.055f, 0.025f, 0.72f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Profile Card",
+                Vector2.zero,
+                new Vector2(600f, 610f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(600f, 610f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.84f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var heading = GetOrCreateText(
+                card.transform,
+                "Profile Heading Text",
+                "프로필",
+                30,
+                TextAnchor.MiddleCenter,
+                new Vector2(50f, -30f),
+                new Vector2(500f, 48f));
+            heading.fontStyle = FontStyle.Bold;
+            var profileName = GetOrCreateText(
+                card.transform,
+                "Profile Name Text",
+                "CheeseTama",
+                26,
+                TextAnchor.MiddleCenter,
+                new Vector2(150f, -82f),
+                new Vector2(300f, 42f));
+            profileName.fontStyle = FontStyle.Bold;
+            profileName.resizeTextForBestFit = true;
+            profileName.resizeTextMinSize = 18;
+            profileName.resizeTextMaxSize = 26;
+            var profileDetail = GetOrCreateText(
+                card.transform,
+                "Profile Detail Text",
+                "Lv. 1 · 치즈타마 알",
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(50f, -124f),
+                new Vector2(500f, 34f));
+            profileDetail.color = new Color(0.55f, 0.34f, 0.14f, 1f);
+
+            var entries = GetOrCreatePanel(
+                card.transform,
+                "Profile Entries",
+                new Vector2(90f, -184f),
+                new Vector2(420f, 288f));
+            if (entries.TryGetComponent(out Image entriesImage))
+            {
+                entriesImage.color = Color.clear;
+                entriesImage.raycastTarget = false;
+            }
+
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Profile Close Button",
+                "닫기",
+                new Vector2(212f, -530f),
+                new Vector2(176f, 50f));
+            ApplyCareButtonStyle(close);
+            overlay.SetActive(false);
+        }
+
+        private static void EnsureCheeseTamaProfileMenu(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            EnsureCheeseTamaProfileMenuShell(canvasTransform);
+            var overlay = canvasTransform.Find(CheeseTamaProfileMenuController.OverlayObjectName)?.gameObject;
+            var card = overlay != null ? overlay.transform.Find("Profile Card") : null;
+            var topBar = canvasTransform.Find("Top Status Bar");
+            var profileButton = topBar != null
+                ? topBar.Find("CheeseTama Profile Button")?.GetComponent<Button>()
+                : null;
+            var portraitImage = profileButton != null
+                ? profileButton.transform.Find("Profile Portrait Image")?.GetComponent<Image>()
+                : null;
+            var entries = GetProfileMenuEntryParent(canvasTransform);
+            var controller = canvasTransform.GetComponent<CheeseTamaProfileMenuController>()
+                ?? canvasTransform.gameObject.AddComponent<CheeseTamaProfileMenuController>();
+            controller.Configure(
+                overlay,
+                profileButton,
+                portraitImage,
+                card != null ? card.Find("Profile Name Text")?.GetComponent<Text>() : null,
+                card != null ? card.Find("Profile Detail Text")?.GetComponent<Text>() : null,
+                entries != null ? entries.Find("Open First Day Journey Button")?.GetComponent<Button>() : null,
+                entries != null ? entries.Find("Open Growth Journey Button")?.GetComponent<Button>() : null,
+                entries != null ? entries.Find("Open Memory Journal Button")?.GetComponent<Button>() : null,
+                entries != null ? entries.Find("Open Bond Status Button")?.GetComponent<Button>() : null,
+                card != null ? card.Find("Open Name Change Button")?.GetComponent<Button>() : null,
+                card != null ? card.Find("Profile Close Button")?.GetComponent<Button>() : null,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay?.transform.SetAsLastSibling();
+        }
+
+        private static Transform GetProfileMenuEntryParent(Transform canvasTransform)
+        {
+            return canvasTransform?.Find(
+                CheeseTamaProfileMenuController.OverlayObjectName + "/Profile Card/Profile Entries");
+        }
+
+        private static Button GetOrMoveProfileEntryButton(
+            Transform canvasTransform,
+            Transform legacyParent,
+            string name,
+            string label,
+            int entryIndex)
+        {
+            var entryParent = GetProfileMenuEntryParent(canvasTransform);
+            if (entryParent == null)
+            {
+                return GetOrCreateTopLeftButton(
+                    legacyParent != null ? legacyParent : canvasTransform,
+                    name,
+                    label,
+                    Vector2.zero,
+                    new Vector2(420f, 48f));
+            }
+
+            var current = entryParent.Find(name);
+            var legacy = legacyParent != null ? legacyParent.Find(name) : null;
+            if (current == null && legacy != null)
+            {
+                legacy.SetParent(entryParent, false);
+                current = legacy;
+            }
+            else if (current != null && legacy != null && legacy != current)
+            {
+                DestroyObjectSafely(legacy.gameObject);
+            }
+
+            var button = current != null ? current.GetComponent<Button>() : null;
+            if (button == null)
+            {
+                button = GetOrCreateTopLeftButton(
+                    entryParent,
+                    name,
+                    label,
+                    Vector2.zero,
+                    new Vector2(420f, 48f));
+            }
+
+            ConfigureTopLeftButton(
+                button,
+                label,
+                new Vector2(0f, -entryIndex * 58f),
+                new Vector2(420f, 48f));
+            return button;
+        }
+
+        private static Button GetOrMoveProfileRenameButton(
+            Transform canvasTransform,
+            Transform legacyParent)
+        {
+            var card = canvasTransform?.Find(
+                CheeseTamaProfileMenuController.OverlayObjectName + "/Profile Card");
+            if (card == null)
+            {
+                return GetOrCreateTopLeftButton(
+                    legacyParent != null ? legacyParent : canvasTransform,
+                    "Open Name Change Button",
+                    "이름 변경",
+                    Vector2.zero,
+                    new Vector2(100f, 36f));
+            }
+
+            var entries = GetProfileMenuEntryParent(canvasTransform);
+            var current = card.Find("Open Name Change Button");
+            var legacy = legacyParent != null
+                ? legacyParent.Find("Open Name Change Button")
+                : null;
+            var oldEntry = entries != null
+                ? entries.Find("Open Name Change Button")
+                : null;
+            if (current == null)
+            {
+                var source = legacy != null ? legacy : oldEntry;
+                if (source != null)
+                {
+                    source.SetParent(card, false);
+                    current = source;
+                }
+            }
+
+            if (legacy != null && legacy != current)
+            {
+                DestroyObjectSafely(legacy.gameObject);
+            }
+
+            if (oldEntry != null && oldEntry != current)
+            {
+                DestroyObjectSafely(oldEntry.gameObject);
+            }
+
+            var button = current != null ? current.GetComponent<Button>() : null;
+            if (button == null)
+            {
+                button = GetOrCreateTopLeftButton(
+                    card,
+                    "Open Name Change Button",
+                    "이름 변경",
+                    Vector2.zero,
+                    new Vector2(100f, 36f));
+            }
+
+            ConfigureTopLeftButton(
+                button,
+                "이름 변경",
+                new Vector2(456f, -85f),
+                new Vector2(100f, 36f));
+            return button;
+        }
+
+        private static void EnsureMilkroomStatGauges(
+            Transform canvasTransform,
+            MilkroomUIController controller)
+        {
+            var statBar = canvasTransform?.Find("Stat Bar");
+            if (statBar == null || controller == null)
+            {
+                return;
+            }
+
+            ConfigureTopLeftRect(statBar.Find("Hunger Text") as RectTransform, 22f, 72f, 306f, 30f);
+            ConfigureTopLeftRect(statBar.Find("Mood Text") as RectTransform, 22f, 132f, 306f, 30f);
+            ConfigureTopLeftRect(statBar.Find("Cleanliness Text") as RectTransform, 22f, 192f, 306f, 30f);
+            ConfigureTopLeftRect(statBar.Find("Sleepiness Text") as RectTransform, 22f, 252f, 306f, 30f);
+            ConfigureTopLeftRect(statBar.Find("Health Text") as RectTransform, 22f, 312f, 306f, 30f);
+
+            controller.ConfigureStatGauges(
+                GetOrCreateStatGauge(statBar, "Hunger Gauge", 108f),
+                GetOrCreateStatGauge(statBar, "Mood Gauge", 168f),
+                GetOrCreateStatGauge(statBar, "Cleanliness Gauge", 228f),
+                GetOrCreateStatGauge(statBar, "Sleepiness Gauge", 288f),
+                GetOrCreateStatGauge(statBar, "Health Gauge", 348f));
+        }
+
+        private static Image GetOrCreateStatGauge(
+            Transform statBar,
+            string gaugeName,
+            float top)
+        {
+            var track = GetOrCreatePanel(
+                statBar,
+                gaugeName,
+                new Vector2(22f, -top),
+                new Vector2(306f, 10f));
+            var trackImage = track.GetComponent<Image>();
+            if (trackImage != null)
+            {
+                ApplyRoundedImage(trackImage);
+                trackImage.color = new Color(0.32f, 0.25f, 0.17f, 0.16f);
+                trackImage.raycastTarget = false;
+            }
+
+            var fillTransform = track.transform.Find("Fill");
+            Image fill;
+            if (fillTransform == null)
+            {
+                var fillObject = new GameObject(
+                    "Fill",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                fillObject.transform.SetParent(track.transform, false);
+                fillTransform = fillObject.transform;
+                fill = fillObject.GetComponent<Image>();
+            }
+            else
+            {
+                fill = fillTransform.GetComponent<Image>()
+                    ?? fillTransform.gameObject.AddComponent<Image>();
+            }
+
+            var fillRect = fillTransform.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = new Vector2(1f, 1f);
+            fillRect.offsetMax = new Vector2(-1f, -1f);
+            fill.sprite = GetRoundedUiSprite();
+            fill.raycastTarget = false;
+            return fill;
+        }
+
+        private static Transform GetOrCreateMilkroomUtilityBar(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return null;
+            }
+
+            var utilityBar = GetOrCreatePanel(
+                canvasTransform,
+                "Milkroom Utility Bar",
+                new Vector2(24f, -650f),
+                new Vector2(350f, 92f));
+            if (utilityBar.TryGetComponent(out Image image))
+            {
+                image.color = Color.clear;
+                image.raycastTarget = false;
+            }
+
+            return utilityBar.transform;
+        }
+
+        private static Button GetOrMoveUtilityButton(
+            Transform canvasTransform,
+            Transform legacyParent,
+            string name,
+            string label,
+            Vector2 anchoredPosition,
+            Vector2 size)
+        {
+            var utilityParent = GetOrCreateMilkroomUtilityBar(canvasTransform);
+            if (utilityParent == null)
+            {
+                return null;
+            }
+
+            var current = utilityParent.Find(name);
+            var legacy = legacyParent != null ? legacyParent.Find(name) : null;
+            if (current == null && legacy != null)
+            {
+                legacy.SetParent(utilityParent, false);
+                current = legacy;
+            }
+            else if (current != null && legacy != null && current != legacy)
+            {
+                DestroyObjectSafely(legacy.gameObject);
+            }
+
+            var button = current != null ? current.GetComponent<Button>() : null;
+            if (button == null)
+            {
+                button = GetOrCreateTopLeftButton(
+                    utilityParent,
+                    name,
+                    label,
+                    Vector2.zero,
+                    size);
+            }
+
+            ConfigureTopLeftButton(
+                button,
+                label,
+                anchoredPosition,
+                size);
+            return button;
+        }
+
+        private static void EnsureCheeseTamaNameDialog(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var settingsModal = canvasTransform.Find("Settings Modal");
+            if (settingsModal == null)
+            {
+                return;
+            }
+
+            var openButton = GetOrMoveProfileRenameButton(canvasTransform, settingsModal);
+            ApplyCareButtonStyle(openButton);
+
+            var dialogTransform = canvasTransform.Find("CheeseTama Name Dialog");
+            GameObject dialogRoot;
+            RectTransform dialogRect;
+            if (dialogTransform == null)
+            {
+                dialogRoot = new GameObject("CheeseTama Name Dialog", typeof(RectTransform));
+                dialogRoot.transform.SetParent(canvasTransform, false);
+                dialogRect = dialogRoot.GetComponent<RectTransform>();
+            }
+            else
+            {
+                dialogRoot = dialogTransform.gameObject;
+                dialogRect = dialogRoot.GetComponent<RectTransform>();
+                if (dialogRect == null)
+                {
+                    dialogRect = dialogRoot.AddComponent<RectTransform>();
+                }
+            }
+
+            dialogRect.anchorMin = Vector2.zero;
+            dialogRect.anchorMax = Vector2.one;
+            dialogRect.pivot = new Vector2(0.5f, 0.5f);
+            dialogRect.anchoredPosition = Vector2.zero;
+            dialogRect.offsetMin = Vector2.zero;
+            dialogRect.offsetMax = Vector2.zero;
+
+            var dimImage = dialogRoot.GetComponent<Image>();
+            if (dimImage == null)
+            {
+                dimImage = dialogRoot.AddComponent<Image>();
+            }
+
+            dimImage.color = new Color(0.08f, 0.05f, 0.02f, 0.62f);
+            dimImage.raycastTarget = true;
+            var canvasGroup = dialogRoot.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = dialogRoot.AddComponent<CanvasGroup>();
+            }
+
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+
+            var card = GetOrCreatePanel(
+                dialogRoot.transform,
+                "Name Change Card",
+                Vector2.zero,
+                new Vector2(600f, 320f));
+            var cardRect = card.GetComponent<RectTransform>();
+            ConfigureCenteredRect(cardRect, new Vector2(600f, 320f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.98f, 0.9f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var titleText = GetOrCreateText(
+                card.transform,
+                "Name Change Title Text",
+                "이름 변경",
+                28,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -28f),
+                new Vector2(528f, 44f));
+            titleText.fontStyle = FontStyle.Bold;
+            var guideText = GetOrCreateText(
+                card.transform,
+                "Name Change Guide Text",
+                "새 이름을 1자부터 12자 사이로 입력해 주세요.",
+                17,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -78f),
+                new Vector2(528f, 30f));
+            guideText.color = new Color(0.38f, 0.28f, 0.17f);
+            var nameInput = GetOrCreateInputField(
+                card.transform,
+                "Name Change Input",
+                "이름을 입력하세요 (최대 12자)",
+                new Vector2(36f, -120f),
+                new Vector2(528f, 56f));
+            var statusText = GetOrCreateText(
+                card.transform,
+                "Name Change Status Text",
+                string.Empty,
+                15,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -188f),
+                new Vector2(528f, 30f));
+            statusText.color = new Color(0.72f, 0.16f, 0.1f);
+
+            var saveButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Save Name Change Button",
+                "변경하기",
+                new Vector2(304f, -244f),
+                new Vector2(120f, 48f));
+            var cancelButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Cancel Name Change Button",
+                "취소",
+                new Vector2(440f, -244f),
+                new Vector2(124f, 48f));
+            ApplyCareButtonStyle(saveButton);
+            ApplyCareButtonStyle(cancelButton);
+
+            var controller = canvasTransform.GetComponent<CheeseTamaNameDialogController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<CheeseTamaNameDialogController>();
+            }
+
+            controller.Configure(
+                openButton,
+                dialogRoot,
+                nameInput,
+                statusText,
+                saveButton,
+                cancelButton,
+                milkroomUi,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            dialogRoot.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureFirstMeetingOnboarding(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            Button FindButton(string path)
+            {
+                var target = canvasTransform.Find(path);
+                return target != null ? target.GetComponent<Button>() : null;
+            }
+
+            var settingsModal = canvasTransform.Find("Settings Modal")?.gameObject;
+            Button replayButton = null;
+            if (settingsModal != null)
+            {
+                replayButton = GetOrCreateTopLeftButton(
+                    settingsModal.transform,
+                    "Replay First Meeting Button",
+                    "튜토리얼",
+                    new Vector2(442f, -170f),
+                    new Vector2(90f, 42f));
+                ApplyCareButtonStyle(replayButton);
+            }
+
+            var overlayTransform = canvasTransform.Find("First Meeting Onboarding Overlay");
+            GameObject overlayRoot;
+            RectTransform overlayRect;
+            if (overlayTransform == null)
+            {
+                overlayRoot = new GameObject("First Meeting Onboarding Overlay", typeof(RectTransform));
+                overlayRoot.transform.SetParent(canvasTransform, false);
+                overlayRect = overlayRoot.GetComponent<RectTransform>();
+            }
+            else
+            {
+                overlayRoot = overlayTransform.gameObject;
+                overlayRect = overlayRoot.GetComponent<RectTransform>();
+                if (overlayRect == null)
+                {
+                    overlayRect = overlayRoot.AddComponent<RectTransform>();
+                }
+            }
+
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.pivot = new Vector2(0.5f, 0.5f);
+            overlayRect.anchoredPosition = Vector2.zero;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+
+            var dimImage = overlayRoot.GetComponent<Image>();
+            if (dimImage == null)
+            {
+                dimImage = overlayRoot.AddComponent<Image>();
+            }
+
+            dimImage.color = new Color(0.08f, 0.05f, 0.02f, 0.62f);
+            dimImage.raycastTarget = false;
+            var overlayCanvasGroup = overlayRoot.GetComponent<CanvasGroup>();
+            if (overlayCanvasGroup == null)
+            {
+                overlayCanvasGroup = overlayRoot.AddComponent<CanvasGroup>();
+            }
+
+            overlayCanvasGroup.alpha = 1f;
+            overlayCanvasGroup.interactable = true;
+            overlayCanvasGroup.blocksRaycasts = true;
+
+            var card = GetOrCreatePanel(overlayRoot.transform, "First Meeting Card", Vector2.zero, new Vector2(760f, 380f));
+            var cardRect = card.GetComponent<RectTransform>();
+            cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.anchoredPosition = Vector2.zero;
+            cardRect.sizeDelta = new Vector2(760f, 380f);
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.98f, 0.9f, 0.99f);
+                cardImage.raycastTarget = true;
+            }
+
+            var stepText = GetOrCreateText(
+                card.transform,
+                "First Meeting Step Text",
+                "튜토리얼 · 1/4",
+                18,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -34f),
+                new Vector2(664f, 28f));
+            stepText.fontStyle = FontStyle.Bold;
+            stepText.color = new Color(0.74f, 0.38f, 0.08f);
+
+            var titleText = GetOrCreateText(
+                card.transform,
+                "First Meeting Title Text",
+                "밀크룸에 온 걸 환영해요",
+                30,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -82f),
+                new Vector2(664f, 52f));
+            titleText.fontStyle = FontStyle.Bold;
+
+            var bodyText = GetOrCreateText(
+                card.transform,
+                "First Meeting Body Text",
+                "작은 치즈 생명체가 당신을 기다리고 있어요.",
+                21,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -154f),
+                new Vector2(664f, 112f));
+            bodyText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            bodyText.verticalOverflow = VerticalWrapMode.Truncate;
+            bodyText.resizeTextForBestFit = true;
+            bodyText.resizeTextMinSize = 16;
+            bodyText.resizeTextMaxSize = 21;
+
+            RemoveChildIfExists(card.transform, "First Meeting Name Input");
+            RemoveChildIfExists(card.transform, "First Meeting Status Text");
+
+            var primaryButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "First Meeting Primary Button",
+                "시작하기",
+                new Vector2(428f, -300f),
+                new Vector2(174f, 52f));
+            var skipButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "First Meeting Skip Button",
+                "건너뛰기",
+                new Vector2(616f, -300f),
+                new Vector2(112f, 52f));
+            ApplyCareButtonStyle(primaryButton);
+            ApplyCareButtonStyle(skipButton);
+
+            var skipConfirmationTransform = overlayRoot.transform.Find("Skip Tutorial Confirmation");
+            GameObject skipConfirmationRoot;
+            RectTransform skipConfirmationRect;
+            if (skipConfirmationTransform == null)
+            {
+                skipConfirmationRoot = new GameObject("Skip Tutorial Confirmation");
+                skipConfirmationRoot.transform.SetParent(overlayRoot.transform, false);
+                skipConfirmationRect = skipConfirmationRoot.AddComponent<RectTransform>();
+            }
+            else
+            {
+                skipConfirmationRoot = skipConfirmationTransform.gameObject;
+                skipConfirmationRect = skipConfirmationRoot.GetComponent<RectTransform>();
+                if (skipConfirmationRect == null)
+                {
+                    skipConfirmationRect = skipConfirmationRoot.AddComponent<RectTransform>();
+                }
+            }
+
+            skipConfirmationRect.anchorMin = Vector2.zero;
+            skipConfirmationRect.anchorMax = Vector2.one;
+            skipConfirmationRect.pivot = new Vector2(0.5f, 0.5f);
+            skipConfirmationRect.anchoredPosition = Vector2.zero;
+            skipConfirmationRect.offsetMin = Vector2.zero;
+            skipConfirmationRect.offsetMax = Vector2.zero;
+            var skipConfirmationDim = skipConfirmationRoot.GetComponent<Image>();
+            if (skipConfirmationDim == null)
+            {
+                skipConfirmationDim = skipConfirmationRoot.AddComponent<Image>();
+            }
+
+            skipConfirmationDim.color = new Color(0.08f, 0.05f, 0.02f, 0.72f);
+            skipConfirmationDim.raycastTarget = true;
+            var skipConfirmationGroup = skipConfirmationRoot.GetComponent<CanvasGroup>();
+            if (skipConfirmationGroup == null)
+            {
+                skipConfirmationGroup = skipConfirmationRoot.AddComponent<CanvasGroup>();
+            }
+
+            skipConfirmationGroup.alpha = 1f;
+            skipConfirmationGroup.interactable = true;
+            skipConfirmationGroup.blocksRaycasts = true;
+
+            var skipConfirmationCard = GetOrCreatePanel(
+                skipConfirmationRoot.transform,
+                "Skip Tutorial Confirmation Card",
+                Vector2.zero,
+                new Vector2(560f, 280f));
+            ConfigureCenteredRect(
+                skipConfirmationCard.GetComponent<RectTransform>(),
+                new Vector2(560f, 280f));
+            if (skipConfirmationCard.TryGetComponent(out Image skipConfirmationCardImage))
+            {
+                skipConfirmationCardImage.color = new Color(1f, 0.98f, 0.9f, 1f);
+                skipConfirmationCardImage.raycastTarget = true;
+            }
+
+            var skipConfirmationTitle = GetOrCreateText(
+                skipConfirmationCard.transform,
+                "Skip Tutorial Confirmation Title Text",
+                "튜토리얼을 건너뛰시겠습니까?",
+                26,
+                TextAnchor.MiddleCenter,
+                new Vector2(36f, -40f),
+                new Vector2(488f, 48f));
+            skipConfirmationTitle.fontStyle = FontStyle.Bold;
+            var skipConfirmationBody = GetOrCreateText(
+                skipConfirmationCard.transform,
+                "Skip Tutorial Confirmation Body Text",
+                "건너뛴 뒤에도 설정에서 튜토리얼을 다시 볼 수 있습니다.",
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(36f, -106f),
+                new Vector2(488f, 56f));
+            skipConfirmationBody.horizontalOverflow = HorizontalWrapMode.Wrap;
+            skipConfirmationBody.verticalOverflow = VerticalWrapMode.Truncate;
+
+            var continueTutorialButton = GetOrCreateTopLeftButton(
+                skipConfirmationCard.transform,
+                "Continue Tutorial Button",
+                "계속 진행",
+                new Vector2(250f, -202f),
+                new Vector2(126f, 48f));
+            var confirmSkipButton = GetOrCreateTopLeftButton(
+                skipConfirmationCard.transform,
+                "Confirm Skip Tutorial Button",
+                "건너뛰기",
+                new Vector2(392f, -202f),
+                new Vector2(132f, 48f));
+            ApplyCareButtonStyle(continueTutorialButton);
+            ApplyDangerButtonStyle(confirmSkipButton);
+
+            var actionButtons = new[]
+            {
+                FindButton("Bottom Action Bar/Milk Button"),
+                FindButton("Bottom Action Bar/Blend Button"),
+                FindButton("Bottom Action Bar/Snack Button"),
+                FindButton("Bottom Action Bar/Play Button"),
+                FindButton("Bottom Action Bar/Clean Button"),
+                FindButton("Bottom Action Bar/Sleep Button")
+            };
+            var topMenuController = canvasTransform.GetComponent<TopMenuController>();
+            var onboardingController = canvasTransform.GetComponent<FirstMeetingOnboardingController>();
+            if (onboardingController == null)
+            {
+                onboardingController = canvasTransform.gameObject.AddComponent<FirstMeetingOnboardingController>();
+            }
+
+            onboardingController.Configure(
+                overlayRoot,
+                cardRect,
+                dimImage,
+                stepText,
+                titleText,
+                bodyText,
+                primaryButton,
+                skipButton,
+                skipConfirmationRoot,
+                confirmSkipButton,
+                continueTutorialButton,
+                replayButton,
+                actionButtons,
+                actionButtons[0],
+                actionButtons[3],
+                actionButtons[4],
+                FindButton("Top Menu/Top Collection Button"),
+                FindButton("Top Menu/Top Decorate Button"),
+                FindButton("Top Menu/Settings Button"),
+                FindButton("Dev Mode Toggle Button"),
+                topMenuController,
+                settingsModal,
+                canvasTransform.GetComponent<MilkPanelController>(),
+                canvasTransform.GetComponent<CookingPanelController>(),
+                canvasTransform.GetComponent<SnackPanelController>(),
+                milkroomUi,
+                visualController);
+            overlayRoot.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureSaveRecoveryNotice(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                SaveRecoveryNoticeController.OverlayObjectName,
+                new Color(0.04f, 0.045f, 0.07f, 0.8f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Save Recovery Notice Card",
+                Vector2.zero,
+                new Vector2(680f, 390f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(680f, 390f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.96f, 0.97f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Save Recovery Notice Title Text",
+                "저장 복구 완료",
+                31,
+                TextAnchor.MiddleCenter,
+                new Vector2(52f, -42f),
+                new Vector2(576f, 54f));
+            title.fontStyle = FontStyle.Bold;
+            var message = GetOrCreateText(
+                card.transform,
+                "Save Recovery Notice Message Text",
+                string.Empty,
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(72f, -126f),
+                new Vector2(536f, 126f));
+            message.horizontalOverflow = HorizontalWrapMode.Wrap;
+            message.verticalOverflow = VerticalWrapMode.Overflow;
+            var confirm = GetOrCreateTopLeftButton(
+                card.transform,
+                "Save Recovery Notice Confirm Button",
+                "확인",
+                new Vector2(250f, -302f),
+                new Vector2(180f, 54f));
+            ApplyCareButtonStyle(confirm);
+
+            var controller = canvasTransform.GetComponent<SaveRecoveryNoticeController>()
+                ?? canvasTransform.gameObject.AddComponent<SaveRecoveryNoticeController>();
+            controller.Configure(overlay, title, message, confirm);
+            var manager = Application.isPlaying ? GameManager.Instance : null;
+            var bridge = canvasTransform.GetComponent<SaveRecoveryNoticeBridge>()
+                ?? canvasTransform.gameObject.AddComponent<SaveRecoveryNoticeBridge>();
+            bridge.Configure(
+                controller,
+                () => manager?.LastSaveRecoveryReport ?? SaveRecoveryReport.NoRecovery,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureReturnSummary(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlayTransform = canvasTransform.Find("Return Summary Overlay");
+            GameObject overlayRoot;
+            RectTransform overlayRect;
+            if (overlayTransform == null)
+            {
+                overlayRoot = new GameObject("Return Summary Overlay", typeof(RectTransform));
+                overlayRoot.transform.SetParent(canvasTransform, false);
+                overlayRect = overlayRoot.GetComponent<RectTransform>();
+            }
+            else
+            {
+                overlayRoot = overlayTransform.gameObject;
+                overlayRect = overlayRoot.GetComponent<RectTransform>();
+                if (overlayRect == null)
+                {
+                    overlayRect = overlayRoot.AddComponent<RectTransform>();
+                }
+            }
+
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.pivot = new Vector2(0.5f, 0.5f);
+            overlayRect.anchoredPosition = Vector2.zero;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+
+            var dimImage = overlayRoot.GetComponent<Image>();
+            if (dimImage == null)
+            {
+                dimImage = overlayRoot.AddComponent<Image>();
+            }
+
+            dimImage.color = new Color(0.08f, 0.05f, 0.02f, 0.66f);
+            dimImage.raycastTarget = true;
+            var canvasGroup = overlayRoot.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = overlayRoot.AddComponent<CanvasGroup>();
+            }
+
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+
+            var card = GetOrCreatePanel(
+                overlayRoot.transform,
+                "Return Summary Card",
+                Vector2.zero,
+                new Vector2(680f, 500f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(680f, 500f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.98f, 0.9f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var titleText = GetOrCreateText(
+                card.transform,
+                "Return Summary Title Text",
+                "다시 만나서 반가워요",
+                30,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -38f),
+                new Vector2(584f, 48f));
+            titleText.fontStyle = FontStyle.Bold;
+
+            var elapsedText = GetOrCreateText(
+                card.transform,
+                "Return Summary Elapsed Text",
+                "잠시 자리를 비운 동안의 기록이에요.",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -96f),
+                new Vector2(584f, 36f));
+            elapsedText.color = new Color(0.55f, 0.32f, 0.12f);
+
+            var changesPanel = GetOrCreatePanel(
+                card.transform,
+                "Return Summary Changes Panel",
+                new Vector2(48f, -150f),
+                new Vector2(584f, 202f));
+            if (changesPanel.TryGetComponent(out Image changesPanelImage))
+            {
+                changesPanelImage.color = new Color(1f, 0.92f, 0.68f, 0.52f);
+            }
+
+            var changesText = GetOrCreateText(
+                changesPanel.transform,
+                "Return Summary Changes Text",
+                "상태 변화를 확인하고 있어요.",
+                19,
+                TextAnchor.MiddleCenter,
+                new Vector2(24f, -18f),
+                new Vector2(536f, 166f));
+            changesText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            changesText.verticalOverflow = VerticalWrapMode.Truncate;
+            changesText.resizeTextForBestFit = true;
+            changesText.resizeTextMinSize = 15;
+            changesText.resizeTextMaxSize = 19;
+
+            var rewardsText = GetOrCreateText(
+                card.transform,
+                "Return Summary Rewards Text",
+                string.Empty,
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -370f),
+                new Vector2(584f, 38f));
+            rewardsText.fontStyle = FontStyle.Bold;
+            rewardsText.color = new Color(0.72f, 0.34f, 0.08f);
+
+            var confirmButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Return Summary Confirm Button",
+                "확인",
+                new Vector2(476f, -424f),
+                new Vector2(156f, 52f));
+            ApplyCareButtonStyle(confirmButton);
+
+            var controller = canvasTransform.GetComponent<ReturnSummaryController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<ReturnSummaryController>();
+            }
+
+            controller.Configure(
+                overlayRoot,
+                elapsedText,
+                changesText,
+                rewardsText,
+                confirmButton,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlayRoot.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureCareEventCard(
+            Transform canvasTransform,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Care Event Overlay",
+                new Color(0.12f, 0.08f, 0.04f, 0.64f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Care Event Card",
+                Vector2.zero,
+                new Vector2(680f, 440f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(680f, 440f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.84f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var titleText = GetOrCreateText(
+                card.transform,
+                "Care Event Title Text",
+                "밀크룸의 작은 순간",
+                30,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -48f),
+                new Vector2(584f, 52f));
+            titleText.fontStyle = FontStyle.Bold;
+            var badge = GetOrCreatePanel(
+                card.transform,
+                "First Discovery Badge",
+                new Vector2(236f, -116f),
+                new Vector2(208f, 38f));
+            if (badge.TryGetComponent(out Image badgeImage))
+            {
+                badgeImage.color = new Color(1f, 0.74f, 0.22f, 0.94f);
+            }
+
+            var badgeText = GetOrCreateText(
+                badge.transform,
+                "First Discovery Badge Text",
+                "새 도감 기록",
+                17,
+                TextAnchor.MiddleCenter,
+                Vector2.zero,
+                new Vector2(184f, 30f));
+            ConfigureCenteredRect(badgeText.rectTransform, new Vector2(184f, 30f));
+            badgeText.fontStyle = FontStyle.Bold;
+            var bodyText = GetOrCreateText(
+                card.transform,
+                "Care Event Body Text",
+                "치즈타마와 밀크룸에서 발견한 순간이에요.",
+                21,
+                TextAnchor.MiddleCenter,
+                new Vector2(58f, -170f),
+                new Vector2(564f, 128f));
+            bodyText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            bodyText.verticalOverflow = VerticalWrapMode.Truncate;
+            bodyText.resizeTextForBestFit = true;
+            bodyText.resizeTextMinSize = 16;
+            bodyText.resizeTextMaxSize = 21;
+            var confirmButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Care Event Confirm Button",
+                "확인",
+                new Vector2(476f, -356f),
+                new Vector2(156f, 52f));
+            ApplyCareButtonStyle(confirmButton);
+
+            var controller = canvasTransform.GetComponent<CareEventCardController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<CareEventCardController>();
+            }
+
+            controller.Configure(
+                overlay,
+                card.GetComponent<RectTransform>(),
+                titleText,
+                bodyText,
+                badge,
+                confirmButton,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>(),
+                visualController);
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureGrowthMilestone(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Growth Achievement Overlay",
+                new Color(0.12f, 0.07f, 0.02f, 0.72f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Growth Achievement Card",
+                Vector2.zero,
+                new Vector2(760f, 570f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(760f, 570f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.96f, 0.78f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var titleText = GetOrCreateText(
+                card.transform,
+                "Growth Achievement Title Text",
+                "새로운 성장 단계 달성!",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(54f, -36f),
+                new Vector2(652f, 54f));
+            titleText.fontStyle = FontStyle.Bold;
+            var thumbnailPanel = GetOrCreatePanel(
+                card.transform,
+                "Growth Achievement Thumbnail",
+                new Vector2(250f, -110f),
+                new Vector2(260f, 230f));
+            var thumbnail = thumbnailPanel.GetComponent<Image>();
+            thumbnail.color = new Color(1f, 0.86f, 0.48f, 0.42f);
+            thumbnail.raycastTarget = false;
+            var levelText = GetOrCreateText(
+                card.transform,
+                "Growth Achievement Level Text",
+                "Lv.10 · 새로운 성장 단계",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(60f, -354f),
+                new Vector2(640f, 34f));
+            levelText.fontStyle = FontStyle.Bold;
+            var descriptionText = GetOrCreateText(
+                card.transform,
+                "Growth Achievement Description Text",
+                "치즈타마가 한 단계 더 성장했어요.",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(72f, -398f),
+                new Vector2(616f, 78f));
+            descriptionText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            descriptionText.resizeTextForBestFit = true;
+            descriptionText.resizeTextMinSize = 15;
+            descriptionText.resizeTextMaxSize = 20;
+            var confirmButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Growth Achievement Confirm Button",
+                "새 모습 만나기",
+                new Vector2(520f, -492f),
+                new Vector2(186f, 52f));
+            ApplyCareButtonStyle(confirmButton);
+
+            var controller = canvasTransform.GetComponent<GrowthMilestoneController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<GrowthMilestoneController>();
+            }
+
+            controller.Configure(
+                overlay,
+                thumbnail,
+                titleText,
+                levelText,
+                descriptionText,
+                confirmButton,
+                milkroomUi,
+                visualController,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureMilkDropMiniGame(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Milk Drop Catch Overlay",
+                new Color(0.04f, 0.09f, 0.16f, 0.78f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Milk Drop Catch Card",
+                Vector2.zero,
+                new Vector2(980f, 760f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(980f, 760f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.98f, 0.97f, 0.84f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var titleText = GetOrCreateText(
+                card.transform,
+                "Milk Drop Catch Title Text",
+                "우유방울 받기",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(44f, -28f),
+                new Vector2(892f, 48f));
+            titleText.fontStyle = FontStyle.Bold;
+            var timeText = GetOrCreateText(
+                card.transform,
+                "Milk Drop Catch Time Text",
+                "남은 시간  30초",
+                21,
+                TextAnchor.MiddleLeft,
+                new Vector2(60f, -82f),
+                new Vector2(340f, 36f));
+            var scoreText = GetOrCreateText(
+                card.transform,
+                "Milk Drop Catch Score Text",
+                "점수  0 · 성공 0 · 놓침 0",
+                21,
+                TextAnchor.MiddleRight,
+                new Vector2(430f, -82f),
+                new Vector2(490f, 36f));
+            var playAreaObject = GetOrCreatePanel(
+                card.transform,
+                "Milk Drop Catch Play Area",
+                new Vector2(60f, -132f),
+                new Vector2(860f, 470f));
+            var playArea = playAreaObject.GetComponent<RectTransform>();
+            if (playAreaObject.TryGetComponent(out Image playAreaImage))
+            {
+                playAreaImage.color = new Color(0.72f, 0.9f, 1f, 0.58f);
+                playAreaImage.raycastTarget = true;
+            }
+
+            if (playAreaObject.GetComponent<RectMask2D>() == null)
+            {
+                playAreaObject.AddComponent<RectMask2D>();
+            }
+
+            var dropTemplate = GetOrCreateButton(
+                playArea,
+                "Milk Drop Template",
+                "●",
+                Vector2.zero,
+                Vector2.one * MilkDropMiniGameRules.DropSizePixels);
+            ApplyCareButtonStyle(dropTemplate);
+            if (dropTemplate.TryGetComponent(out Image dropImage))
+            {
+                dropImage.sprite = Resources.Load<Sprite>("UI/TopBarIcons/milkdrop");
+                dropImage.type = Image.Type.Simple;
+                dropImage.preserveAspect = true;
+                dropImage.color = Color.white;
+            }
+
+            var dropLabel = dropTemplate.transform.Find("Label")?.GetComponent<Text>();
+            if (dropLabel != null)
+            {
+                dropLabel.gameObject.SetActive(false);
+            }
+
+            var resultText = GetOrCreateText(
+                card.transform,
+                "Milk Drop Catch Result Text",
+                "떨어지는 우유방울을 눌러서 받아 보세요!",
+                18,
+                TextAnchor.MiddleCenter,
+                new Vector2(60f, -618f),
+                new Vector2(650f, 88f));
+            resultText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            resultText.resizeTextForBestFit = true;
+            resultText.resizeTextMinSize = 14;
+            resultText.resizeTextMaxSize = 18;
+            var cancelButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Milk Drop Catch Cancel Button",
+                "그만하기",
+                new Vector2(754f, -634f),
+                new Vector2(166f, 52f));
+            var confirmButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Milk Drop Catch Confirm Button",
+                "확인",
+                new Vector2(754f, -634f),
+                new Vector2(166f, 52f));
+            ApplyCareButtonStyle(cancelButton);
+            ApplyCareButtonStyle(confirmButton);
+
+            var controller = canvasTransform.GetComponent<MilkDropMiniGameController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<MilkDropMiniGameController>();
+            }
+
+            controller.Configure(
+                overlay,
+                playArea,
+                dropTemplate,
+                timeText,
+                scoreText,
+                resultText,
+                cancelButton,
+                confirmButton,
+                milkroomUi,
+                visualController,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+
+            var playButton = canvasTransform.Find("Bottom Action Bar/Play Button")?.GetComponent<Button>();
+            var careButton = playButton != null ? playButton.GetComponent<MilkroomCareButton>() : null;
+            careButton?.Configure(MilkroomCareAction.CatchMilkDrops, milkroomUi, visualController);
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureBouncyJumpMiniGame(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                BouncyJumpMiniGameController.OverlayObjectName,
+                new Color(0.08f, 0.07f, 0.18f, 0.8f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Bouncy Jump Card",
+                Vector2.zero,
+                new Vector2(940f, 730f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(940f, 730f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.96f, 0.91f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Bouncy Jump Title Text",
+                "말랑 점프",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(44f, -24f),
+                new Vector2(852f, 50f));
+            title.fontStyle = FontStyle.Bold;
+            var time = GetOrCreateText(
+                card.transform,
+                "Bouncy Jump Time Text",
+                "남은 시간  25초",
+                20,
+                TextAnchor.MiddleLeft,
+                new Vector2(58f, -82f),
+                new Vector2(250f, 36f));
+            var score = GetOrCreateText(
+                card.transform,
+                "Bouncy Jump Score Text",
+                "점수  0",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(326f, -82f),
+                new Vector2(270f, 36f));
+            var combo = GetOrCreateText(
+                card.transform,
+                "Bouncy Jump Combo Text",
+                "콤보  -",
+                20,
+                TextAnchor.MiddleRight,
+                new Vector2(614f, -82f),
+                new Vector2(268f, 36f));
+
+            var playAreaObject = GetOrCreatePanel(
+                card.transform,
+                "Bouncy Jump Play Area",
+                new Vector2(58f, -132f),
+                new Vector2(824f, 414f));
+            var playArea = playAreaObject.GetComponent<RectTransform>();
+            if (playAreaObject.TryGetComponent(out Image playAreaImage))
+            {
+                playAreaImage.color = new Color(0.67f, 0.82f, 1f, 0.48f);
+                playAreaImage.raycastTarget = true;
+            }
+
+            if (playAreaObject.GetComponent<RectMask2D>() == null)
+            {
+                playAreaObject.AddComponent<RectMask2D>();
+            }
+
+            var targetObject = GetOrCreatePanel(
+                playArea,
+                "Bouncy Jump Target Zone",
+                Vector2.zero,
+                new Vector2(150f, 28f));
+            var target = targetObject.GetComponent<RectTransform>();
+            ConfigureCenteredRect(target, new Vector2(150f, 28f));
+            target.anchoredPosition = new Vector2(0f, -112f);
+            if (targetObject.TryGetComponent(out Image targetImage))
+            {
+                targetImage.color = new Color(1f, 0.83f, 0.24f, 0.92f);
+                targetImage.raycastTarget = false;
+            }
+
+            var markerObject = GetOrCreatePanel(
+                playArea,
+                "Bouncy Jump Tama Marker",
+                Vector2.zero,
+                new Vector2(86f, 86f));
+            var marker = markerObject.GetComponent<RectTransform>();
+            ConfigureCenteredRect(marker, new Vector2(86f, 86f));
+            marker.anchoredPosition = new Vector2(0f, -112f);
+            if (markerObject.TryGetComponent(out Image markerImage))
+            {
+                markerImage.color = new Color(1f, 0.72f, 0.25f, 1f);
+                markerImage.raycastTarget = false;
+                ApplyCircleImage(markerImage);
+            }
+
+            var face = GetOrCreateText(
+                marker,
+                "Bouncy Jump Tama Face",
+                "•ᴗ•",
+                24,
+                TextAnchor.MiddleCenter,
+                Vector2.zero,
+                new Vector2(78f, 52f));
+            ConfigureCenteredRect(face.rectTransform, new Vector2(78f, 52f));
+            face.raycastTarget = false;
+
+            var jumpButton = GetOrCreateButton(
+                playArea,
+                "Bouncy Jump Input Button",
+                "점프!",
+                new Vector2(0f, 154f),
+                new Vector2(216f, 60f));
+            ApplyCareButtonStyle(jumpButton);
+            var jumpRect = jumpButton.GetComponent<RectTransform>();
+            jumpRect.anchorMin = new Vector2(0.5f, 0.5f);
+            jumpRect.anchorMax = new Vector2(0.5f, 0.5f);
+            jumpRect.pivot = new Vector2(0.5f, 0.5f);
+            jumpRect.anchoredPosition = new Vector2(0f, 154f);
+            jumpRect.sizeDelta = new Vector2(216f, 60f);
+
+            var result = GetOrCreateText(
+                card.transform,
+                "Bouncy Jump Result Text",
+                "빛나는 착지 구역과 겹칠 때 점프하세요!",
+                18,
+                TextAnchor.MiddleCenter,
+                new Vector2(58f, -564f),
+                new Vector2(640f, 104f));
+            result.horizontalOverflow = HorizontalWrapMode.Wrap;
+            result.resizeTextForBestFit = true;
+            result.resizeTextMinSize = 14;
+            result.resizeTextMaxSize = 18;
+            var cancel = GetOrCreateTopLeftButton(
+                card.transform,
+                "Bouncy Jump Cancel Button",
+                "그만하기",
+                new Vector2(718f, -594f),
+                new Vector2(164f, 52f));
+            var confirm = GetOrCreateTopLeftButton(
+                card.transform,
+                "Bouncy Jump Confirm Button",
+                "확인",
+                new Vector2(718f, -594f),
+                new Vector2(164f, 52f));
+            ApplyCareButtonStyle(cancel);
+            ApplyCareButtonStyle(confirm);
+
+            var controller = canvasTransform.GetComponent<BouncyJumpMiniGameController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<BouncyJumpMiniGameController>();
+            }
+
+            controller.Configure(
+                overlay,
+                playArea,
+                marker,
+                target,
+                time,
+                score,
+                combo,
+                result,
+                jumpButton,
+                cancel,
+                confirm,
+                milkroomUi,
+                visualController,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsurePlayChoicePanel(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                PlayChoicePanelController.OverlayObjectName,
+                new Color(0.08f, 0.06f, 0.12f, 0.72f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Play Choice Card",
+                Vector2.zero,
+                new Vector2(680f, 430f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(680f, 430f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.95f, 0.82f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Play Choice Title Text",
+                "어떻게 놀아줄까요?",
+                30,
+                TextAnchor.MiddleCenter,
+                new Vector2(40f, -30f),
+                new Vector2(600f, 50f));
+            title.fontStyle = FontStyle.Bold;
+            var status = GetOrCreateText(
+                card.transform,
+                "Play Choice Status Text",
+                "놀이를 선택해 주세요.",
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(60f, -94f),
+                new Vector2(560f, 66f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var milkDrop = GetOrCreateTopLeftButton(
+                card.transform,
+                "Play Choice Milk Drop Button",
+                "우유방울 받기\n30초 반응 게임",
+                new Vector2(64f, -184f),
+                new Vector2(260f, 108f));
+            var bouncy = GetOrCreateTopLeftButton(
+                card.transform,
+                "Play Choice Bouncy Jump Button",
+                "말랑 점프\n25초 타이밍 게임",
+                new Vector2(356f, -184f),
+                new Vector2(260f, 108f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Play Choice Close Button",
+                "닫기",
+                new Vector2(252f, -330f),
+                new Vector2(176f, 50f));
+            ApplyCareButtonStyle(milkDrop);
+            ApplyCareButtonStyle(bouncy);
+            ApplyCareButtonStyle(close);
+
+            var controller = canvasTransform.GetComponent<PlayChoicePanelController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<PlayChoicePanelController>();
+            }
+
+            controller.Configure(
+                overlay,
+                status,
+                milkDrop,
+                bouncy,
+                close,
+                canvasTransform.GetComponent<MilkDropMiniGameController>(),
+                canvasTransform.GetComponent<BouncyJumpMiniGameController>(),
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureNewGameSetup(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                NewGameSetupController.OverlayObjectName,
+                new Color(0.08f, 0.05f, 0.02f, 0.76f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "New Game Setup Card",
+                Vector2.zero,
+                new Vector2(980f, 650f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(980f, 650f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.85f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var progress = GetOrCreateText(card.transform, "New Game Setup Progress Text", "새 게임 설정 · 1/2", 18,
+                TextAnchor.MiddleCenter, new Vector2(54f, -28f), new Vector2(872f, 30f));
+            progress.color = new Color(0.72f, 0.38f, 0.08f);
+            progress.fontStyle = FontStyle.Bold;
+            var title = GetOrCreateText(card.transform, "New Game Setup Title Text", "함께할 알을 골라 주세요", 32,
+                TextAnchor.MiddleCenter, new Vector2(54f, -70f), new Vector2(872f, 50f));
+            title.fontStyle = FontStyle.Bold;
+            var body = GetOrCreateText(card.transform, "New Game Setup Body Text", "다섯 알은 서로 다른 초기 성향의 바탕을 가지고 있어요.", 18,
+                TextAnchor.MiddleCenter, new Vector2(74f, -126f), new Vector2(832f, 54f));
+            body.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var selection = GetOrCreateText(card.transform, "New Game Setup Selection Text", "아직 선택하지 않음", 17,
+                TextAnchor.MiddleCenter, new Vector2(74f, -184f), new Vector2(832f, 44f));
+            var status = GetOrCreateText(card.transform, "New Game Setup Status Text", string.Empty, 15,
+                TextAnchor.MiddleCenter, new Vector2(74f, -522f), new Vector2(832f, 30f));
+            status.color = new Color(0.72f, 0.16f, 0.1f);
+
+            GameObject EnsureStep(string name)
+            {
+                var found = card.transform.Find(name);
+                if (found != null) return found.gameObject;
+                var root = new GameObject(name, typeof(RectTransform));
+                root.transform.SetParent(card.transform, false);
+                var rect = root.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                return root;
+            }
+
+            Button[] CreateChoices(Transform parent, string prefix, System.Collections.Generic.IReadOnlyList<Gameplay.NewGameSetup.NewGameSetupChoiceDefinition> choices, out Text[] labels)
+            {
+                var buttons = new Button[choices.Count];
+                labels = new Text[choices.Count];
+                for (var index = 0; index < choices.Count; index += 1)
+                {
+                    var row = index / 3;
+                    var column = index % 3;
+                    var x = 90f + column * 272f + (row == 1 ? 136f : 0f);
+                    var y = -256f - row * 112f;
+                    var button = GetOrCreateTopLeftButton(
+                        parent,
+                        $"{prefix} Option Button {index}",
+                        choices[index].DisplayName,
+                        new Vector2(x, y),
+                        new Vector2(248f, 84f));
+                    ApplyCareButtonStyle(button);
+                    buttons[index] = button;
+                    labels[index] = button.GetComponentInChildren<Text>(true);
+                }
+
+                return buttons;
+            }
+
+            var eggStep = EnsureStep("New Game Setup Egg Step");
+            var milkStep = EnsureStep("New Game Setup Milk Step");
+            var eggButtons = CreateChoices(eggStep.transform, "Egg", Gameplay.NewGameSetup.NewGameSetupCatalog.EggChoices, out var eggLabels);
+            var milkButtons = CreateChoices(milkStep.transform, "First Milk", Gameplay.NewGameSetup.NewGameSetupCatalog.FirstMilkChoices, out var milkLabels);
+
+            var back = GetOrCreateTopLeftButton(card.transform, "New Game Setup Back Button", "이전", new Vector2(62f, -574f), new Vector2(118f, 48f));
+            var skip = GetOrCreateTopLeftButton(card.transform, "New Game Setup Skip Button", "건너뛰기", new Vector2(620f, -574f), new Vector2(126f, 48f));
+            var primary = GetOrCreateTopLeftButton(card.transform, "New Game Setup Primary Button", "다음", new Vector2(762f, -574f), new Vector2(156f, 48f));
+            ApplyCareButtonStyle(back);
+            ApplyDangerButtonStyle(skip);
+            ApplyCareButtonStyle(primary);
+
+            var skipOverlay = GetOrCreateFullScreenOverlay(overlay.transform, "Skip New Game Setup Confirmation", new Color(0.08f, 0.05f, 0.02f, 0.74f));
+            var skipCard = GetOrCreatePanel(skipOverlay.transform, "Skip New Game Setup Card", Vector2.zero, new Vector2(580f, 290f));
+            ConfigureCenteredRect(skipCard.GetComponent<RectTransform>(), new Vector2(580f, 290f));
+            GetOrCreateText(skipCard.transform, "Skip New Game Setup Title", "새 게임 설정을 건너뛰시겠습니까?", 26,
+                TextAnchor.MiddleCenter, new Vector2(36f, -38f), new Vector2(508f, 52f)).fontStyle = FontStyle.Bold;
+            GetOrCreateText(skipCard.transform, "Skip New Game Setup Body", "알과 첫 우유는 기본 성향으로 정해집니다.", 17,
+                TextAnchor.MiddleCenter, new Vector2(54f, -108f), new Vector2(472f, 54f));
+            var keep = GetOrCreateTopLeftButton(skipCard.transform, "Continue New Game Setup Button", "계속 진행", new Vector2(260f, -210f), new Vector2(130f, 48f));
+            var confirmSkip = GetOrCreateTopLeftButton(skipCard.transform, "Confirm Skip New Game Setup Button", "건너뛰기", new Vector2(406f, -210f), new Vector2(130f, 48f));
+            ApplyCareButtonStyle(keep);
+            ApplyDangerButtonStyle(confirmSkip);
+
+            var controller = canvasTransform.GetComponent<NewGameSetupController>();
+            if (controller == null) controller = canvasTransform.gameObject.AddComponent<NewGameSetupController>();
+            controller.Configure(
+                overlay,
+                eggStep,
+                milkStep,
+                progress,
+                title,
+                body,
+                selection,
+                status,
+                eggButtons,
+                eggLabels,
+                milkButtons,
+                milkLabels,
+                back,
+                primary,
+                skip,
+                skipOverlay,
+                keep,
+                confirmSkip,
+                () => GameManager.Instance?.CurrentSave?.newGameSetup,
+                state =>
+                {
+                    var manager = GameManager.Instance;
+                    manager?.PersistNewGameSetup(state);
+                    if (manager != null)
+                    {
+                        milkroomUi?.Bind(manager.CurrentSave);
+                        visualController?.Bind(manager.CurrentTama);
+                    }
+                },
+                _ => canvasTransform.GetComponent<FirstMeetingOnboardingController>()?.Refresh(),
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureCheeseTamaSpeechBubble(
+            Transform canvasTransform,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var bubble = GetOrCreatePanel(
+                canvasTransform,
+                "CheeseTama Speech Bubble",
+                Vector2.zero,
+                new Vector2(380f, 122f));
+            var bubbleRect = bubble.GetComponent<RectTransform>();
+            bubbleRect.anchorMin = new Vector2(0.5f, 0.5f);
+            bubbleRect.anchorMax = new Vector2(0.5f, 0.5f);
+            bubbleRect.pivot = new Vector2(0.5f, 0f);
+            bubbleRect.anchoredPosition = Vector2.zero;
+            if (bubble.TryGetComponent(out Image bubbleImage))
+            {
+                bubbleImage.color = new Color(1f, 0.98f, 0.9f, 0.96f);
+                bubbleImage.raycastTarget = false;
+            }
+
+            var tailRect = GetOrCreateRect(bubble.transform, "CheeseTama Speech Tail");
+            tailRect.anchorMin = new Vector2(0.5f, 0f);
+            tailRect.anchorMax = new Vector2(0.5f, 0f);
+            tailRect.pivot = new Vector2(0.5f, 0.5f);
+            tailRect.anchoredPosition = new Vector2(0f, -3f);
+            tailRect.sizeDelta = new Vector2(26f, 26f);
+            tailRect.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            var tailImage = tailRect.GetComponent<Image>() ?? tailRect.gameObject.AddComponent<Image>();
+            tailImage.color = new Color(1f, 0.98f, 0.9f, 0.96f);
+            tailImage.raycastTarget = false;
+            tailRect.SetAsFirstSibling();
+
+            var text = GetOrCreateText(
+                bubble.transform,
+                "CheeseTama Speech Text",
+                string.Empty,
+                19,
+                TextAnchor.MiddleCenter,
+                new Vector2(24f, -18f),
+                new Vector2(332f, 86f));
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 14;
+            text.resizeTextMaxSize = 19;
+            text.raycastTarget = false;
+
+            var controller = canvasTransform.GetComponent<CheeseTamaSpeechBubbleController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<CheeseTamaSpeechBubbleController>();
+            }
+
+            controller.Configure(
+                bubble,
+                bubbleRect,
+                text,
+                canvasTransform.GetComponent<Canvas>(),
+                visualController != null ? visualController.transform : null,
+                Camera.main);
+            controller.SetOffsets(new Vector3(0f, 1.45f, 0f), new Vector2(0f, 4f));
+
+            var dialogueBridge = canvasTransform.GetComponent<CheeseTamaDialogueBridge>();
+            if (dialogueBridge == null)
+            {
+                dialogueBridge = canvasTransform.gameObject.AddComponent<CheeseTamaDialogueBridge>();
+            }
+
+            dialogueBridge.Configure(
+                controller,
+                Application.isPlaying ? GameManager.Instance : null,
+                canvasTransform);
+            bubble.transform.SetSiblingIndex(Mathf.Min(4, canvasTransform.childCount - 1));
+        }
+
+        private static void EnsureLateGameFeatures(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var statusPanel = canvasTransform.Find("Status Panel");
+            var entryParent = statusPanel != null ? statusPanel : canvasTransform;
+            var entryTop = statusPanel != null ? -430f : -104f;
+
+            var starOpen = GetOrCreateTopLeftButton(
+                entryParent,
+                "Open Star Legacy Button",
+                "별빛 숙성",
+                new Vector2(statusPanel != null ? 22f : 1500f, entryTop),
+                new Vector2(96f, 34f));
+            var bondOpen = GetOrMoveProfileEntryButton(
+                canvasTransform,
+                entryParent,
+                "Open Bond Status Button",
+                "우리 사이",
+                3);
+            var careerOpen = GetOrCreateTopLeftButton(
+                entryParent,
+                "Open Hidden Career Button",
+                "특별 기록",
+                new Vector2(statusPanel != null ? 230f : 1708f, entryTop),
+                new Vector2(106f, 34f));
+            ApplyCareButtonStyle(starOpen);
+            ApplyCareButtonStyle(bondOpen);
+            ApplyCareButtonStyle(careerOpen);
+
+            var starOverlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                StarLegacyPanelController.OverlayObjectName,
+                new Color(0.04f, 0.035f, 0.16f, 0.84f));
+            var starCard = GetOrCreatePanel(
+                starOverlay.transform,
+                "Star Legacy Card",
+                Vector2.zero,
+                new Vector2(780f, 620f));
+            ConfigureCenteredRect(starCard.GetComponent<RectTransform>(), new Vector2(780f, 620f));
+            if (starCard.TryGetComponent(out Image starCardImage))
+            {
+                starCardImage.color = new Color(0.94f, 0.92f, 1f, 1f);
+                starCardImage.raycastTarget = true;
+            }
+
+            var starTitle = GetOrCreateText(
+                starCard.transform,
+                "Star Legacy Title Text",
+                "별빛 숙성",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(54f, -36f),
+                new Vector2(672f, 54f));
+            starTitle.fontStyle = FontStyle.Bold;
+            var starRoute = GetOrCreateText(
+                starCard.transform,
+                "Star Legacy Route Text",
+                string.Empty,
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(76f, -108f),
+                new Vector2(628f, 92f));
+            starRoute.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var starSlider = GetOrCreateSettingsSlider(
+                starCard.transform,
+                "Star Legacy Maturation Slider",
+                new Vector2(116f, -226f),
+                new Vector2(548f, 30f),
+                0f,
+                FinalMaturationCycleSystem.RequiredProgress,
+                true);
+            starSlider.interactable = false;
+            var maturationText = GetOrCreateText(
+                starCard.transform,
+                "Star Legacy Maturation Text",
+                "최종형 숙성 0/100",
+                19,
+                TextAnchor.MiddleCenter,
+                new Vector2(80f, -270f),
+                new Vector2(620f, 40f));
+            var rewardText = GetOrCreateText(
+                starCard.transform,
+                "Star Legacy Reward Text",
+                "받을 숙성 보상이 없습니다.",
+                18,
+                TextAnchor.MiddleCenter,
+                new Vector2(80f, -320f),
+                new Vector2(620f, 72f));
+            rewardText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var starStatus = GetOrCreateText(
+                starCard.transform,
+                "Star Legacy Status Text",
+                string.Empty,
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(80f, -398f),
+                new Vector2(620f, 58f));
+            starStatus.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var starEgg = GetOrCreateTopLeftButton(
+                starCard.transform,
+                "Begin Star Egg Button",
+                "별빛 알 만나기",
+                new Vector2(64f, -494f),
+                new Vector2(176f, 54f));
+            var evolve = GetOrCreateTopLeftButton(
+                starCard.transform,
+                "Emmental Evolution Button",
+                "빛 이어보기",
+                new Vector2(256f, -494f),
+                new Vector2(154f, 54f));
+            var claim = GetOrCreateTopLeftButton(
+                starCard.transform,
+                "Final Maturation Claim Button",
+                "숙성 보상",
+                new Vector2(426f, -494f),
+                new Vector2(140f, 54f));
+            var starClose = GetOrCreateTopLeftButton(
+                starCard.transform,
+                "Star Legacy Close Button",
+                "닫기",
+                new Vector2(582f, -494f),
+                new Vector2(134f, 54f));
+            ApplyCareButtonStyle(starEgg);
+            ApplyCareButtonStyle(evolve);
+            ApplyCareButtonStyle(claim);
+            ApplyCareButtonStyle(starClose);
+
+            var starController = canvasTransform.GetComponent<StarLegacyPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<StarLegacyPanelController>();
+            var lateBridge = canvasTransform.GetComponent<LateGameFeatureBridge>()
+                ?? canvasTransform.gameObject.AddComponent<LateGameFeatureBridge>();
+            starController.Configure(
+                starOverlay,
+                starTitle,
+                starRoute,
+                starSlider,
+                maturationText,
+                rewardText,
+                starStatus,
+                evolve,
+                claim,
+                starClose,
+                starOpen,
+                () => GameManager.Instance?.GetStarLegacyViewModel()
+                    ?? StarLegacyPanelViewModel.Hidden(),
+                () => GameManager.Instance != null
+                    ? GameManager.Instance.TryEvolveEmmental()
+                    : default,
+                () => GameManager.Instance != null
+                    ? GameManager.Instance.ClaimFinalMaturationReward()
+                    : default,
+                lateBridge.SetStarPanelBlocking);
+
+            var bondOverlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Bond Status Overlay",
+                new Color(0.09f, 0.04f, 0.06f, 0.78f));
+            var bondCard = GetOrCreatePanel(
+                bondOverlay.transform,
+                "Bond Status Card",
+                Vector2.zero,
+                new Vector2(680f, 470f));
+            ConfigureCenteredRect(bondCard.GetComponent<RectTransform>(), new Vector2(680f, 470f));
+            if (bondCard.TryGetComponent(out Image bondCardImage))
+            {
+                bondCardImage.color = new Color(1f, 0.94f, 0.93f, 1f);
+                bondCardImage.raycastTarget = true;
+            }
+
+            var bondTitle = GetOrCreateText(
+                bondCard.transform,
+                "Bond Status Title Text",
+                "치즈타마와 우리 사이",
+                30,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -38f),
+                new Vector2(584f, 54f));
+            bondTitle.fontStyle = FontStyle.Bold;
+            var relationship = GetOrCreateText(
+                bondCard.transform,
+                "Bond Relationship Text",
+                string.Empty,
+                23,
+                TextAnchor.MiddleCenter,
+                new Vector2(70f, -122f),
+                new Vector2(540f, 48f));
+            var trait = GetOrCreateText(
+                bondCard.transform,
+                "Bond Trait Text",
+                string.Empty,
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(70f, -190f),
+                new Vector2(540f, 44f));
+            var preference = GetOrCreateText(
+                bondCard.transform,
+                "Bond Preference Text",
+                string.Empty,
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(76f, -250f),
+                new Vector2(528f, 84f));
+            preference.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var bondClose = GetOrCreateTopLeftButton(
+                bondCard.transform,
+                "Bond Status Close Button",
+                "닫기",
+                new Vector2(250f, -382f),
+                new Vector2(180f, 54f));
+            ApplyCareButtonStyle(bondClose);
+            var bondController = canvasTransform.GetComponent<BondStatusPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<BondStatusPanelController>();
+            bondController.Configure(
+                bondOverlay,
+                relationship,
+                trait,
+                preference,
+                bondOpen,
+                bondClose);
+
+            var careerOverlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Hidden Career Card Overlay",
+                new Color(0.035f, 0.05f, 0.09f, 0.82f));
+            var careerCard = GetOrCreatePanel(
+                careerOverlay.transform,
+                "Hidden Career Card",
+                Vector2.zero,
+                new Vector2(860f, 700f));
+            ConfigureCenteredRect(careerCard.GetComponent<RectTransform>(), new Vector2(860f, 700f));
+            if (careerCard.TryGetComponent(out Image careerCardImage))
+            {
+                careerCardImage.color = new Color(0.92f, 0.96f, 1f, 1f);
+                careerCardImage.raycastTarget = true;
+            }
+
+            var careerTitle = GetOrCreateText(
+                careerCard.transform,
+                "Hidden Career Title Text",
+                string.Empty,
+                31,
+                TextAnchor.MiddleCenter,
+                new Vector2(54f, -34f),
+                new Vector2(752f, 54f));
+            careerTitle.fontStyle = FontStyle.Bold;
+            var careerViewport = GetOrCreatePanel(
+                careerCard.transform,
+                "Hidden Career Viewport",
+                new Vector2(52f, -104f),
+                new Vector2(756f, 490f));
+            if (careerViewport.TryGetComponent(out Image careerViewportImage))
+            {
+                careerViewportImage.color = new Color(0.975f, 0.99f, 1f, 0.96f);
+            }
+
+            if (careerViewport.GetComponent<RectMask2D>() == null)
+            {
+                careerViewport.AddComponent<RectMask2D>();
+            }
+
+            var careerContent = GetOrCreateRect(careerViewport.transform, "Hidden Career Content");
+            careerContent.anchorMin = new Vector2(0f, 1f);
+            careerContent.anchorMax = new Vector2(1f, 1f);
+            careerContent.pivot = new Vector2(0.5f, 1f);
+            careerContent.anchoredPosition = new Vector2(0f, -20f);
+            careerContent.sizeDelta = new Vector2(-48f, 0f);
+            var careerText = careerContent.GetComponent<Text>()
+                ?? careerContent.gameObject.AddComponent<Text>();
+            careerText.font = GetDefaultFont();
+            careerText.fontSize = 18;
+            careerText.alignment = TextAnchor.UpperLeft;
+            careerText.color = new Color(0.16f, 0.2f, 0.3f);
+            careerText.raycastTarget = false;
+            careerText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            careerText.verticalOverflow = VerticalWrapMode.Overflow;
+            var careerFitter = careerContent.GetComponent<ContentSizeFitter>()
+                ?? careerContent.gameObject.AddComponent<ContentSizeFitter>();
+            careerFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            careerFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var careerScroll = careerViewport.GetComponent<ScrollRect>()
+                ?? careerViewport.AddComponent<ScrollRect>();
+            careerScroll.viewport = careerViewport.GetComponent<RectTransform>();
+            careerScroll.content = careerContent;
+            careerScroll.horizontal = false;
+            careerScroll.vertical = true;
+            careerScroll.movementType = ScrollRect.MovementType.Clamped;
+            careerScroll.scrollSensitivity = 34f;
+            var careerClose = GetOrCreateTopLeftButton(
+                careerCard.transform,
+                "Hidden Career Close Button",
+                "닫기",
+                new Vector2(340f, -624f),
+                new Vector2(180f, 54f));
+            ApplyCareButtonStyle(careerClose);
+            var careerController = canvasTransform.GetComponent<HiddenCareerCardPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<HiddenCareerCardPanelController>();
+            careerController.Configure(
+                careerOverlay,
+                careerTitle,
+                careerText,
+                careerOpen,
+                careerClose);
+
+            var bubble = canvasTransform.GetComponent<CheeseTamaSpeechBubbleController>();
+            var reactionPresenter = canvasTransform.GetComponent<BondReactionPresenter>()
+                ?? canvasTransform.gameObject.AddComponent<BondReactionPresenter>();
+            reactionPresenter.Configure(bubble, visualController);
+
+            EmmentalConstellationPresenter constellation = null;
+            if (visualController != null)
+            {
+                constellation = visualController.GetComponent<EmmentalConstellationPresenter>()
+                    ?? visualController.gameObject.AddComponent<EmmentalConstellationPresenter>();
+                constellation.Configure(visualController.transform, 1f);
+            }
+
+            lateBridge.Configure(
+                Application.isPlaying ? GameManager.Instance : null,
+                starController,
+                bondController,
+                careerController,
+                reactionPresenter,
+                constellation,
+                visualController,
+                milkroomUi,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>(),
+                starEgg,
+                starStatus,
+                starOpen,
+                starClose,
+                bondOpen,
+                bondClose,
+                careerOpen,
+                careerClose);
+
+            starOverlay.transform.SetAsLastSibling();
+            bondOverlay.transform.SetAsLastSibling();
+            careerOverlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureGrowthJourney(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                GrowthJourneyController.OverlayObjectName,
+                new Color(0.04f, 0.04f, 0.14f, 0.82f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Growth Journey Card",
+                Vector2.zero,
+                new Vector2(780f, 560f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(780f, 560f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.95f, 0.93f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Growth Journey Title Text",
+                "치즈타마 성장 여정",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(54f, -34f),
+                new Vector2(672f, 54f));
+            title.fontStyle = FontStyle.Bold;
+            var level = GetOrCreateText(
+                card.transform,
+                "Growth Journey Level Text",
+                "성장 레벨  1/33",
+                24,
+                TextAnchor.MiddleLeft,
+                new Vector2(80f, -122f),
+                new Vector2(620f, 44f));
+            var milk = GetOrCreateText(
+                card.transform,
+                "Growth Journey Milk Text",
+                "주요 우유 완전 성장  0/7",
+                24,
+                TextAnchor.MiddleLeft,
+                new Vector2(80f, -184f),
+                new Vector2(620f, 44f));
+            var goal = GetOrCreateText(
+                card.transform,
+                "Growth Journey Goal Text",
+                "다음 성장 목표를 확인하는 중입니다.",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(80f, -256f),
+                new Vector2(620f, 94f));
+            goal.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var unlock = GetOrCreateText(
+                card.transform,
+                "Growth Journey Unlock Text",
+                "Lv.33과 주요 우유 완전 성장을 모두 달성하면 별빛 루트가 열립니다.",
+                18,
+                TextAnchor.MiddleCenter,
+                new Vector2(80f, -368f),
+                new Vector2(620f, 74f));
+            unlock.horizontalOverflow = HorizontalWrapMode.Wrap;
+            unlock.fontStyle = FontStyle.Bold;
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Growth Journey Close Button",
+                "확인",
+                new Vector2(296f, -468f),
+                new Vector2(188f, 52f));
+            ApplyCareButtonStyle(close);
+
+            var statusPanel = canvasTransform.Find("Status Panel");
+            var recordTitle = statusPanel != null
+                ? statusPanel.Find("Detail Title Text") as RectTransform
+                : null;
+            if (recordTitle != null)
+            {
+                recordTitle.sizeDelta = new Vector2(316f, recordTitle.sizeDelta.y);
+            }
+            var open = GetOrMoveProfileEntryButton(
+                canvasTransform,
+                statusPanel,
+                "Open Growth Journey Button",
+                "성장 여정",
+                1);
+            ApplyCareButtonStyle(open);
+
+            var controller = canvasTransform.GetComponent<GrowthJourneyController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<GrowthJourneyController>();
+            }
+
+            controller.Configure(
+                overlay,
+                title,
+                level,
+                milk,
+                goal,
+                unlock,
+                close,
+                open,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureMemoryJournal(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            const string overlayName = "Memory Journal Overlay";
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                overlayName,
+                new Color(0.07f, 0.05f, 0.03f, 0.78f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Memory Journal Card",
+                Vector2.zero,
+                new Vector2(900f, 760f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(900f, 760f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.965f, 0.86f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Memory Journal Title Text",
+                "치즈타마 추억일기",
+                32,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -34f),
+                new Vector2(530f, 52f));
+            title.fontStyle = FontStyle.Bold;
+            var unread = GetOrCreateText(
+                card.transform,
+                "Memory Journal Unread Text",
+                "모두 읽음",
+                18,
+                TextAnchor.MiddleRight,
+                new Vector2(620f, -42f),
+                new Vector2(220f, 38f));
+            unread.color = new Color(0.72f, 0.39f, 0.1f);
+
+            var viewportObject = GetOrCreatePanel(
+                card.transform,
+                "Memory Journal Viewport",
+                new Vector2(48f, -108f),
+                new Vector2(804f, 500f));
+            if (viewportObject.TryGetComponent(out Image viewportImage))
+            {
+                viewportImage.color = new Color(1f, 0.985f, 0.93f, 0.94f);
+            }
+
+            var viewportRect = viewportObject.GetComponent<RectTransform>();
+            if (viewportObject.GetComponent<RectMask2D>() == null)
+            {
+                viewportObject.AddComponent<RectMask2D>();
+            }
+
+            var contentRect = GetOrCreateRect(viewportObject.transform, "Memory Journal Content");
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = new Vector2(0f, -14f);
+            contentRect.sizeDelta = new Vector2(-44f, 0f);
+            var entries = contentRect.GetComponent<Text>() ?? contentRect.gameObject.AddComponent<Text>();
+            entries.font = GetDefaultFont();
+            entries.fontSize = 18;
+            entries.alignment = TextAnchor.UpperLeft;
+            entries.color = new Color(0.25f, 0.18f, 0.12f);
+            entries.raycastTarget = false;
+            entries.supportRichText = true;
+            entries.horizontalOverflow = HorizontalWrapMode.Wrap;
+            entries.verticalOverflow = VerticalWrapMode.Overflow;
+            var contentFitter = contentRect.GetComponent<ContentSizeFitter>()
+                ?? contentRect.gameObject.AddComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scroll = viewportObject.GetComponent<ScrollRect>()
+                ?? viewportObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewportRect;
+            scroll.content = contentRect;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 34f;
+
+            var empty = GetOrCreateText(
+                viewportObject.transform,
+                "Memory Journal Empty Text",
+                "아직 기록된 추억이 없어요.\n함께 돌보고 놀아주며 첫 장을 채워보세요.",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(70f, -170f),
+                new Vector2(664f, 140f));
+            empty.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            var markRead = GetOrCreateTopLeftButton(
+                card.transform,
+                "Memory Journal Mark Read Button",
+                "모두 읽음",
+                new Vector2(500f, -656f),
+                new Vector2(160f, 54f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Memory Journal Close Button",
+                "닫기",
+                new Vector2(688f, -656f),
+                new Vector2(164f, 54f));
+            ApplyCareButtonStyle(markRead);
+            ApplyCareButtonStyle(close);
+
+            var statusPanel = canvasTransform.Find("Status Panel");
+            var open = GetOrMoveProfileEntryButton(
+                canvasTransform,
+                statusPanel,
+                "Open Memory Journal Button",
+                "추억일기",
+                2);
+            ApplyCareButtonStyle(open);
+
+            var manager = Application.isPlaying ? GameManager.Instance : null;
+            var controller = canvasTransform.GetComponent<MemoryJournalPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<MemoryJournalPanelController>();
+            controller.Configure(
+                overlay,
+                title,
+                unread,
+                entries,
+                empty,
+                markRead,
+                close,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            controller.BindProvider(
+                () => GameManager.Instance?.CurrentSave?.memoryJournal,
+                _ => GameManager.Instance?.SaveGame(),
+                unlockId => IsMemoryJournalUnlockAvailable(GameManager.Instance, unlockId));
+            open.onClick.RemoveAllListeners();
+            open.onClick.AddListener(controller.Open);
+
+            var bubble = canvasTransform.GetComponent<CheeseTamaSpeechBubbleController>();
+            if (bubble != null)
+            {
+                var bridge = canvasTransform.GetComponent<MemoryJournalRecallBridge>()
+                    ?? canvasTransform.gameObject.AddComponent<MemoryJournalRecallBridge>();
+                bridge.Configure(bubble, manager, canvasTransform);
+            }
+
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureCheeseStarDelivery(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            const string overlayName = "Cheese Star Delivery Overlay";
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                overlayName,
+                new Color(0.07f, 0.05f, 0.03f, 0.78f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Cheese Star Delivery Card",
+                Vector2.zero,
+                new Vector2(680f, 560f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(680f, 560f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.95f, 0.78f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Delivery Title Text",
+                "오늘의 배달",
+                34,
+                TextAnchor.MiddleCenter,
+                new Vector2(44f, -38f),
+                new Vector2(592f, 58f));
+            title.fontStyle = FontStyle.Bold;
+            var streak = GetOrCreateText(
+                card.transform,
+                "Delivery Streak Text",
+                "연속 1일째 · 보상 1일차",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(58f, -108f),
+                new Vector2(564f, 40f));
+            streak.color = new Color(0.72f, 0.4f, 0.1f);
+            var rewardPanel = GetOrCreatePanel(
+                card.transform,
+                "Delivery Reward Panel",
+                new Vector2(104f, -174f),
+                new Vector2(472f, 164f));
+            if (rewardPanel.TryGetComponent(out Image rewardImage))
+            {
+                rewardImage.color = new Color(1f, 0.985f, 0.91f, 1f);
+            }
+
+            var reward = GetOrCreateText(
+                rewardPanel.transform,
+                "Delivery Reward Text",
+                "우유 코인 +20\n우유방울 +3",
+                24,
+                TextAnchor.MiddleCenter,
+                new Vector2(36f, -22f),
+                new Vector2(400f, 120f));
+            reward.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var note = GetOrCreateText(
+                card.transform,
+                "Delivery Note Text",
+                "오늘 찾아온 포근한 선물이에요.",
+                18,
+                TextAnchor.MiddleCenter,
+                new Vector2(62f, -360f),
+                new Vector2(556f, 62f));
+            note.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var later = GetOrCreateTopLeftButton(
+                card.transform,
+                "Delivery Later Button",
+                "나중에",
+                new Vector2(160f, -460f),
+                new Vector2(160f, 54f));
+            var claim = GetOrCreateTopLeftButton(
+                card.transform,
+                "Delivery Claim Button",
+                "선물 받기",
+                new Vector2(360f, -460f),
+                new Vector2(160f, 54f));
+            ApplyCareButtonStyle(later);
+            ApplyCareButtonStyle(claim);
+
+            var cardController = canvasTransform.GetComponent<CheeseStarDeliveryCardController>()
+                ?? canvasTransform.gameObject.AddComponent<CheeseStarDeliveryCardController>();
+            cardController.Configure(
+                overlay,
+                title,
+                streak,
+                reward,
+                note,
+                claim,
+                later);
+
+            var manager = Application.isPlaying ? GameManager.Instance : null;
+            var bridge = canvasTransform.GetComponent<CheeseStarDeliveryBridge>()
+                ?? canvasTransform.gameObject.AddComponent<CheeseStarDeliveryBridge>();
+            bridge.Configure(
+                cardController,
+                manager,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>(),
+                canvasTransform);
+
+            var careTipPanel = canvasTransform.Find("Care Tip Panel");
+            var open = GetOrMoveUtilityButton(
+                canvasTransform,
+                careTipPanel,
+                "Open Delivery Button",
+                "오늘배달",
+                new Vector2(0f, -48f),
+                new Vector2(104f, 40f));
+            ApplyCareButtonStyle(open);
+            open.onClick.RemoveAllListeners();
+            open.onClick.AddListener(() =>
+            {
+                var liveManager = GameManager.Instance;
+                if (liveManager != null)
+                {
+                    bridge.TryShowOffer(liveManager.ObserveCheeseStarDelivery());
+                }
+            });
+            bridge.BindEntryButton(open);
+
+            if (careTipPanel != null)
+            {
+                var titleRect = careTipPanel.Find("Care Tip Title Text") as RectTransform;
+                if (titleRect != null)
+                {
+                    titleRect.gameObject.SetActive(true);
+                    titleRect.anchoredPosition = new Vector2(22f, -16f);
+                    titleRect.sizeDelta = new Vector2(306f, 30f);
+                    if (titleRect.TryGetComponent(out Text titleText))
+                    {
+                        titleText.text = "돌봄 팁";
+                    }
+                }
+            }
+
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static bool IsMemoryJournalUnlockAvailable(GameManager manager, string unlockId)
+        {
+            var unlocks = manager?.CurrentSave?.unlocks;
+            if (unlocks == null || string.IsNullOrWhiteSpace(unlockId))
+            {
+                return false;
+            }
+
+            return unlockId switch
+            {
+                "star" or "star_route" or "star_milk" => unlocks.starMilkUnlocked,
+                "fantasy_powder" => unlocks.fantasyPowderEnabled,
+                _ => false
+            };
+        }
+
+        private static void EnsureFantasyPowderHiddenRecipes(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            const string overlayName = "Fantasy Powder Overlay";
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                overlayName,
+                new Color(0.08f, 0.04f, 0.13f, 0.8f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Fantasy Powder Card",
+                Vector2.zero,
+                new Vector2(920f, 700f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(920f, 700f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.98f, 0.94f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Fantasy Powder Title Text",
+                "환상가루 비밀 조합",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -30f),
+                new Vector2(824f, 54f));
+            title.fontStyle = FontStyle.Bold;
+            var powder = GetOrCreateText(
+                card.transform,
+                "Fantasy Powder Quantity Text",
+                "보유 수량 0",
+                19,
+                TextAnchor.MiddleLeft,
+                new Vector2(60f, -92f),
+                new Vector2(280f, 38f));
+            var attempts = GetOrCreateText(
+                card.transform,
+                "Fantasy Powder Attempts Text",
+                "시도 0회 · 단서 0/3",
+                19,
+                TextAnchor.MiddleRight,
+                new Vector2(572f, -92f),
+                new Vector2(288f, 38f));
+            var hint = GetOrCreateText(
+                card.transform,
+                "Fantasy Powder Hint Text",
+                "아직 분명한 단서는 없어요.",
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(90f, -136f),
+                new Vector2(740f, 52f));
+            hint.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            var recipeNames = new Text[3];
+            var recipeStates = new Text[3];
+            var recipeButtons = new Button[3];
+            for (var index = 0; index < 3; index += 1)
+            {
+                var y = -210f - index * 84f;
+                recipeButtons[index] = GetOrCreateTopLeftButton(
+                    card.transform,
+                    $"Fantasy Recipe Button {index}",
+                    "선택",
+                    new Vector2(62f, y),
+                    new Vector2(118f, 58f));
+                ApplyCareButtonStyle(recipeButtons[index]);
+                recipeNames[index] = GetOrCreateText(
+                    card.transform,
+                    $"Fantasy Recipe Name Text {index}",
+                    $"미지의 조합 {index + 1}",
+                    20,
+                    TextAnchor.MiddleLeft,
+                    new Vector2(202f, y + 3f),
+                    new Vector2(430f, 48f));
+                recipeStates[index] = GetOrCreateText(
+                    card.transform,
+                    $"Fantasy Recipe State Text {index}",
+                    "미발견",
+                    17,
+                    TextAnchor.MiddleRight,
+                    new Vector2(664f, y + 3f),
+                    new Vector2(190f, 48f));
+            }
+
+            var detail = GetOrCreateText(
+                card.transform,
+                "Fantasy Powder Detail Text",
+                "표시할 조합이 없어요.",
+                18,
+                TextAnchor.MiddleCenter,
+                new Vector2(76f, -472f),
+                new Vector2(768f, 82f));
+            detail.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var status = GetOrCreateText(
+                card.transform,
+                "Fantasy Powder Status Text",
+                string.Empty,
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(76f, -554f),
+                new Vector2(768f, 52f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var attempt = GetOrCreateTopLeftButton(
+                card.transform,
+                "Fantasy Powder Attempt Button",
+                "가루 1개로 시도",
+                new Vector2(494f, -622f),
+                new Vector2(188f, 54f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Fantasy Powder Close Button",
+                "닫기",
+                new Vector2(704f, -622f),
+                new Vector2(150f, 54f));
+            ApplyCareButtonStyle(attempt);
+            ApplyCareButtonStyle(close);
+
+            var careTipPanel = canvasTransform.Find("Care Tip Panel");
+            var open = GetOrMoveUtilityButton(
+                canvasTransform,
+                careTipPanel,
+                "Open Fantasy Powder Button",
+                "비밀조합",
+                new Vector2(112f, 0f),
+                new Vector2(104f, 40f));
+            ApplyCareButtonStyle(open);
+
+            var controller = canvasTransform.GetComponent<FantasyPowderHiddenRecipePanelController>()
+                ?? canvasTransform.gameObject.AddComponent<FantasyPowderHiddenRecipePanelController>();
+            controller.Configure(
+                overlay,
+                powder,
+                attempts,
+                hint,
+                detail,
+                status,
+                recipeNames,
+                recipeStates,
+                recipeButtons,
+                attempt,
+                close,
+                () => GameManager.Instance?.GetFantasyPowderSnapshot()
+                    ?? Gameplay.HiddenRecipes.FantasyPowderPanelSnapshot.CreateHidden(),
+                recipeId => GameManager.Instance?.TryAttemptFantasyPowderRecipe(recipeId),
+                null,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            var manager = GameManager.Instance;
+            controller.BindEntryButton(open, manager);
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureFirstDayJourney(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                FirstDayJourneyController.OverlayObjectName,
+                new Color(0.08f, 0.06f, 0.03f, 0.78f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                FirstDayJourneyController.CardObjectName,
+                Vector2.zero,
+                new Vector2(720f, 660f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(720f, 660f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.86f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "First Day Journey Title Text",
+                "첫날 여정",
+                32,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -30f),
+                new Vector2(624f, 52f));
+            title.fontStyle = FontStyle.Bold;
+            var progress = GetOrCreateText(
+                card.transform,
+                "First Day Journey Progress Text",
+                "첫날 여정  0/6",
+                19,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -84f),
+                new Vector2(624f, 36f));
+            progress.color = new Color(0.67f, 0.36f, 0.08f);
+
+            var taskTexts = new Text[Gameplay.Journey.FirstDayJourneySystem.Tasks.Count];
+            for (var index = 0; index < taskTexts.Length; index += 1)
+            {
+                taskTexts[index] = GetOrCreateText(
+                    card.transform,
+                    $"First Day Journey Task Text {index}",
+                    $"○ {Gameplay.Journey.FirstDayJourneySystem.Tasks[index].DisplayName}",
+                    20,
+                    TextAnchor.MiddleLeft,
+                    new Vector2(110f, -142f - index * 58f),
+                    new Vector2(500f, 44f));
+            }
+
+            var status = GetOrCreateText(
+                card.transform,
+                "First Day Journey Status Text",
+                "정해진 순서 없이 천천히 경험해도 괜찮아요.",
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(70f, -500f),
+                new Vector2(580f, 58f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "First Day Journey Close Button",
+                "확인",
+                new Vector2(275f, -590f),
+                new Vector2(170f, 52f));
+            var claim = GetOrCreateTopLeftButton(
+                card.transform,
+                "First Day Journey Claim Button",
+                "첫날 선물 받기",
+                new Vector2(275f, -532f),
+                new Vector2(170f, 52f));
+            ApplyCareButtonStyle(close);
+            ApplyCareButtonStyle(claim);
+
+            var profileEntries = GetProfileMenuEntryParent(canvasTransform);
+            var open = GetOrMoveUtilityButton(
+                canvasTransform,
+                profileEntries,
+                "Open First Day Journey Button",
+                "첫날 여정",
+                Vector2.zero,
+                new Vector2(104f, 40f));
+            ApplyCareButtonStyle(open);
+
+            var manager = Application.isPlaying ? GameManager.Instance : null;
+            var controller = canvasTransform.GetComponent<FirstDayJourneyController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<FirstDayJourneyController>();
+            }
+
+            controller.Configure(
+                overlay,
+                open,
+                progress,
+                status,
+                taskTexts,
+                claim,
+                close,
+                () => GameManager.Instance?.CurrentSave?.firstDayJourney,
+                () => GameManager.Instance?.MarkFirstDayJourneyShown(),
+                () => GameManager.Instance != null
+                    ? GameManager.Instance.ClaimFirstDayJourneyReward()
+                    : default,
+                manager,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureEvolutionMilestone(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Evolution Achievement Overlay",
+                new Color(0.11f, 0.05f, 0.16f, 0.78f));
+            var card = GetOrCreatePanel(overlay.transform, "Evolution Achievement Card", Vector2.zero, new Vector2(760f, 530f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(760f, 530f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.98f, 0.92f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(card.transform, "Evolution Achievement Title Text", "새로운 진화!", 34,
+                TextAnchor.MiddleCenter, new Vector2(54f, -42f), new Vector2(652f, 58f));
+            title.fontStyle = FontStyle.Bold;
+            var emblem = GetOrCreateText(card.transform, "Evolution Achievement Emblem Text", "✦", 88,
+                TextAnchor.MiddleCenter, new Vector2(250f, -112f), new Vector2(260f, 130f));
+            emblem.color = new Color(0.66f, 0.4f, 0.85f, 1f);
+            var level = GetOrCreateText(card.transform, "Evolution Achievement Level Text", "Lv.21 · 일반 진화 달성", 21,
+                TextAnchor.MiddleCenter, new Vector2(64f, -258f), new Vector2(632f, 38f));
+            level.fontStyle = FontStyle.Bold;
+            var description = GetOrCreateText(card.transform, "Evolution Achievement Description Text", "돌봄의 추억이 새로운 모습으로 이어졌어요.", 19,
+                TextAnchor.MiddleCenter, new Vector2(70f, -314f), new Vector2(620f, 118f));
+            description.horizontalOverflow = HorizontalWrapMode.Wrap;
+            description.resizeTextForBestFit = true;
+            description.resizeTextMinSize = 14;
+            description.resizeTextMaxSize = 19;
+            var confirm = GetOrCreateTopLeftButton(card.transform, "Evolution Achievement Confirm Button", "새 모습 만나기",
+                new Vector2(514f, -450f), new Vector2(192f, 54f));
+            ApplyCareButtonStyle(confirm);
+
+            var controller = canvasTransform.GetComponent<EvolutionMilestoneController>()
+                ?? canvasTransform.gameObject.AddComponent<EvolutionMilestoneController>();
+            controller.Configure(
+                overlay,
+                title,
+                level,
+                description,
+                confirm,
+                milkroomUi,
+                visualController,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureCleaningMiniGame(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                CleaningMiniGameController.OverlayObjectName,
+                new Color(0.07f, 0.12f, 0.11f, 0.8f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Cleaning Mini Game Card",
+                Vector2.zero,
+                new Vector2(940f, 730f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(940f, 730f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.94f, 0.99f, 0.94f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(card.transform, "Cleaning Title Text", "반짝반짝 청소", 32,
+                TextAnchor.MiddleCenter, new Vector2(42f, -24f), new Vector2(856f, 50f));
+            title.fontStyle = FontStyle.Bold;
+            var timeText = GetOrCreateText(card.transform, "Cleaning Time Text", "남은 시간  24초", 20,
+                TextAnchor.MiddleLeft, new Vector2(54f, -80f), new Vector2(270f, 36f));
+            var scoreText = GetOrCreateText(card.transform, "Cleaning Score Text", "점수  0", 20,
+                TextAnchor.MiddleCenter, new Vector2(334f, -80f), new Vector2(250f, 36f));
+            var progressText = GetOrCreateText(card.transform, "Cleaning Progress Text", "닦음 0 · 놓침 0", 20,
+                TextAnchor.MiddleRight, new Vector2(590f, -80f), new Vector2(296f, 36f));
+            var playAreaObject = GetOrCreatePanel(card.transform, "Cleaning Play Area", new Vector2(54f, -128f), new Vector2(832f, 430f));
+            var playArea = playAreaObject.GetComponent<RectTransform>();
+            if (playAreaObject.TryGetComponent(out Image playAreaImage))
+            {
+                playAreaImage.color = new Color(0.72f, 0.88f, 0.78f, 0.58f);
+                playAreaImage.raycastTarget = true;
+            }
+
+            if (playAreaObject.GetComponent<RectMask2D>() == null)
+            {
+                playAreaObject.AddComponent<RectMask2D>();
+            }
+
+            var spotTemplate = GetOrCreateButton(playArea, "Dirt Spot Template", "✦", Vector2.zero,
+                Vector2.one * CleaningMiniGameRules.SpotSizePixels);
+            ApplyCareButtonStyle(spotTemplate);
+            if (spotTemplate.TryGetComponent(out Image spotImage))
+            {
+                spotImage.sprite = null;
+                spotImage.color = new Color(0.42f, 0.27f, 0.14f, 0.94f);
+            }
+
+            var resultText = GetOrCreateText(card.transform, "Cleaning Result Text",
+                "얼룩을 눌러 밀크룸을 반짝이게 닦아 주세요.", 18, TextAnchor.MiddleCenter,
+                new Vector2(54f, -574f), new Vector2(626f, 96f));
+            resultText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            resultText.resizeTextForBestFit = true;
+            resultText.resizeTextMinSize = 14;
+            resultText.resizeTextMaxSize = 18;
+            var cancelButton = GetOrCreateTopLeftButton(card.transform, "Cleaning Cancel Button", "그만하기",
+                new Vector2(704f, -598f), new Vector2(182f, 54f));
+            var confirmButton = GetOrCreateTopLeftButton(card.transform, "Cleaning Confirm Button", "밀크룸으로",
+                new Vector2(704f, -598f), new Vector2(182f, 54f));
+            ApplyCareButtonStyle(cancelButton);
+            ApplyCareButtonStyle(confirmButton);
+
+            var controller = canvasTransform.GetComponent<CleaningMiniGameController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<CleaningMiniGameController>();
+            }
+
+            controller.Configure(
+                overlay,
+                playArea,
+                spotTemplate,
+                timeText,
+                scoreText,
+                progressText,
+                resultText,
+                cancelButton,
+                confirmButton,
+                milkroomUi,
+                visualController,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureDecorationShop(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var decorateOverlay = canvasTransform.Find("Decorate Overlay");
+            if (decorateOverlay == null)
+            {
+                return;
+            }
+
+            var shopRoot = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Decoration Shop Overlay",
+                new Color(0.1f, 0.06f, 0.02f, 0.7f));
+            var card = GetOrCreatePanel(shopRoot.transform, "Decoration Shop Card", Vector2.zero, new Vector2(1180f, 820f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(1180f, 820f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.85f, 1f);
+            }
+
+            var heading = GetOrCreateText(card.transform, "Decoration Shop Title Text", "밀크룸 장식 상점", 30,
+                TextAnchor.MiddleLeft, new Vector2(42f, -24f), new Vector2(480f, 50f));
+            heading.fontStyle = FontStyle.Bold;
+            var balance = GetOrCreateText(card.transform, "Decoration Shop Balance Text", "코인 0 · 우유방울 0", 18,
+                TextAnchor.MiddleRight, new Vector2(540f, -28f), new Vector2(452f, 42f));
+
+            var itemNames = new Text[DecorationCatalog.All.Length];
+            var itemStates = new Text[DecorationCatalog.All.Length];
+            var itemButtons = new Button[DecorationCatalog.All.Length];
+            for (var index = 0; index < DecorationCatalog.All.Length; index += 1)
+            {
+                var column = index % 3;
+                var row = index / 3;
+                var x = 42f + column * 286f;
+                var y = 96f + row * 92f;
+                itemButtons[index] = GetOrCreateTopLeftButton(card.transform,
+                    $"Decoration Item {index + 1} Button", string.Empty, new Vector2(x, -y), new Vector2(268f, 78f));
+                itemNames[index] = GetOrCreateText(itemButtons[index].transform, "Item Name Text",
+                    DecorationCatalog.All[index].displayName, 17, TextAnchor.UpperLeft,
+                    new Vector2(14f, -8f), new Vector2(238f, 28f));
+                itemStates[index] = GetOrCreateText(itemButtons[index].transform, "Item State Text", "보유 상태", 13,
+                    TextAnchor.LowerLeft, new Vector2(14f, -40f), new Vector2(238f, 25f));
+            }
+
+            var detail = GetOrCreateText(card.transform, "Decoration Detail Text", "장식을 선택해 주세요.", 18,
+                TextAnchor.UpperLeft, new Vector2(910f, -112f), new Vector2(228f, 240f));
+            detail.supportRichText = true;
+            var status = GetOrCreateText(card.transform, "Decoration Status Text", string.Empty, 16,
+                TextAnchor.UpperLeft, new Vector2(910f, -366f), new Vector2(228f, 94f));
+            var purchase = GetOrCreateTopLeftButton(card.transform, "Decoration Purchase Button", "구매",
+                new Vector2(910f, -488f), new Vector2(104f, 52f));
+            var equip = GetOrCreateTopLeftButton(card.transform, "Decoration Equip Button", "장착",
+                new Vector2(1030f, -488f), new Vector2(104f, 52f));
+            var close = GetOrCreateTopLeftButton(card.transform, "Decoration Shop Close Button", "닫기",
+                new Vector2(990f, -718f), new Vector2(144f, 52f));
+            ApplyCareButtonStyle(purchase);
+            ApplyCareButtonStyle(equip);
+            ApplyCareButtonStyle(close);
+
+            var controller = canvasTransform.GetComponent<DecorationShopPanelController>();
+            if (controller == null)
+            {
+                controller = canvasTransform.gameObject.AddComponent<DecorationShopPanelController>();
+            }
+
+            controller.Configure(
+                shopRoot,
+                balance,
+                detail,
+                status,
+                itemNames,
+                itemStates,
+                itemButtons,
+                purchase,
+                equip,
+                close,
+                () => ResolveDecorationManager()?.GetDecorationShopSnapshot()
+                    ?? DecorationShopSnapshot.CreateDefault(),
+                itemId =>
+                {
+                    var manager = ResolveDecorationManager();
+                    return manager != null
+                        ? manager.TryPurchaseDecoration(itemId)
+                        : DecorationShopRules.Purchase(itemId, DecorationShopSnapshot.CreateDefault());
+                },
+                itemId =>
+                {
+                    var manager = ResolveDecorationManager();
+                    return manager != null
+                        ? manager.TryEquipDecoration(itemId)
+                        : DecorationShopRules.Equip(itemId, DecorationShopSnapshot.CreateDefault());
+                });
+
+            var previewRect = decorateOverlay.Find("Decorate Preview Panel") as RectTransform;
+            if (previewRect != null)
+            {
+                previewRect.sizeDelta = new Vector2(692f, 432f);
+            }
+
+            var openShopButton = GetOrCreateTopLeftButton(
+                decorateOverlay,
+                "Open Decoration Shop Button",
+                "장식 상점",
+                new Vector2(568f, -562f),
+                new Vector2(144f, 42f));
+            ApplyCareButtonStyle(openShopButton);
+            openShopButton.onClick.RemoveAllListeners();
+            openShopButton.onClick.AddListener(controller.Open);
+        }
+
+        private static GameManager ResolveDecorationManager()
+        {
+            if (GameManager.Instance != null)
+            {
+                return GameManager.Instance;
+            }
+
+            return Application.isPlaying ? EnsureCoreSystems() : null;
+        }
+
+        private static void EnsureDecorationRoomPresenter()
+        {
+            var background = GameObject.Find("Milkroom Background");
+            if (background == null)
+            {
+                return;
+            }
+
+            var presenter = background.GetComponent<DecorationRoomPresenter>();
+            if (presenter == null)
+            {
+                presenter = background.AddComponent<DecorationRoomPresenter>();
+            }
+
+            var shell = background.transform.Find("RoomShell");
+            var wall = shell != null ? shell.Find("BackWall")?.GetComponent<Renderer>() : null;
+            var rug = background.transform.Find("Rug_Model");
+            var floor = rug != null
+                ? rug.GetComponentInChildren<Renderer>(true)
+                : shell != null ? shell.Find("Floor")?.GetComponent<Renderer>() : null;
+            var anchor = background.transform.Find("Decoration Accent Anchor");
+            if (anchor == null)
+            {
+                var anchorObject = new GameObject("Decoration Accent Anchor");
+                anchorObject.transform.SetParent(background.transform, false);
+                anchorObject.transform.localPosition = new Vector3(3.34f, -1.93f, 1.55f);
+                anchor = anchorObject.transform;
+            }
+
+            Transform EnsureDecorationAnchor(string name, Vector3 localPosition)
+            {
+                var found = background.transform.Find(name);
+                if (found != null)
+                {
+                    return found;
+                }
+
+                var created = new GameObject(name).transform;
+                created.SetParent(background.transform, false);
+                created.localPosition = localPosition;
+                return created;
+            }
+
+            var windowAnchor = EnsureDecorationAnchor("Decoration Window Anchor", new Vector3(-3.15f, 0.62f, 1.42f));
+            var shelfAnchor = EnsureDecorationAnchor("Decoration Shelf Anchor", new Vector3(3.05f, 0.18f, 1.36f));
+            var bedsideAnchor = EnsureDecorationAnchor("Decoration Bedside Anchor", new Vector3(-2.85f, -1.72f, 1.2f));
+
+            presenter.Configure(wall, floor, anchor, windowAnchor, shelfAnchor, bedsideAnchor);
+        }
+
+        private static void RemoveNormalEvolutionVisualAccents(
+            CheeseTamaVisualController visualController)
+        {
+            if (visualController == null)
+            {
+                return;
+            }
+
+            // Normal-evolution accents were previously drawn as primitive ribbons,
+            // drops, and spots in front of the character. In particular, the
+            // Mozzarella profile produced pale blue and white shapes over the face.
+            // The authored growth model already carries the intended facial detail,
+            // so remove both live components and any orphaned generated roots.
+            foreach (var bridge in visualController.GetComponents<NormalEvolutionVisualBridge>())
+            {
+                bridge.enabled = false;
+                DestroyObjectSafely(bridge);
+            }
+
+            foreach (var presenter in visualController.GetComponents<NormalEvolutionVisualPresenter>())
+            {
+                if (presenter.GeneratedRoot != null)
+                {
+                    presenter.GeneratedRoot.gameObject.SetActive(false);
+                }
+
+                presenter.enabled = false;
+                presenter.Release();
+                DestroyObjectSafely(presenter);
+            }
+
+            var modelRoot = visualController.ModelInstance;
+            if (modelRoot == null)
+            {
+                return;
+            }
+
+            while (true)
+            {
+                var generatedRoot = modelRoot.Find(NormalEvolutionVisualPresenter.GeneratedRootName);
+                if (generatedRoot == null)
+                {
+                    break;
+                }
+
+                generatedRoot.gameObject.SetActive(false);
+                generatedRoot.SetParent(null, true);
+                DestroyObjectSafely(generatedRoot.gameObject);
+            }
+        }
+
+        private static void EnsureAutonomousLife(
+            Transform canvasTransform,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null || visualController == null)
+            {
+                return;
+            }
+
+            var visualRoot = visualController.transform;
+            var motionObject = GameObject.Find("CheeseTama Autonomous Motion Root");
+            if (motionObject == null)
+            {
+                motionObject = new GameObject("CheeseTama Autonomous Motion Root");
+                motionObject.transform.position = CheeseTamaRestingWorldPosition;
+                motionObject.transform.rotation = Quaternion.identity;
+                motionObject.transform.localScale = Vector3.one;
+                motionObject.transform.SetParent(visualRoot.parent, true);
+            }
+
+            if (visualRoot.parent != motionObject.transform)
+            {
+                visualRoot.SetParent(motionObject.transform, true);
+            }
+
+            motionObject.transform.position = CheeseTamaRestingWorldPosition;
+            visualController.SetRestingWorldPosition(CheeseTamaRestingWorldPosition);
+
+            var sceneRoot = GameObject.Find("MilkroomSceneRoot");
+            if (sceneRoot == null)
+            {
+                sceneRoot = new GameObject("MilkroomSceneRoot");
+            }
+
+            var environment = GetOrCreateSceneGroup(sceneRoot.transform, "Environment");
+            var anchorRoot = GetOrCreateSceneGroup(environment, "Autonomous Life Anchors");
+            var restingY = CheeseTamaRestingWorldPosition.y;
+            var idle = EnsureAutonomousLifeAnchor(anchorRoot, "Idle Anchor", new Vector3(0f, restingY, 0.08f));
+            var nap = EnsureAutonomousLifeAnchor(anchorRoot, "Nap Anchor", new Vector3(-2.05f, restingY, 0.25f));
+            var window = EnsureAutonomousLifeAnchor(anchorRoot, "Window Anchor", new Vector3(-0.85f, restingY, 1.2f));
+            var shelf = EnsureAutonomousLifeAnchor(anchorRoot, "Shelf Anchor", new Vector3(1.9f, restingY, 1.15f));
+            var play = EnsureAutonomousLifeAnchor(anchorRoot, "Play Anchor", new Vector3(-1.15f, restingY, 0.15f));
+            var dance = EnsureAutonomousLifeAnchor(anchorRoot, "Dance Anchor", new Vector3(1.15f, restingY, 0.15f));
+
+            var presenter = motionObject.GetComponent<AutonomousLifePresenter>();
+            if (presenter == null)
+            {
+                presenter = motionObject.AddComponent<AutonomousLifePresenter>();
+            }
+
+            var bridge = motionObject.GetComponent<AutonomousLifeBridge>();
+            if (bridge == null)
+            {
+                bridge = motionObject.AddComponent<AutonomousLifeBridge>();
+            }
+
+            bridge.Configure(
+                presenter,
+                motionObject.transform,
+                new AutonomousLifeAnchorBindings(idle, nap, window, shelf, play, dance),
+                EnsureCoreSystems(),
+                visualController,
+                canvasTransform.GetComponent<CheeseTamaDialogueBridge>());
+        }
+
+        private static Transform EnsureAutonomousLifeAnchor(
+            Transform parent,
+            string name,
+            Vector3 worldPosition)
+        {
+            var anchor = parent.Find(name);
+            if (anchor == null)
+            {
+                anchor = new GameObject(name).transform;
+                anchor.SetParent(parent, false);
+            }
+
+            anchor.position = worldPosition;
+            anchor.rotation = Quaternion.identity;
+            anchor.localScale = Vector3.one;
+            return anchor;
+        }
+
+        private static void EnsureMilkroomAtmosphere(Transform canvasTransform, CheeseTama.Gameplay.CheeseTamaModel tama)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            // Restore the original Milkroom lighting. The atmosphere feature added
+            // a full-screen warm tint and an extra point light on top of the theme
+            // controller, making the room visibly brighter than the authored scene.
+            var overlayTransform = canvasTransform.Find("Milkroom Atmosphere Overlay");
+            if (overlayTransform != null)
+            {
+                DestroyObjectSafely(overlayTransform.gameObject);
+            }
+
+            var lightObject = GameObject.Find("Milkroom Atmosphere Light");
+            if (lightObject != null)
+            {
+                DestroyObjectSafely(lightObject);
+            }
+        }
+
+        private static void EnsureCheeseTamaPetInteraction(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null || visualController == null)
+            {
+                return;
+            }
+
+            var target = visualController.gameObject;
+            var interactionCollider = target.GetComponent<BoxCollider>();
+            if (interactionCollider == null)
+            {
+                interactionCollider = target.AddComponent<BoxCollider>();
+            }
+
+            interactionCollider.isTrigger = true;
+            var petController = target.GetComponent<CheeseTamaPetInteractionController>();
+            if (petController == null)
+            {
+                petController = target.AddComponent<CheeseTamaPetInteractionController>();
+            }
+
+            petController.Configure(milkroomUi, visualController, canvasTransform);
+        }
+
+        private static void EnsureUiButtonSounds(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var buttons = root.GetComponentsInChildren<Button>(true);
+            foreach (var button in buttons)
+            {
+                if (button != null && button.GetComponent<UiButtonSound>() == null)
+                {
+                    button.gameObject.AddComponent<UiButtonSound>();
+                }
+            }
+        }
+
         private static void BuildMilkroomSettings(
             Transform canvasTransform,
             Button settingsButton,
@@ -1230,7 +4808,7 @@ namespace CheeseTama.Core
             CheeseTamaVisualController visualController,
             out Text settingsLastSavedText)
         {
-            var settingsModal = GetOrCreateRightPanel(canvasTransform, "Settings Modal", new Vector2(-40, -116), new Vector2(560, 700));
+            var settingsModal = GetOrCreateRightPanel(canvasTransform, "Settings Modal", new Vector2(-40, -76), new Vector2(560, 780));
             if (settingsModal.TryGetComponent(out Image settingsImage))
             {
                 settingsImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
@@ -1240,8 +4818,8 @@ namespace CheeseTama.Core
             GetOrCreateText(settingsTransform, "Settings Title Text", "설정", 22, TextAnchor.UpperLeft, new Vector2(28, -24), new Vector2(280, 34));
             GetOrCreateText(settingsTransform, "Settings Data Title Text", "데이터 관리", 18, TextAnchor.UpperLeft, new Vector2(28, -82), new Vector2(300, 30));
             GetOrCreateText(settingsTransform, "Settings Sound Title Text", "소리", 18, TextAnchor.UpperLeft, new Vector2(28, -276), new Vector2(220, 28));
-            GetOrCreateText(settingsTransform, "Settings Display Title Text", "화면", 18, TextAnchor.UpperLeft, new Vector2(28, -392), new Vector2(220, 28));
-            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "조작", 18, TextAnchor.UpperLeft, new Vector2(28, -552), new Vector2(220, 28));
+            GetOrCreateText(settingsTransform, "Settings Display Title Text", "화면", 18, TextAnchor.UpperLeft, new Vector2(28, -472), new Vector2(220, 28));
+            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "조작", 18, TextAnchor.UpperLeft, new Vector2(28, -632), new Vector2(220, 28));
 
             var closeSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Close Settings Button", "닫기", new Vector2(424, -20), new Vector2(108, 40));
             var manualSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Save Button", "저장", new Vector2(28, -170), new Vector2(120, 42));
@@ -1256,27 +4834,33 @@ namespace CheeseTama.Core
             GetOrCreateText(settingsTransform, "Master Volume Label Text", "전체 볼륨", 14, TextAnchor.MiddleLeft, new Vector2(28, -308), new Vector2(100, 28));
             var masterVolumeSlider = GetOrCreateSettingsSlider(settingsTransform, "Master Volume Slider", new Vector2(132, -312), new Vector2(280, 22), 0f, 1f, false);
             var masterVolumeValueText = GetOrCreateText(settingsTransform, "Master Volume Value Text", "100%", 14, TextAnchor.MiddleRight, new Vector2(430, -306), new Vector2(80, 28));
-            var muteToggle = GetOrCreateSettingsToggle(settingsTransform, "Mute Audio Toggle", "음소거", new Vector2(28, -346), new Vector2(160, 30));
+            GetOrCreateText(settingsTransform, "Music Volume Label Text", "배경음", 14, TextAnchor.MiddleLeft, new Vector2(28, -346), new Vector2(100, 28));
+            var musicVolumeSlider = GetOrCreateSettingsSlider(settingsTransform, "Music Volume Slider", new Vector2(132, -350), new Vector2(280, 22), 0f, 1f, false);
+            var musicVolumeValueText = GetOrCreateText(settingsTransform, "Music Volume Value Text", "100%", 14, TextAnchor.MiddleRight, new Vector2(430, -344), new Vector2(80, 28));
+            GetOrCreateText(settingsTransform, "Effect Volume Label Text", "효과음", 14, TextAnchor.MiddleLeft, new Vector2(28, -384), new Vector2(100, 28));
+            var effectVolumeSlider = GetOrCreateSettingsSlider(settingsTransform, "Effect Volume Slider", new Vector2(132, -388), new Vector2(280, 22), 0f, 1f, false);
+            var effectVolumeValueText = GetOrCreateText(settingsTransform, "Effect Volume Value Text", "100%", 14, TextAnchor.MiddleRight, new Vector2(430, -382), new Vector2(80, 28));
+            var muteToggle = GetOrCreateSettingsToggle(settingsTransform, "Mute Audio Toggle", "전체 음소거", new Vector2(28, -422), new Vector2(180, 30));
 
-            var fullScreenToggle = GetOrCreateSettingsToggle(settingsTransform, "Fullscreen Toggle", "전체화면", new Vector2(28, -424), new Vector2(180, 30));
-            GetOrCreateText(settingsTransform, "UI Scale Label Text", "UI 크기", 14, TextAnchor.MiddleLeft, new Vector2(28, -460), new Vector2(100, 28));
+            var fullScreenToggle = GetOrCreateSettingsToggle(settingsTransform, "Fullscreen Toggle", "전체화면", new Vector2(28, -504), new Vector2(180, 30));
+            GetOrCreateText(settingsTransform, "UI Scale Label Text", "UI 크기", 14, TextAnchor.MiddleLeft, new Vector2(28, -540), new Vector2(100, 28));
             RemoveChildIfExists(settingsTransform, "UI Scale Slider");
-            var uiScale90Button = GetOrCreateTopLeftButton(settingsTransform, "UI Scale 90 Button", "90", new Vector2(132, -456), new Vector2(80, 34));
-            var uiScale100Button = GetOrCreateTopLeftButton(settingsTransform, "UI Scale 100 Button", "100", new Vector2(226, -456), new Vector2(80, 34));
-            var uiScale110Button = GetOrCreateTopLeftButton(settingsTransform, "UI Scale 110 Button", "110", new Vector2(320, -456), new Vector2(80, 34));
+            var uiScale90Button = GetOrCreateTopLeftButton(settingsTransform, "UI Scale 90 Button", "90", new Vector2(132, -536), new Vector2(80, 34));
+            var uiScale100Button = GetOrCreateTopLeftButton(settingsTransform, "UI Scale 100 Button", "100", new Vector2(226, -536), new Vector2(80, 34));
+            var uiScale110Button = GetOrCreateTopLeftButton(settingsTransform, "UI Scale 110 Button", "110", new Vector2(320, -536), new Vector2(80, 34));
             ApplyCollectionTabButtonStyle(uiScale90Button, uiScale100Button, uiScale110Button);
-            var uiScaleValueText = GetOrCreateText(settingsTransform, "UI Scale Value Text", "100%", 14, TextAnchor.MiddleRight, new Vector2(420, -458), new Vector2(90, 28));
-            GetOrCreateText(settingsTransform, "Frame Rate Label Text", "프레임", 14, TextAnchor.MiddleLeft, new Vector2(28, -500), new Vector2(90, 28));
-            var frameRate30Button = GetOrCreateTopLeftButton(settingsTransform, "Frame Rate 30 Button", "30", new Vector2(132, -496), new Vector2(80, 34));
-            var frameRate60Button = GetOrCreateTopLeftButton(settingsTransform, "Frame Rate 60 Button", "60", new Vector2(226, -496), new Vector2(80, 34));
-            var frameRate120Button = GetOrCreateTopLeftButton(settingsTransform, "Frame Rate 120 Button", "120", new Vector2(320, -496), new Vector2(80, 34));
+            var uiScaleValueText = GetOrCreateText(settingsTransform, "UI Scale Value Text", "100%", 14, TextAnchor.MiddleRight, new Vector2(420, -538), new Vector2(90, 28));
+            GetOrCreateText(settingsTransform, "Frame Rate Label Text", "프레임", 14, TextAnchor.MiddleLeft, new Vector2(28, -580), new Vector2(90, 28));
+            var frameRate30Button = GetOrCreateTopLeftButton(settingsTransform, "Frame Rate 30 Button", "30", new Vector2(132, -576), new Vector2(80, 34));
+            var frameRate60Button = GetOrCreateTopLeftButton(settingsTransform, "Frame Rate 60 Button", "60", new Vector2(226, -576), new Vector2(80, 34));
+            var frameRate120Button = GetOrCreateTopLeftButton(settingsTransform, "Frame Rate 120 Button", "120", new Vector2(320, -576), new Vector2(80, 34));
             ApplyCollectionTabButtonStyle(frameRate30Button, frameRate60Button, frameRate120Button);
-            var frameRateValueText = GetOrCreateText(settingsTransform, "Frame Rate Value Text", "60 FPS", 14, TextAnchor.MiddleRight, new Vector2(420, -498), new Vector2(90, 28));
+            var frameRateValueText = GetOrCreateText(settingsTransform, "Frame Rate Value Text", "60 FPS", 14, TextAnchor.MiddleRight, new Vector2(420, -578), new Vector2(90, 28));
 
-            var careTipToggle = GetOrCreateSettingsToggle(settingsTransform, "Care Tip Toggle", "돌봄 팁 표시", new Vector2(28, -584), new Vector2(210, 30));
-            var resetSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Reset Settings Button", "설정 초기화", new Vector2(374, -576), new Vector2(136, 40));
+            var careTipToggle = GetOrCreateSettingsToggle(settingsTransform, "Care Tip Toggle", "돌봄 팁 표시", new Vector2(28, -664), new Vector2(210, 30));
+            var resetSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Reset Settings Button", "설정 초기화", new Vector2(374, -656), new Vector2(136, 40));
             ApplyCareButtonStyle(resetSettingsButton);
-            var settingsStatusText = GetOrCreateText(settingsTransform, "Settings Status Text", "설정을 불러왔습니다.", 13, TextAnchor.MiddleLeft, new Vector2(28, -638), new Vector2(500, 34));
+            var settingsStatusText = GetOrCreateText(settingsTransform, "Settings Status Text", "설정을 불러왔습니다.", 13, TextAnchor.MiddleLeft, new Vector2(28, -718), new Vector2(500, 34));
             settingsStatusText.color = new Color(0.38f, 0.28f, 0.17f);
 
             var confirmRoot = GetOrCreatePanel(canvasTransform, "Confirm Reset Dialog", new Vector2(640, -300), new Vector2(640, 360));
@@ -1339,6 +4923,8 @@ namespace CheeseTama.Core
 
             gameSettingsPanel.Configure(
                 masterVolumeSlider,
+                musicVolumeSlider,
+                effectVolumeSlider,
                 muteToggle,
                 fullScreenToggle,
                 uiScale90Button,
@@ -1350,6 +4936,8 @@ namespace CheeseTama.Core
                 careTipToggle,
                 resetSettingsButton,
                 masterVolumeValueText,
+                musicVolumeValueText,
+                effectVolumeValueText,
                 uiScaleValueText,
                 frameRateValueText,
                 settingsStatusText);
@@ -1412,6 +5000,829 @@ namespace CheeseTama.Core
 #endif
         }
 
+        private static bool EnsureInputBindingsPanel(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return false;
+            }
+
+            var settingsModal = canvasTransform.Find("Settings Modal");
+            if (settingsModal == null)
+            {
+                return false;
+            }
+
+            var openButton = GetOrCreateTopLeftButton(
+                settingsModal,
+                "Open Input Bindings Button",
+                "키 설정",
+                new Vector2(246f, -656f),
+                new Vector2(112f, 40f));
+            ApplyCareButtonStyle(openButton);
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                InputBindingsPanelController.OverlayObjectName,
+                new Color(0.06f, 0.045f, 0.03f, 0.82f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Input Bindings Card",
+                Vector2.zero,
+                new Vector2(820f, 650f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(820f, 650f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.975f, 0.88f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Input Bindings Title Text",
+                "키보드 조작 설정",
+                28,
+                TextAnchor.MiddleCenter,
+                new Vector2(48f, -32f),
+                new Vector2(724f, 48f));
+            title.fontStyle = FontStyle.Bold;
+            var help = GetOrCreateText(
+                card.transform,
+                "Input Bindings Help Text",
+                "바꿀 항목을 누른 다음 새 키를 입력하세요. 중복 키는 저장되지 않습니다.",
+                15,
+                TextAnchor.MiddleCenter,
+                new Vector2(54f, -78f),
+                new Vector2(712f, 34f));
+            help.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            var definitions = CheeseTama.Gameplay.Input.GameInputBindingSystem.All;
+            var buttons = new Button[definitions.Count];
+            var valueLabels = new Text[definitions.Count];
+            for (var index = 0; index < definitions.Count; index += 1)
+            {
+                var leftColumn = index < 5;
+                var row = leftColumn ? index : index - 5;
+                var x = leftColumn ? 48f : 424f;
+                var y = -128f - (row * 64f);
+                var button = GetOrCreateTopLeftButton(
+                    card.transform,
+                    $"Input Binding {definitions[index].id} Button",
+                    definitions[index].displayName,
+                    new Vector2(x, y),
+                    new Vector2(348f, 50f));
+                ApplyCareButtonStyle(button);
+                var label = button.transform.Find("Label")?.GetComponent<Text>();
+                if (label != null)
+                {
+                    label.alignment = TextAnchor.MiddleLeft;
+                    var labelRect = label.rectTransform;
+                    labelRect.offsetMin = new Vector2(18f, 0f);
+                    labelRect.offsetMax = new Vector2(-152f, 0f);
+                }
+
+                var value = GetOrCreateText(
+                    button.transform,
+                    "Binding Value Text",
+                    "-",
+                    15,
+                    TextAnchor.MiddleRight,
+                    new Vector2(174f, -4f),
+                    new Vector2(154f, 42f));
+                value.fontStyle = FontStyle.Bold;
+                value.color = new Color(0.39f, 0.22f, 0.08f, 1f);
+                buttons[index] = button;
+                valueLabels[index] = value;
+            }
+
+            var status = GetOrCreateText(
+                card.transform,
+                "Input Bindings Status Text",
+                "바꿀 조작을 선택하세요.",
+                15,
+                TextAnchor.MiddleCenter,
+                new Vector2(54f, -470f),
+                new Vector2(712f, 46f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var reset = GetOrCreateTopLeftButton(
+                card.transform,
+                "Reset Input Bindings Button",
+                "기본 키로",
+                new Vector2(444f, -558f),
+                new Vector2(148f, 50f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Close Input Bindings Button",
+                "확인",
+                new Vector2(616f, -558f),
+                new Vector2(148f, 50f));
+            ApplyCareButtonStyle(reset);
+            ApplyCareButtonStyle(close);
+
+            var controller = canvasTransform.GetComponent<InputBindingsPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<InputBindingsPanelController>();
+            controller.Configure(
+                overlay,
+                status,
+                buttons,
+                valueLabels,
+                reset,
+                close,
+                () =>
+                {
+                    var manager = GameManager.Instance;
+                    if (manager?.CurrentSave?.settings == null)
+                    {
+                        return null;
+                    }
+
+                    manager.CurrentSave.settings.EnsureRuntimeDefaults();
+                    return manager.CurrentSave.settings.inputBindings;
+                },
+                state =>
+                {
+                    var manager = GameManager.Instance;
+                    if (manager?.CurrentSave?.settings == null || state == null)
+                    {
+                        return;
+                    }
+
+                    manager.CurrentSave.settings.inputBindings = state;
+                    manager.SaveGame();
+                },
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            openButton.onClick.RemoveAllListeners();
+            openButton.onClick.AddListener(controller.Open);
+            overlay.transform.SetAsLastSibling();
+            return true;
+        }
+
+        private static void EnsureNpcVisitCard(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                NpcVisitCardController.OverlayObjectName,
+                new Color(0.055f, 0.04f, 0.025f, 0.8f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Npc Visit Card",
+                Vector2.zero,
+                new Vector2(720f, 590f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(720f, 590f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.965f, 0.82f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var portrait = GetOrCreatePanel(
+                card.transform,
+                "Npc Portrait",
+                new Vector2(48f, -42f),
+                new Vector2(118f, 118f));
+            if (portrait.TryGetComponent(out Image portraitImage))
+            {
+                portraitImage.color = new Color(1f, 0.79f, 0.34f, 1f);
+                ApplyCircleImage(portraitImage);
+            }
+
+            var portraitText = GetOrCreateText(
+                portrait.transform,
+                "Npc Portrait Text",
+                "손님",
+                22,
+                TextAnchor.MiddleCenter,
+                Vector2.zero,
+                new Vector2(118f, 118f));
+            portraitText.fontStyle = FontStyle.Bold;
+            var title = GetOrCreateText(
+                card.transform,
+                "Npc Visit Title Text",
+                "밀크룸의 손님",
+                30,
+                TextAnchor.MiddleLeft,
+                new Vector2(194f, -42f),
+                new Vector2(470f, 52f));
+            title.fontStyle = FontStyle.Bold;
+            var role = GetOrCreateText(
+                card.transform,
+                "Npc Visit Role Text",
+                "새로운 방문자",
+                17,
+                TextAnchor.MiddleLeft,
+                new Vector2(196f, -98f),
+                new Vector2(430f, 34f));
+            role.color = new Color(0.62f, 0.35f, 0.1f, 1f);
+            var relationship = GetOrCreateText(
+                card.transform,
+                "Npc Visit Relationship Text",
+                "이야기 1/3",
+                15,
+                TextAnchor.MiddleRight,
+                new Vector2(500f, -132f),
+                new Vector2(164f, 28f));
+            var messagePanel = GetOrCreatePanel(
+                card.transform,
+                "Npc Visit Message Panel",
+                new Vector2(48f, -184f),
+                new Vector2(624f, 170f));
+            if (messagePanel.TryGetComponent(out Image messageImage))
+            {
+                messageImage.color = new Color(1f, 0.99f, 0.93f, 1f);
+            }
+
+            var message = GetOrCreateText(
+                messagePanel.transform,
+                "Npc Visit Message Text",
+                "밀크룸에 반가운 손님이 찾아왔어요.",
+                20,
+                TextAnchor.MiddleCenter,
+                new Vector2(28f, -18f),
+                new Vector2(568f, 134f));
+            message.horizontalOverflow = HorizontalWrapMode.Wrap;
+            message.verticalOverflow = VerticalWrapMode.Truncate;
+
+            var firstChoice = GetOrCreateTopLeftButton(
+                card.transform,
+                "Npc Visit First Choice Button",
+                "첫 번째 선택",
+                new Vector2(48f, -382f),
+                new Vector2(296f, 58f));
+            var secondChoice = GetOrCreateTopLeftButton(
+                card.transform,
+                "Npc Visit Second Choice Button",
+                "두 번째 선택",
+                new Vector2(376f, -382f),
+                new Vector2(296f, 58f));
+            var later = GetOrCreateTopLeftButton(
+                card.transform,
+                "Npc Visit Later Button",
+                "나중에",
+                new Vector2(288f, -494f),
+                new Vector2(144f, 50f));
+            var confirm = GetOrCreateTopLeftButton(
+                card.transform,
+                "Npc Visit Confirm Button",
+                "확인",
+                new Vector2(528f, -494f),
+                new Vector2(144f, 50f));
+            ApplyCareButtonStyle(firstChoice);
+            ApplyCareButtonStyle(secondChoice);
+            ApplyCareButtonStyle(later);
+            ApplyCareButtonStyle(confirm);
+            var firstLabel = firstChoice.transform.Find("Label")?.GetComponent<Text>();
+            var secondLabel = secondChoice.transform.Find("Label")?.GetComponent<Text>();
+
+            var controller = canvasTransform.GetComponent<NpcVisitCardController>()
+                ?? canvasTransform.gameObject.AddComponent<NpcVisitCardController>();
+            controller.Configure(
+                overlay,
+                portraitText,
+                title,
+                role,
+                message,
+                relationship,
+                firstChoice,
+                firstLabel,
+                secondChoice,
+                secondLabel,
+                later,
+                confirm,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            var bridge = canvasTransform.GetComponent<NpcVisitBridge>()
+                ?? canvasTransform.gameObject.AddComponent<NpcVisitBridge>();
+            bridge.Configure(
+                controller,
+                Application.isPlaying ? GameManager.Instance : null,
+                canvasTransform);
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureMilkBlendingPanel(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            RemoveChildIfExists(canvasTransform.Find("Cooking Panel"), "Open Milk Blending Button");
+            RemoveChildIfExists(canvasTransform.Find("Milkroom Utility Bar"), "Open Milk Blending Button");
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Milk Blending Overlay",
+                new Color(0.055f, 0.04f, 0.025f, 0.82f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Milk Blending Card",
+                Vector2.zero,
+                new Vector2(1120f, 780f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(1120f, 780f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.975f, 0.88f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Milk Blending Title Text",
+                "우유 블렌딩 실험",
+                30,
+                TextAnchor.MiddleLeft,
+                new Vector2(42f, -26f),
+                new Vector2(430f, 48f));
+            title.fontStyle = FontStyle.Bold;
+            var balance = GetOrCreateText(
+                card.transform,
+                "Milk Blending Balance Text",
+                "우유코인 0 · 우유방울 0 · 수집 조각 0",
+                15,
+                TextAnchor.MiddleRight,
+                new Vector2(512f, -30f),
+                new Vector2(430f, 40f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Close Milk Blending Button",
+                "닫기",
+                new Vector2(962f, -24f),
+                new Vector2(116f, 42f));
+            ApplyCareButtonStyle(close);
+
+            GetOrCreateText(
+                card.transform,
+                "Milk Blending Milk Header Text",
+                "1. 우유 선택",
+                19,
+                TextAnchor.MiddleLeft,
+                new Vector2(42f, -88f),
+                new Vector2(400f, 34f));
+            GetOrCreateText(
+                card.transform,
+                "Milk Blending Ingredient Header Text",
+                "2. 재료 선택",
+                19,
+                TextAnchor.MiddleLeft,
+                new Vector2(578f, -88f),
+                new Vector2(400f, 34f));
+
+            var milkCount = CheeseTama.Gameplay.Milk.MilkBlendingCatalog.AllMilkIds.Length;
+            var ingredientCount = CheeseTama.Gameplay.Milk.MilkBlendingCatalog.AllIngredients.Length;
+            var milkNames = new Text[milkCount];
+            var milkStates = new Text[milkCount];
+            var milkButtons = new Button[milkCount];
+            var ingredientNames = new Text[ingredientCount];
+            var ingredientStates = new Text[ingredientCount];
+            var ingredientButtons = new Button[ingredientCount];
+
+            for (var index = 0; index < milkCount; index += 1)
+            {
+                var row = index / 2;
+                var column = index % 2;
+                var button = GetOrCreateTopLeftButton(
+                    card.transform,
+                    $"Milk Blending Milk Button {index}",
+                    "우유",
+                    new Vector2(42f + (column * 230f), -130f - (row * 64f)),
+                    new Vector2(214f, 54f));
+                ApplyCareButtonStyle(button);
+                var nameLabel = button.transform.Find("Label")?.GetComponent<Text>();
+                if (nameLabel != null)
+                {
+                    nameLabel.alignment = TextAnchor.MiddleLeft;
+                    nameLabel.rectTransform.offsetMin = new Vector2(14f, 0f);
+                    nameLabel.rectTransform.offsetMax = new Vector2(-72f, 0f);
+                }
+
+                var stateLabel = GetOrCreateText(
+                    button.transform,
+                    "Option State Text",
+                    "사용 가능",
+                    12,
+                    TextAnchor.MiddleRight,
+                    new Vector2(128f, -4f),
+                    new Vector2(70f, 46f));
+                milkNames[index] = nameLabel;
+                milkStates[index] = stateLabel;
+                milkButtons[index] = button;
+            }
+
+            for (var index = 0; index < ingredientCount; index += 1)
+            {
+                var row = index / 2;
+                var column = index % 2;
+                var button = GetOrCreateTopLeftButton(
+                    card.transform,
+                    $"Milk Blending Ingredient Button {index}",
+                    "재료",
+                    new Vector2(578f + (column * 230f), -130f - (row * 64f)),
+                    new Vector2(214f, 54f));
+                ApplyCareButtonStyle(button);
+                var nameLabel = button.transform.Find("Label")?.GetComponent<Text>();
+                if (nameLabel != null)
+                {
+                    nameLabel.alignment = TextAnchor.MiddleLeft;
+                    nameLabel.rectTransform.offsetMin = new Vector2(14f, 0f);
+                    nameLabel.rectTransform.offsetMax = new Vector2(-74f, 0f);
+                }
+
+                var stateLabel = GetOrCreateText(
+                    button.transform,
+                    "Option State Text",
+                    "사용 0회",
+                    12,
+                    TextAnchor.MiddleRight,
+                    new Vector2(128f, -4f),
+                    new Vector2(70f, 46f));
+                ingredientNames[index] = nameLabel;
+                ingredientStates[index] = stateLabel;
+                ingredientButtons[index] = button;
+            }
+
+            var detailPanel = GetOrCreatePanel(
+                card.transform,
+                "Milk Blending Detail Panel",
+                new Vector2(42f, -418f),
+                new Vector2(1036f, 214f));
+            if (detailPanel.TryGetComponent(out Image detailImage))
+            {
+                detailImage.color = new Color(1f, 0.99f, 0.94f, 1f);
+            }
+
+            var detail = GetOrCreateText(
+                detailPanel.transform,
+                "Milk Blending Detail Text",
+                "우유와 재료를 하나씩 선택해 주세요.",
+                17,
+                TextAnchor.UpperLeft,
+                new Vector2(24f, -20f),
+                new Vector2(620f, 160f));
+            detail.supportRichText = true;
+            detail.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var resultText = GetOrCreateText(
+                detailPanel.transform,
+                "Milk Blending Result Text",
+                "완성 결과  ???",
+                17,
+                TextAnchor.UpperLeft,
+                new Vector2(680f, -20f),
+                new Vector2(330f, 110f));
+            resultText.supportRichText = true;
+            resultText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var status = GetOrCreateText(
+                card.transform,
+                "Milk Blending Status Text",
+                "어울리는 조합을 찾아보세요.",
+                15,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -660f),
+                new Vector2(780f, 52f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var blend = GetOrCreateTopLeftButton(
+                card.transform,
+                "Execute Milk Blending Button",
+                "블렌딩",
+                new Vector2(884f, -660f),
+                new Vector2(194f, 54f));
+            ApplyCareButtonStyle(blend);
+
+            var panelController = canvasTransform.GetComponent<MilkBlendingPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<MilkBlendingPanelController>();
+            panelController.Configure(
+                overlay,
+                balance,
+                detail,
+                resultText,
+                status,
+                milkNames,
+                milkStates,
+                milkButtons,
+                ingredientNames,
+                ingredientStates,
+                ingredientButtons,
+                blend,
+                close,
+                () => GameManager.Instance?.GetMilkBlendingSnapshot()
+                    ?? CheeseTama.Gameplay.Milk.MilkBlendingPanelSnapshot.CreateDefault(),
+                (milkId, ingredientId) =>
+                {
+                    var manager = GameManager.Instance;
+                    var result = manager?.TryBlendMilk(milkId, ingredientId);
+                    if (result != null && result.applied)
+                    {
+                        milkroomUi?.Bind(manager.CurrentSave);
+                        visualController?.Bind(manager.CurrentTama);
+                        visualController?.ReactAction(CheeseTamaVisualAction.Cook);
+                    }
+
+                    return result;
+                },
+                null,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureCookingChoicePanel(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            RemoveChildIfExists(canvasTransform.Find("Cooking Panel"), "Open Milk Blending Button");
+            RemoveChildIfExists(canvasTransform.Find("Milkroom Utility Bar"), "Open Milk Blending Button");
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                CookingChoicePanelController.OverlayObjectName,
+                new Color(0.08f, 0.055f, 0.025f, 0.76f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Cooking Choice Card",
+                Vector2.zero,
+                new Vector2(680f, 420f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(680f, 420f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.96f, 0.82f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Cooking Choice Title Text",
+                "무엇을 만들까요?",
+                30,
+                TextAnchor.MiddleCenter,
+                new Vector2(40f, -34f),
+                new Vector2(600f, 48f));
+            title.fontStyle = FontStyle.Bold;
+            GetOrCreateText(
+                card.transform,
+                "Cooking Choice Help Text",
+                "만드는 방법을 선택해 주세요.",
+                17,
+                TextAnchor.MiddleCenter,
+                new Vector2(80f, -92f),
+                new Vector2(520f, 38f));
+
+            var cookingButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Cooking Choice Cooking Button",
+                "요리하기",
+                new Vector2(64f, -150f),
+                new Vector2(552f, 96f));
+            var milkBlendingButton = GetOrCreateTopLeftButton(
+                card.transform,
+                "Cooking Choice Milk Blending Button",
+                "<size=21>우유 블렌딩</size>\n<size=14>(낮은 확률로 특별한 음식 등장)</size>",
+                new Vector2(64f, -266f),
+                new Vector2(552f, 96f));
+            RemoveChildIfExists(card.transform, "Cooking Choice Close Button");
+            ApplyCareButtonStyle(cookingButton);
+            ApplyCareButtonStyle(milkBlendingButton);
+            cookingButton.navigation = new Navigation
+            {
+                mode = Navigation.Mode.Explicit,
+                selectOnDown = milkBlendingButton
+            };
+            milkBlendingButton.navigation = new Navigation
+            {
+                mode = Navigation.Mode.Explicit,
+                selectOnUp = cookingButton
+            };
+            var cookingLabel = cookingButton.transform.Find("Label")?.GetComponent<Text>();
+            if (cookingLabel != null)
+            {
+                cookingLabel.fontSize = 21;
+                cookingLabel.alignment = TextAnchor.MiddleCenter;
+                cookingLabel.resizeTextForBestFit = false;
+            }
+
+            var milkBlendingLabel = milkBlendingButton.transform.Find("Label")?.GetComponent<Text>();
+            if (milkBlendingLabel != null)
+            {
+                milkBlendingLabel.supportRichText = true;
+                milkBlendingLabel.fontSize = 21;
+                milkBlendingLabel.alignment = TextAnchor.MiddleCenter;
+                milkBlendingLabel.lineSpacing = 1.15f;
+                milkBlendingLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
+                milkBlendingLabel.verticalOverflow = VerticalWrapMode.Truncate;
+                milkBlendingLabel.resizeTextForBestFit = false;
+            }
+
+            var cookingPanel = canvasTransform.GetComponent<CookingPanelController>();
+            var milkBlendingPanel = canvasTransform.GetComponent<MilkBlendingPanelController>();
+            var controller = canvasTransform.GetComponent<CookingChoicePanelController>()
+                ?? canvasTransform.gameObject.AddComponent<CookingChoicePanelController>();
+            controller.Configure(
+                overlay,
+                cookingButton,
+                milkBlendingButton,
+                () =>
+                {
+                    canvasTransform.GetComponent<MilkPanelController>()?.Close();
+                    canvasTransform.GetComponent<SnackPanelController>()?.Close();
+                    cookingPanel?.Open();
+                },
+                () =>
+                {
+                    canvasTransform.GetComponent<CookingPanelController>()?.Close();
+                    canvasTransform.GetComponent<MilkPanelController>()?.Close();
+                    canvasTransform.GetComponent<SnackPanelController>()?.Close();
+                    return milkBlendingPanel != null && milkBlendingPanel.Open();
+                },
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureSleepSchedulePanel(
+            Transform canvasTransform,
+            MilkroomUIController milkroomUi,
+            CheeseTamaVisualController visualController)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var sleepButton = canvasTransform.Find("Bottom Action Bar/Sleep Button")
+                ?.GetComponent<Button>();
+            if (sleepButton != null)
+            {
+                var careButton = sleepButton.GetComponent<MilkroomCareButton>()
+                    ?? sleepButton.gameObject.AddComponent<MilkroomCareButton>();
+                careButton.Configure(
+                    MilkroomCareAction.SleepSchedule,
+                    milkroomUi,
+                    visualController);
+                SetButtonLabel(sleepButton, "수면 예약");
+                ApplyCareButtonStyle(sleepButton);
+                SetButtonIcon(sleepButton, "rest");
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                SleepSchedulePanelController.OverlayObjectName,
+                new Color(0.025f, 0.035f, 0.075f, 0.84f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Sleep Schedule Card",
+                Vector2.zero,
+                new Vector2(760f, 700f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(760f, 700f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.97f, 0.96f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Sleep Schedule Title Text",
+                "수면 예약",
+                30,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -24f),
+                new Vector2(420f, 48f));
+            title.fontStyle = FontStyle.Bold;
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Close Sleep Schedule Button",
+                "닫기",
+                new Vector2(610f, -24f),
+                new Vector2(114f, 44f));
+            ApplyCareButtonStyle(close);
+            var summary = GetOrCreateText(
+                card.transform,
+                "Sleep Schedule Summary Text",
+                "1~8시간 중 쉴 시간을 정해 주세요.",
+                20,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -88f),
+                new Vector2(688f, 58f));
+            summary.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            var detailPanel = GetOrCreatePanel(
+                card.transform,
+                "Sleep Schedule Detail Panel",
+                new Vector2(36f, -158f),
+                new Vector2(688f, 132f));
+            if (detailPanel.TryGetComponent(out Image detailImage))
+            {
+                detailImage.color = new Color(0.91f, 0.92f, 0.99f, 1f);
+            }
+
+            var detail = GetOrCreateText(
+                detailPanel.transform,
+                "Sleep Schedule Detail Text",
+                "예약은 저장되며, 실제로 쉰 시간만큼 회복해요.",
+                18,
+                TextAnchor.MiddleLeft,
+                new Vector2(22f, -16f),
+                new Vector2(644f, 100f));
+            detail.horizontalOverflow = HorizontalWrapMode.Wrap;
+            GetOrCreateText(
+                card.transform,
+                "Sleep Duration Header Text",
+                "수면 시간 선택",
+                20,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -314f),
+                new Vector2(300f, 36f));
+
+            var durationButtons = new Button[8];
+            var durationLabels = new Text[8];
+            for (var index = 0; index < durationButtons.Length; index += 1)
+            {
+                var row = index / 4;
+                var column = index % 4;
+                var button = GetOrCreateTopLeftButton(
+                    card.transform,
+                    $"Sleep Duration Button {index + 1}",
+                    $"{index + 1}시간",
+                    new Vector2(36f + (column * 174f), -358f - (row * 70f)),
+                    new Vector2(158f, 54f));
+                ApplyCareButtonStyle(button);
+                durationButtons[index] = button;
+                durationLabels[index] = button.transform.Find("Label")?.GetComponent<Text>();
+            }
+
+            var status = GetOrCreateText(
+                card.transform,
+                "Sleep Schedule Status Text",
+                "원하는 시간을 선택한 뒤 예약을 시작하세요.",
+                16,
+                TextAnchor.MiddleLeft,
+                new Vector2(36f, -510f),
+                new Vector2(688f, 54f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var start = GetOrCreateTopLeftButton(
+                card.transform,
+                "Start Sleep Schedule Button",
+                "수면 시작",
+                new Vector2(350f, -588f),
+                new Vector2(176f, 58f));
+            var wake = GetOrCreateTopLeftButton(
+                card.transform,
+                "Wake Sleep Schedule Button",
+                "지금 깨우기",
+                new Vector2(548f, -588f),
+                new Vector2(176f, 58f));
+            ApplyCareButtonStyle(start);
+            ApplyCareButtonStyle(wake);
+            var wakeLabel = wake.transform.Find("Label")?.GetComponent<Text>();
+
+            overlay.SetActive(false);
+            var panelController = canvasTransform.GetComponent<SleepSchedulePanelController>()
+                ?? canvasTransform.gameObject.AddComponent<SleepSchedulePanelController>();
+            var bridge = canvasTransform.GetComponent<SleepScheduleBridge>()
+                ?? canvasTransform.gameObject.AddComponent<SleepScheduleBridge>();
+            bridge.Configure(
+                panelController,
+                Application.isPlaying ? GameManager.Instance : null,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>(),
+                milkroomUi,
+                visualController,
+                canvasTransform);
+            panelController.Configure(
+                overlay,
+                title,
+                summary,
+                detail,
+                status,
+                durationLabels,
+                wakeLabel,
+                durationButtons,
+                start,
+                wake,
+                close,
+                bridge.GetSnapshot,
+                bridge.StartSchedule,
+                bridge.WakeSchedule,
+                null,
+                bridge.SetBlocking);
+            overlay.transform.SetAsLastSibling();
+        }
+
         private static void ApplySavedMilkroomTheme(GameManager manager)
         {
             var themeId = MilkroomThemeController.MorningThemeId;
@@ -1451,8 +5862,16 @@ namespace CheeseTama.Core
             ReparentIfFound("Milkroom Rim Light", lighting);
             ReparentIfFound("GlobalVolume", lighting);
             ReparentIfFound("Milkroom Background", environment);
-            ReparentIfFound("CheeseTamaRoot", character);
-            ReparentIfFound("CheeseTama Egg Placeholder", character);
+            var autonomousMotionRoot = GameObject.Find("CheeseTama Autonomous Motion Root");
+            if (autonomousMotionRoot != null)
+            {
+                ReparentIfFound("CheeseTama Autonomous Motion Root", character);
+            }
+            else
+            {
+                ReparentIfFound("CheeseTamaRoot", character);
+                ReparentIfFound("CheeseTama Egg Placeholder", character);
+            }
             ReparentIfFound("Milkroom Canvas", ui);
             ReparentIfFound("EventSystem", ui);
 
@@ -1546,6 +5965,7 @@ namespace CheeseTama.Core
 
         private static void EnsureLight()
         {
+            var palette = MilkroomThemePalette.For(MilkroomThemeController.MorningThemeId);
             var keyObject = GameObject.Find("Milkroom Key Light");
             if (keyObject == null)
             {
@@ -1559,9 +5979,13 @@ namespace CheeseTama.Core
             }
 
             keyLight.type = LightType.Directional;
-            keyLight.color = new Color(1f, 0.96f, 0.86f);
-            keyLight.intensity = 1.05f;
-            keyObject.transform.rotation = Quaternion.Euler(48, -32, 0);
+            keyLight.color = Color.Lerp(palette.Glow, Color.white, MilkroomLightingController.KeyWhiteBlend);
+            keyLight.intensity = MilkroomLightingController.DayKeyIntensity;
+            keyLight.shadows = LightShadows.Soft;
+            keyLight.shadowStrength = MilkroomLightingController.KeyShadowStrength;
+            keyLight.shadowBias = MilkroomLightingController.KeyShadowBias;
+            keyLight.shadowNormalBias = MilkroomLightingController.KeyShadowNormalBias;
+            keyObject.transform.rotation = Quaternion.Euler(MilkroomLightingController.KeyRotationEuler);
 
             var fillObject = GameObject.Find("Milkroom Fill Light");
             if (fillObject == null)
@@ -1576,9 +6000,10 @@ namespace CheeseTama.Core
             }
 
             fillLight.type = LightType.Directional;
-            fillLight.color = new Color(0.76f, 0.92f, 1f);
-            fillLight.intensity = 0.42f;
-            fillObject.transform.rotation = Quaternion.Euler(25, 145, 0);
+            fillLight.color = Color.Lerp(palette.WindowSky, Color.white, MilkroomLightingController.FillWhiteBlend);
+            fillLight.intensity = MilkroomLightingController.DayFillIntensity;
+            fillLight.shadows = LightShadows.None;
+            fillObject.transform.rotation = Quaternion.Euler(MilkroomLightingController.FillRotationEuler);
 
             var rimObject = GameObject.Find("Milkroom Rim Light");
             if (rimObject == null)
@@ -1593,9 +6018,10 @@ namespace CheeseTama.Core
             }
 
             rimLight.type = LightType.Directional;
-            rimLight.color = new Color(1f, 0.78f, 0.34f);
-            rimLight.intensity = 0.36f;
-            rimObject.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
+            rimLight.color = Color.Lerp(palette.Celestial, new Color(1f, 0.82f, 0.38f), 0.35f);
+            rimLight.intensity = MilkroomLightingController.DayRimIntensity;
+            rimLight.shadows = LightShadows.None;
+            rimObject.transform.rotation = Quaternion.Euler(MilkroomLightingController.RimRotationEuler);
 
             var volumeObject = GameObject.Find("GlobalVolume");
             if (volumeObject == null)
@@ -1606,7 +6032,9 @@ namespace CheeseTama.Core
             ConfigureGlobalVolumeIfAvailable(volumeObject);
 
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.72f, 0.63f, 0.52f);
+            RenderSettings.ambientLight = MilkroomLightingController.ResolveAmbientColor(
+                MilkroomThemeController.MorningThemeId,
+                palette);
         }
 
         private static void ConfigureGlobalVolumeIfAvailable(GameObject volumeObject)
@@ -1699,15 +6127,15 @@ namespace CheeseTama.Core
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Fridge.prefab", "Fridge_Model",
                 new Vector3(-1.75f, 0f, 2.35f), 2.1f, 180f, true, 0f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/MilkShelf.prefab", "MilkShelf_Model",
-                new Vector3(2.65f, 0f, 2.2f), 1.3f, 190f, false, -0.35f, floorTop);
+                new Vector3(2.65f, 0f, 2.295f), 1.3f, 180f, false, -0.15f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/CozyChair.prefab", "CozyChair_Model",
                 new Vector3(-2.7f, 0f, 0.2f), 1.5f, 150f, true, 0f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Window.prefab", "Window_Model",
-                new Vector3(0.1f, 0f, 2.42f), 1.72f, 0f, false, -0.15f, floorTop);
+                new Vector3(0.45f, 0f, 2.366f), 1.72f, 180f, false, -0.15f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Rug.prefab", "Rug_Model",
-                new Vector3(0.005f, 0f, 0.28f), 0.22f, 0f, true, 0f, floorTop);
+                new Vector3(0.005f, 0f, 0.28f), RugPlacedHeight, 0f, true, 0f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/DresserTable.prefab", "DresserTable_Model",
-                new Vector3(2.807f, 0f, 1.18f), 1.25f, 183.292f, true, 0f, floorTop);
+                new Vector3(2.807f, 0f, 1.18f), 1.5f, 200f, true, 0f, floorTop);
             PlaceGeneratedProp(root, "Assets/Environments/Milkroom/Props/Chalkboard.prefab", "Chalkboard_Model",
                 new Vector3(-2.78f, 0f, 2.41f), 1.18f, 0f, false, 0.05f, floorTop);
 #endif
@@ -2362,16 +6790,28 @@ namespace CheeseTama.Core
             if (existing != null)
             {
                 existing.name = "CheeseTamaRoot";
-                existing.transform.position = new Vector3(0f, -1.118f, 0.08f);
+                existing.transform.position = CheeseTamaRestingWorldPosition;
                 existing.transform.localScale = Vector3.one;
-                return GetOrCreateVisualController(existing);
+                var existingController = GetOrCreateVisualController(existing);
+                AlignCheeseTamaRestingPosition(existingController);
+                return existingController;
             }
 
             var egg = new GameObject("CheeseTamaRoot");
-            egg.transform.position = new Vector3(0f, -1.118f, 0.08f);
+            egg.transform.position = CheeseTamaRestingWorldPosition;
             egg.transform.localScale = Vector3.one;
 
-            return GetOrCreateVisualController(egg);
+            var controller = GetOrCreateVisualController(egg);
+            AlignCheeseTamaRestingPosition(controller);
+            return controller;
+        }
+
+        private const float RugPlacedHeight = 0.1f;
+        private static readonly Vector3 CheeseTamaRestingWorldPosition = new Vector3(0f, -1.1f, 0.08f);
+
+        private static void AlignCheeseTamaRestingPosition(CheeseTamaVisualController controller)
+        {
+            controller?.SetRestingWorldPosition(CheeseTamaRestingWorldPosition);
         }
 
         private static CheeseTamaVisualController GetOrCreateVisualController(GameObject target)
@@ -2542,6 +6982,48 @@ namespace CheeseTama.Core
             image.color = new Color(1f, 0.98f, 0.9f, 0.92f);
             ApplyRoundedImage(image);
             return panel;
+        }
+
+        private static GameObject GetOrCreateFullScreenOverlay(Transform parent, string name, Color color)
+        {
+            var existing = parent.Find(name);
+            var overlay = existing != null ? existing.gameObject : new GameObject(name);
+            if (existing == null)
+            {
+                overlay.transform.SetParent(parent, false);
+            }
+
+            var rect = overlay.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                rect = overlay.AddComponent<RectTransform>();
+            }
+
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            var image = overlay.GetComponent<Image>();
+            if (image == null)
+            {
+                image = overlay.AddComponent<Image>();
+            }
+
+            image.color = color;
+            image.raycastTarget = true;
+            var group = overlay.GetComponent<CanvasGroup>();
+            if (group == null)
+            {
+                group = overlay.AddComponent<CanvasGroup>();
+            }
+
+            group.alpha = 1f;
+            group.interactable = true;
+            group.blocksRaycasts = true;
+            return overlay;
         }
 
         private static GameObject GetOrCreatePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
@@ -2809,6 +7291,11 @@ namespace CheeseTama.Core
 
         private static void RemoveChildIfExists(Transform parent, string name)
         {
+            if (parent == null || string.IsNullOrEmpty(name))
+            {
+                return;
+            }
+
             var child = parent.Find(name);
             if (child == null)
             {

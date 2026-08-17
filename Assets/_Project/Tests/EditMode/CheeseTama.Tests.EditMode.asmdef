@@ -1,0 +1,21 @@
+{
+  "name": "CheeseTama.Tests.EditMode",
+  "rootNamespace": "CheeseTama.Tests",
+  "references": [
+    "CheeseTama"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

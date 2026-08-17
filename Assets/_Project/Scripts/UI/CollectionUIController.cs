@@ -1118,6 +1118,12 @@ namespace CheeseTama.UI
                 return growthStage.DisplayName;
             }
 
+            var normalEvolution = EvolutionSystem.FindNormalEvolution(id);
+            if (normalEvolution != null)
+            {
+                return normalEvolution.DisplayName;
+            }
+
             var milkDefinition = MilkCatalog.Find(id);
             if (milkDefinition != null)
             {
@@ -1185,6 +1191,16 @@ namespace CheeseTama.UI
             if (id == "play_sessions_3")
             {
                 return "놀이 3회";
+            }
+
+            if (id == "pet_first")
+            {
+                return "첫 쓰다듬기";
+            }
+
+            if (id == "pet_sessions_10")
+            {
+                return "쓰다듬기 10회";
             }
 
             if (id == "cleanings_3")
@@ -1287,6 +1303,16 @@ namespace CheeseTama.UI
                 return "기쁜 흔들림";
             }
 
+            if (id == "milk_aversion")
+            {
+                return "우유가 질린 날";
+            }
+
+            if (id == "overfull")
+            {
+                return "배가 너무 부른 날";
+            }
+
             if (id == "recipe_warm_milk_soup")
             {
                 return "따뜻한 우유 수프";
@@ -1341,6 +1367,20 @@ namespace CheeseTama.UI
                 }
             }
 
+            foreach (var milk in MilkCatalog.VisibleMilks)
+            {
+                if (milk == null)
+                {
+                    continue;
+                }
+
+                var rewardPrefix = $"milk_growth_reward_{milk.id}_lv_";
+                if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(rewardPrefix))
+                {
+                    return $"{milk.displayName} 특별 성장 Lv.{id.Substring(rewardPrefix.Length)}";
+                }
+            }
+
             const string BasicMilkGrowthPrefix = "basic_milk_growth_lv_";
             if (!string.IsNullOrWhiteSpace(id) && id.StartsWith(BasicMilkGrowthPrefix))
             {
@@ -1363,12 +1403,20 @@ namespace CheeseTama.UI
                 return "성장";
             }
 
+            if (EvolutionSystem.FindNormalEvolution(id) != null)
+            {
+                return "진화";
+            }
+
             if (MilkCatalog.Find(id) != null || id == "basic_milk" || id == "star_milk")
             {
                 return "우유";
             }
 
-            if (!string.IsNullOrWhiteSpace(id) && (id.Contains("_growth_lv_") || id.EndsWith("_unlocked")))
+            if (!string.IsNullOrWhiteSpace(id)
+                && (id.Contains("_growth_lv_")
+                    || id.StartsWith("milk_growth_reward_")
+                    || id.EndsWith("_unlocked")))
             {
                 return "성장";
             }
@@ -1412,6 +1460,12 @@ namespace CheeseTama.UI
                 return growthStage.Description;
             }
 
+            var normalEvolution = EvolutionSystem.FindNormalEvolution(id);
+            if (normalEvolution != null)
+            {
+                return normalEvolution.Description;
+            }
+
             var milkDefinition = MilkCatalog.Find(id);
             if (milkDefinition != null)
             {
@@ -1426,6 +1480,11 @@ namespace CheeseTama.UI
             if (id.Contains("_growth_lv_"))
             {
                 return "우유를 반복해서 돌본 성장 기록입니다.";
+            }
+
+            if (id.StartsWith("milk_growth_reward_"))
+            {
+                return "우유의 성장 단계에서 얻은 특별 보상 기록입니다.";
             }
 
             if (id.EndsWith("_unlocked"))
@@ -1458,7 +1517,17 @@ namespace CheeseTama.UI
                 return "간식을 먹이거나 간식 반응으로 등록된 기록입니다.";
             }
 
-            if (id.Contains("play") || id.Contains("clean") || id.Contains("rest"))
+            if (id == "milk_aversion")
+            {
+                return "같은 우유를 반복해 질렸지만, 다른 우유를 맛보며 회복할 수 있는 먹이 상태입니다.";
+            }
+
+            if (id == "overfull")
+            {
+                return "먹이를 너무 많이 먹었을 때 생기며, 시간 경과나 가벼운 놀이로 회복하는 상태입니다.";
+            }
+
+            if (id.Contains("play") || id.Contains("pet") || id.Contains("clean") || id.Contains("rest"))
             {
                 return "직접 돌봄 행동을 반복해 등록된 기록입니다.";
             }

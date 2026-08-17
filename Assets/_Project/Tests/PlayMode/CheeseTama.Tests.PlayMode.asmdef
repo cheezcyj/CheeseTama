@@ -1,0 +1,19 @@
+{
+  "name": "CheeseTama.Tests.PlayMode",
+  "rootNamespace": "CheeseTama.Tests.PlayMode",
+  "references": [
+    "CheeseTama"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

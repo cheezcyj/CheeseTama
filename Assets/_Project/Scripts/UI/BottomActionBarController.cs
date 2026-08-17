@@ -1,3 +1,4 @@
+using CheeseTama.Gameplay.Input;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,9 +39,16 @@ namespace CheeseTama.UI
 
             for (var i = 0; i < actionButtons.Length && i < 6; i += 1)
             {
-                var alphaKey = (KeyCode)((int)KeyCode.Alpha1 + i);
-                var keypadKey = (KeyCode)((int)KeyCode.Keypad1 + i);
-                if (Input.GetKeyDown(alphaKey) || Input.GetKeyDown(keypadKey))
+                var actionId = i switch
+                {
+                    0 => GameInputActionIds.Care1,
+                    1 => GameInputActionIds.Care2,
+                    2 => GameInputActionIds.Care3,
+                    3 => GameInputActionIds.Care4,
+                    4 => GameInputActionIds.Care5,
+                    _ => GameInputActionIds.Care6
+                };
+                if (GameInputRouter.WasPressed(actionId))
                 {
                     var button = actionButtons[i];
                     if (button != null && button.interactable && button.gameObject.activeInHierarchy)

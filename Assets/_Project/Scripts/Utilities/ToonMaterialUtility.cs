@@ -26,6 +26,7 @@ namespace CheeseTama.Utilities
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
+        private static readonly int GlossinessId = Shader.PropertyToID("_Glossiness");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
         private static readonly int SpecColorId = Shader.PropertyToID("_SpecColor");
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
@@ -214,9 +215,15 @@ namespace CheeseTama.Utilities
                 material.SetFloat(MetallicId, 0f);
             }
 
+            var smoothness = GetSmoothness(profile);
             if (material.HasProperty(SmoothnessId))
             {
-                material.SetFloat(SmoothnessId, GetSmoothness(profile));
+                material.SetFloat(SmoothnessId, smoothness);
+            }
+
+            if (material.HasProperty(GlossinessId))
+            {
+                material.SetFloat(GlossinessId, smoothness);
             }
 
             if (material.HasProperty(SpecColorId))

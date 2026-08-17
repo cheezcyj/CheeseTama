@@ -4,6 +4,23 @@ namespace CheeseTama.Environment
 {
     public sealed class MilkroomLightingController : MonoBehaviour
     {
+        internal const float DayAmbientWhiteBlend = 0.32f;
+        internal const float NightAmbientWhiteBlend = 0.12f;
+        internal const float DayKeyIntensity = 0.36f;
+        internal const float DayFillIntensity = 0.18f;
+        internal const float DayRimIntensity = 0.07f;
+        internal const float NightKeyIntensity = 0.28f;
+        internal const float NightFillIntensity = 0.16f;
+        internal const float NightRimIntensity = 0.1f;
+        internal const float KeyWhiteBlend = 0.52f;
+        internal const float FillWhiteBlend = 0.42f;
+        internal const float KeyShadowStrength = 0.18f;
+        internal const float KeyShadowBias = 0.05f;
+        internal const float KeyShadowNormalBias = 0.35f;
+        internal static readonly Vector3 KeyRotationEuler = new(52f, -28f, 0f);
+        internal static readonly Vector3 FillRotationEuler = new(25f, 32f, 0f);
+        internal static readonly Vector3 RimRotationEuler = new(32f, 208f, 0f);
+
         [SerializeField] private string currentThemeId = MilkroomThemeController.MorningThemeId;
         [SerializeField] private Light keyLight;
         [SerializeField] private Light fillLight;
@@ -23,33 +40,54 @@ namespace CheeseTama.Environment
             CacheSceneReferences();
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = Color.Lerp(palette.Ambient, Color.white, 0.28f);
+            RenderSettings.ambientLight = ResolveAmbientColor(themeId, palette);
 
             if (keyLight != null)
             {
-                keyLight.color = Color.Lerp(palette.Glow, Color.white, 0.12f);
-                keyLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.95f : 1.18f;
+                keyLight.color = Color.Lerp(palette.Glow, Color.white, KeyWhiteBlend);
+                keyLight.intensity = themeId == MilkroomThemeController.NightThemeId
+                    ? NightKeyIntensity
+                    : DayKeyIntensity;
+                keyLight.shadows = LightShadows.Soft;
+                keyLight.shadowStrength = KeyShadowStrength;
+                keyLight.shadowBias = KeyShadowBias;
+                keyLight.shadowNormalBias = KeyShadowNormalBias;
                 keyLight.transform.position = new Vector3(-2.2f, 3.2f, -2.8f);
-                keyLight.transform.rotation = Quaternion.Euler(52f, -28f, 0f);
+                keyLight.transform.rotation = Quaternion.Euler(KeyRotationEuler);
             }
 
             if (fillLight != null)
             {
-                fillLight.color = Color.Lerp(palette.WindowSky, Color.white, 0.12f);
-                fillLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.42f : 0.52f;
+                fillLight.color = Color.Lerp(palette.WindowSky, Color.white, FillWhiteBlend);
+                fillLight.intensity = themeId == MilkroomThemeController.NightThemeId
+                    ? NightFillIntensity
+                    : DayFillIntensity;
+                fillLight.shadows = LightShadows.None;
+                fillLight.transform.rotation = Quaternion.Euler(FillRotationEuler);
             }
 
             if (rimLight != null)
             {
                 rimLight.color = Color.Lerp(palette.Celestial, new Color(1f, 0.82f, 0.38f), 0.35f);
-                rimLight.intensity = themeId == MilkroomThemeController.NightThemeId ? 0.48f : 0.44f;
-                rimLight.transform.rotation = Quaternion.Euler(32f, 208f, 0f);
+                rimLight.intensity = themeId == MilkroomThemeController.NightThemeId
+                    ? NightRimIntensity
+                    : DayRimIntensity;
+                rimLight.shadows = LightShadows.None;
+                rimLight.transform.rotation = Quaternion.Euler(RimRotationEuler);
             }
 
             if (targetCamera != null)
             {
                 targetCamera.backgroundColor = palette.CameraBackground;
             }
+        }
+
+        internal static Color ResolveAmbientColor(string themeId, MilkroomThemePalette palette)
+        {
+            var whiteBlend = themeId == MilkroomThemeController.NightThemeId
+                ? NightAmbientWhiteBlend
+                : DayAmbientWhiteBlend;
+            return Color.Lerp(palette.Ambient, Color.white, whiteBlend);
         }
 
         private void CacheSceneReferences()

@@ -10,6 +10,9 @@ namespace CheeseTama.Environment
         public const string NightThemeId = "milkroom_night";
         public const string RainyThemeId = "milkroom_rainy";
 
+        internal const float RoomWallValueScale = 1f;
+        internal const float RoomFloorValueScale = 0.55f / 0.5f;
+
         [SerializeField] private string currentThemeId = MorningThemeId;
         [SerializeField] private Transform backgroundRoot;
         [SerializeField] private Transform midgroundRoot;
@@ -58,6 +61,18 @@ namespace CheeseTama.Environment
             SetThemeVfxVisibility(currentThemeId);
         }
 
+        public void ApplyCurrentThemeToRenderer(Renderer renderer)
+        {
+            if (renderer == null || ShouldPreserveImportedRenderer(renderer))
+            {
+                return;
+            }
+
+            var palette = MilkroomThemePalette.For(currentThemeId);
+            var color = ResolveColor(renderer.name, palette);
+            PaintRenderer(renderer, AdjustRoomShellColor(renderer, color));
+        }
+
         private void CacheGroupRoots()
         {
             backgroundRoot ??= transform.Find("BackgroundRoot");
@@ -82,8 +97,54 @@ namespace CheeseTama.Environment
                     continue;
                 }
 
-                PaintRenderer(renderer, ResolveColor(renderer.name, palette));
+                var color = ResolveColor(renderer.name, palette);
+                PaintRenderer(renderer, AdjustRoomShellColor(renderer, color));
             }
+        }
+
+        private static Color AdjustRoomShellColor(Renderer renderer, Color color)
+        {
+            if (!IsUnderNamedAncestor(renderer, "RoomShell"))
+            {
+                return color;
+            }
+
+            var objectName = renderer.name;
+            if (objectName.Contains("Wall") && !objectName.Contains("Wall Wash"))
+            {
+                return ScaleValuePreservingHueAndSaturation(color, RoomWallValueScale);
+            }
+
+            if (objectName.Contains("Floor") || objectName.Contains("Plank") || objectName.Contains("Seam"))
+            {
+                return ScaleValuePreservingHueAndSaturation(color, RoomFloorValueScale);
+            }
+
+            return color;
+        }
+
+        private static bool IsUnderNamedAncestor(Renderer renderer, string ancestorName)
+        {
+            var current = renderer != null ? renderer.transform : null;
+            while (current != null)
+            {
+                if (current.name == ancestorName)
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
+        private static Color ScaleValuePreservingHueAndSaturation(Color color, float scale)
+        {
+            Color.RGBToHSV(color, out var hue, out var saturation, out var value);
+            var adjusted = Color.HSVToRGB(hue, saturation, Mathf.Clamp01(value * scale));
+            adjusted.a = color.a;
+            return adjusted;
         }
 
         private static bool ShouldPreserveImportedRenderer(Renderer renderer)

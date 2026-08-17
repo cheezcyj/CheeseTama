@@ -29,7 +29,8 @@ namespace CheeseTama.UI
         CatchMilkDrops,
         Blend,
         OpenMilkPanel,
-        OpenSnackPanel
+        OpenSnackPanel,
+        SleepSchedule
     }
 
     [RequireComponent(typeof(Button))]
@@ -44,6 +45,7 @@ namespace CheeseTama.UI
 
         private readonly CareActionSystem careActions = new CareActionSystem();
         private Button button;
+        private CookingChoicePanelController cookingChoicePanelController;
 
         private void Awake()
         {
@@ -164,36 +166,94 @@ namespace CheeseTama.UI
                 return;
             }
 
+            if (action == MilkroomCareAction.SleepSchedule)
+            {
+                CloseToolPanels();
+                var sleepSchedule = Object.FindFirstObjectByType<SleepScheduleBridge>();
+                if (sleepSchedule != null && sleepSchedule.Open())
+                {
+                    Refresh("수면 시간을 예약하거나 현재 수면을 확인해 주세요.", manager, false);
+                }
+                else
+                {
+                    Refresh("지금은 수면 예약을 열 수 없습니다.", manager, false);
+                }
+
+                return;
+            }
+
+            if (manager.IsSleepScheduleActive)
+            {
+                Refresh("치즈타마가 자는 중이에요. 수면 예약에서 먼저 깨워 주세요.", manager, false);
+                return;
+            }
+
             if (action == MilkroomCareAction.WaitHour)
             {
                 var timeResult = manager.ApplyTimeSkipHours(1);
                 manager.RegisterCareAction("wait_hour", timeResult.applied ? timeResult.hours : 1);
                 var timeEvent = RegisterRandomEvent(manager);
                 PersistAfterInteraction(manager);
-                Refresh(timeResult.ToSummary("밀크룸에서"), manager, false, timeEvent.eventId, timeEvent.message);
+                var timeEventUsesCard = !string.IsNullOrWhiteSpace(timeEvent.occurrenceId);
+                Refresh(
+                    timeResult.ToSummary("밀크룸에서"),
+                    manager,
+                    false,
+                    timeEventUsesCard ? string.Empty : timeEvent.eventId,
+                    timeEventUsesCard ? string.Empty : timeEvent.message);
                 return;
             }
 
             if (action == MilkroomCareAction.CatchMilkDrops)
             {
-                var message = manager.PlayMilkDropCatch();
-                PersistAfterInteraction(manager);
-                Refresh(message, manager, false, "milk_drop_catch");
+                CloseToolPanels();
+                var playChoice = Object.FindFirstObjectByType<PlayChoicePanelController>();
+                if (playChoice != null && playChoice.Open())
+                {
+                    Refresh("오늘 함께할 놀이를 선택해 주세요.", manager, false);
+                    return;
+                }
+
+                var miniGame = Object.FindFirstObjectByType<MilkDropMiniGameController>();
+                if (miniGame != null && miniGame.Open())
+                {
+                    Refresh("30초 동안 떨어지는 우유방울을 받아 주세요.", manager, false);
+                }
+                else
+                {
+                    Refresh("우유방울 놀이를 지금 시작할 수 없습니다.", manager, false);
+                }
+
+                return;
+            }
+
+            if (action == MilkroomCareAction.Clean)
+            {
+                CloseToolPanels();
+                var cleaningGame = Object.FindFirstObjectByType<CleaningMiniGameController>();
+                if (cleaningGame != null && cleaningGame.Open())
+                {
+                    Refresh("24초 동안 나타나는 얼룩을 눌러 닦아 주세요.", manager, false);
+                }
+                else
+                {
+                    Refresh("청소 게임을 시작할 수 없습니다.", manager, false);
+                }
+
                 return;
             }
 
             if (action == MilkroomCareAction.Blend)
             {
-                var cookingPanel = ResolveCookingPanel();
-                if (cookingPanel != null)
+                if (TryOpenCookingChoice())
                 {
-                    CloseToolPanelsExcept(MilkroomCareAction.Blend);
-                    cookingPanel.Open();
-                    Refresh("요리할 레시피를 선택하세요.", manager, false);
-                    return;
+                    Refresh("요리와 우유 블렌딩 중 하나를 선택하세요.", manager, false);
+                }
+                else
+                {
+                    Refresh("지금은 만들기 선택창을 열 수 없습니다.", manager, false);
                 }
 
-                Refresh("요리 패널을 찾지 못했습니다.", manager, false);
                 return;
             }
 
@@ -244,7 +304,10 @@ namespace CheeseTama.UI
             var careResult = RunCareAction(manager, milkDefinition);
             var routineMessage = RegisterCareHistory(manager, careResult, milkDefinition);
             var discoveryMessage = RegisterCollectionDiscoveries(manager, careResult, milkDefinition);
-            var eventResult = careResult.hatched ? CareEventResult.None() : RegisterRandomEvent(manager);
+            var eventResult = careResult.hatched || careResult.leveledUp
+                ? CareEventResult.None()
+                : RegisterRandomEvent(manager);
+            var eventUsesCard = !string.IsNullOrWhiteSpace(eventResult.occurrenceId);
             var visualAction = GetVisualAction(careResult, milkDefinition);
             var hideMilkPanelDuringMotion = careResult.success && milkDefinition != null;
             PersistCareResult(manager, careResult);
@@ -252,8 +315,8 @@ namespace CheeseTama.UI
                 CombineMessages(CombineMessages(careResult.message, routineMessage), discoveryMessage),
                 manager,
                 careResult.hatched,
-                eventResult.eventId,
-                eventResult.message,
+                eventUsesCard ? string.Empty : eventResult.eventId,
+                eventUsesCard ? string.Empty : eventResult.message,
                 visualAction,
                 hideMilkPanelDuringMotion);
 
@@ -261,6 +324,9 @@ namespace CheeseTama.UI
 
         private CareActionResult RunCareAction(GameManager manager, MilkDefinition milkDefinition)
         {
+            careActions.ConfigureLateLevelGrowth(
+                manager.CurrentSave?.lateLevelGrowth,
+                manager.CurrentSave?.milkGrowth);
             if (milkDefinition != null)
             {
                 return careActions.FeedMilk(manager.CurrentTama, milkDefinition);
@@ -288,7 +354,7 @@ namespace CheeseTama.UI
             {
                 manager.RegisterCareAction(actionId);
                 return manager.RegisterDailyCareAction(actionId)
-                    ? "오늘 돌봄 루틴을 완료했습니다."
+                    ? GameManager.DailyRoutineRewardMessage
                     : string.Empty;
             }
 
@@ -353,6 +419,12 @@ namespace CheeseTama.UI
             if (growth != null && growth.growthLevel > previousLevel)
             {
                 message = $"{milk.displayName} 레벨 {growth.growthLevel} 달성.";
+            }
+
+            if (manager.LastMilkGrowthMilestoneReward != null
+                && manager.LastMilkGrowthMilestoneReward.granted)
+            {
+                message = CombineMessages(message, manager.LastMilkGrowthMilestoneReward.message);
             }
 
             message = CombineMessages(message, RegisterNewMainMilkUnlocks(manager, unlockedBefore));
@@ -617,10 +689,34 @@ namespace CheeseTama.UI
             return cookingPanelController;
         }
 
+        private CookingChoicePanelController ResolveCookingChoicePanel()
+        {
+            if (cookingChoicePanelController != null)
+            {
+                return cookingChoicePanelController;
+            }
+
+            cookingChoicePanelController = Object.FindFirstObjectByType<CookingChoicePanelController>();
+            return cookingChoicePanelController;
+        }
+
+        private bool TryOpenCookingChoice()
+        {
+            var cookingChoice = ResolveCookingChoicePanel();
+            if (cookingChoice == null)
+            {
+                return false;
+            }
+
+            CloseToolPanels();
+            return cookingChoice.Open();
+        }
+
         private void CloseToolPanelsExcept(MilkroomCareAction activePanelAction)
         {
             if (activePanelAction != MilkroomCareAction.Blend)
             {
+                ResolveCookingChoicePanel()?.Close();
                 ResolveCookingPanel()?.Close();
             }
 
@@ -637,6 +733,7 @@ namespace CheeseTama.UI
 
         private void CloseToolPanels()
         {
+            ResolveCookingChoicePanel()?.Close();
             ResolveCookingPanel()?.Close();
             ResolveMilkPanel()?.Close();
             ResolveSnackPanel()?.Close();

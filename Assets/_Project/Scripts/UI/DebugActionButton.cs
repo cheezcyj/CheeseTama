@@ -237,7 +237,11 @@ namespace CheeseTama.UI
             if (!tama.isHatched)
             {
                 tama.isHatched = true;
-                tama.name = "말랑 CheeseTama";
+                if (!tama.hasCustomName)
+                {
+                    tama.name = "말랑 CheeseTama";
+                }
+
                 tama.form = "soft_cheesetama";
             }
 

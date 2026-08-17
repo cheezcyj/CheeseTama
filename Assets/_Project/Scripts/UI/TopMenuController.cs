@@ -1,5 +1,7 @@
+using System;
 using CheeseTama.Collections;
 using CheeseTama.Core;
+using CheeseTama.Gameplay.Input;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -26,6 +28,8 @@ namespace CheeseTama.UI
         private int observedCollectionRecordCount = -1;
         private int observedClaimedRewardCount = -1;
         private int observedCollectionFragmentBalance = -1;
+
+        public event Action CollectionOpening;
 
         public void Configure(
             Button collectionOpenButton,
@@ -76,15 +80,15 @@ namespace CheeseTama.UI
         {
             RefreshCollectionRewardNotification(false);
 
-            if (Input.GetKeyDown(KeyCode.C))
+            if (GameInputRouter.WasPressed(GameInputActionIds.Collection))
             {
                 OpenCollectionPage();
             }
-            else if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.K) || Input.GetKeyDown(KeyCode.D))
+            else if (GameInputRouter.WasPressed(GameInputActionIds.Decorate))
             {
                 OpenDecorate();
             }
-            else if (Input.GetKeyDown(KeyCode.Escape))
+            else if (GameInputRouter.WasPressed(GameInputActionIds.Cancel))
             {
                 CloseAll();
             }
@@ -192,6 +196,7 @@ namespace CheeseTama.UI
 
             if (GameManager.Instance != null)
             {
+                CollectionOpening?.Invoke();
                 GameManager.Instance.SaveGame();
             }
 

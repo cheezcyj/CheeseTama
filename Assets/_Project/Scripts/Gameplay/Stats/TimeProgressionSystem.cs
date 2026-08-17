@@ -1,4 +1,5 @@
 using System;
+using CheeseTama.Gameplay.Feeding;
 using CheeseTama.Utilities;
 
 namespace CheeseTama.Gameplay.Stats
@@ -12,6 +13,8 @@ namespace CheeseTama.Gameplay.Stats
         public readonly int cleanlinessDelta;
         public readonly int sleepinessDelta;
         public readonly int healthDelta;
+        public readonly int overfullnessDelta;
+        public readonly bool overfullnessRecovered;
 
         public TimeProgressionResult(
             bool applied,
@@ -21,6 +24,29 @@ namespace CheeseTama.Gameplay.Stats
             int cleanlinessDelta,
             int sleepinessDelta,
             int healthDelta)
+            : this(
+                applied,
+                hours,
+                hungerDelta,
+                moodDelta,
+                cleanlinessDelta,
+                sleepinessDelta,
+                healthDelta,
+                0,
+                false)
+        {
+        }
+
+        public TimeProgressionResult(
+            bool applied,
+            int hours,
+            int hungerDelta,
+            int moodDelta,
+            int cleanlinessDelta,
+            int sleepinessDelta,
+            int healthDelta,
+            int overfullnessDelta,
+            bool overfullnessRecovered)
         {
             this.applied = applied;
             this.hours = hours;
@@ -29,6 +55,8 @@ namespace CheeseTama.Gameplay.Stats
             this.cleanlinessDelta = cleanlinessDelta;
             this.sleepinessDelta = sleepinessDelta;
             this.healthDelta = healthDelta;
+            this.overfullnessDelta = overfullnessDelta;
+            this.overfullnessRecovered = overfullnessRecovered;
         }
 
         public static TimeProgressionResult None()
@@ -44,12 +72,19 @@ namespace CheeseTama.Gameplay.Stats
             }
 
             var healthText = healthDelta == 0 ? string.Empty : $", 건강 {healthDelta}";
-            return $"{prefix} {hours}시간이 지났습니다. 포만감 {hungerDelta}, 기분 {moodDelta}, 청결 {cleanlinessDelta}, 졸림 +{sleepinessDelta}{healthText}.";
+            var overfullnessText = overfullnessDelta >= 0
+                ? string.Empty
+                : overfullnessRecovered
+                    ? ", 과포만 회복"
+                    : $", 과포만 {overfullnessDelta}";
+            return $"{prefix} {hours}시간이 지났습니다. 포만감 {hungerDelta}, 기분 {moodDelta}, 청결 {cleanlinessDelta}, 졸림 +{sleepinessDelta}{healthText}{overfullnessText}.";
         }
     }
 
     public sealed class TimeProgressionSystem
     {
+        private readonly FeedingStatusSystem feedingStatusSystem = new FeedingStatusSystem();
+
         public TimeProgressionResult ApplyOfflineProgress(CheeseTamaModel tama, DateTimeOffset now)
         {
             if (tama == null || tama.stats == null)
@@ -95,8 +130,18 @@ namespace CheeseTama.Gameplay.Stats
                 tama.stats.health += healthDelta;
             }
 
+            var feedingStatus = feedingStatusSystem.RecoverByTime(tama, careTicks);
             tama.stats.ClampAll();
-            return new TimeProgressionResult(true, careTicks, hungerDelta, moodDelta, cleanlinessDelta, sleepinessDelta, healthDelta);
+            return new TimeProgressionResult(
+                true,
+                careTicks,
+                hungerDelta,
+                moodDelta,
+                cleanlinessDelta,
+                sleepinessDelta,
+                healthDelta,
+                feedingStatus.OverfullnessDelta,
+                feedingStatus.overfullnessRecovered);
         }
     }
 }

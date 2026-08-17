@@ -2,6 +2,7 @@ using System.Collections;
 using System.Text;
 using CheeseTama.Core;
 using CheeseTama.Gameplay.Milk;
+using CheeseTama.Gameplay.Feeding;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -171,9 +172,7 @@ namespace CheeseTama.UI
             SetText(selectedMilkGrowthText, FormatSelectedMilkMeta(activeMilk));
             SetText(selectedMilkEffectText, FormatSelectedMilkDescriptionAndEffects(activeMilk));
             SetText(selectedMilkUnlockText, FormatSelectedMilkUnlockState(manager, activeMilk));
-            SetText(statusText, manager.IsMilkUnlocked(activeMilk.id)
-                ? $"{activeMilk.displayName}를 먹일 수 있습니다."
-                : $"{activeMilk.displayName}는 조건을 만족하면 줄 수 있습니다.");
+            SetText(statusText, FormatFeedingStatus(manager, activeMilk));
         }
 
         private void RefreshButtons(GameManager manager)
@@ -206,6 +205,30 @@ namespace CheeseTama.UI
         private static bool ShouldShowMilk(GameManager manager, MilkDefinition milk)
         {
             return milk.id != MilkCatalog.StarMilkId || manager.IsMilkUnlocked(MilkCatalog.StarMilkId);
+        }
+
+        private static string FormatFeedingStatus(GameManager manager, MilkDefinition activeMilk)
+        {
+            if (!manager.IsMilkUnlocked(activeMilk.id))
+            {
+                return $"{activeMilk.displayName}는 조건을 만족하면 줄 수 있습니다.";
+            }
+
+            var tama = manager.CurrentTama;
+            if (tama?.growthHistory != null
+                && tama.growthHistory.sameMilkFeedStreak >= FeedingStatusSystem.MilkAversionStreakThreshold)
+            {
+                return tama.growthHistory.lastFedMilkId == activeMilk.id
+                    ? $"우유 질림 중 · {activeMilk.displayName} 대신 다른 우유를 골라 주세요."
+                    : $"{activeMilk.displayName}로 바꾸면 우유 질림이 회복됩니다.";
+            }
+
+            var streak = tama?.growthHistory != null
+                && tama.growthHistory.lastFedMilkId == activeMilk.id
+                    ? tama.growthHistory.sameMilkFeedStreak
+                    : 0;
+            var warning = streak >= 2 ? " · 한 번 더 반복하면 질릴 수 있어요." : string.Empty;
+            return $"{activeMilk.displayName}를 먹일 수 있습니다.{warning}";
         }
 
         private static string FormatMilkTitle(GameManager manager, MilkDefinition milk)

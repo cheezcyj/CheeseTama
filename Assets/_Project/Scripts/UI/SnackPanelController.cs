@@ -208,6 +208,13 @@ namespace CheeseTama.UI
                 manager.LoadOrCreateGame();
             }
 
+            if (manager.IsSleepScheduleActive)
+            {
+                statusMessage = "치즈타마가 자는 중이에요. 먼저 깨운 뒤 간식을 주세요.";
+                Refresh();
+                return;
+            }
+
             var saveData = manager.CurrentSave;
             saveData?.EnsureRuntimeDefaults();
             var entry = FindEntry(saveData, snack.id);
@@ -218,6 +225,9 @@ namespace CheeseTama.UI
                 return;
             }
 
+            careActions.ConfigureLateLevelGrowth(
+                manager.CurrentSave?.lateLevelGrowth,
+                manager.CurrentSave?.milkGrowth);
             var careResult = careActions.FeedSnack(manager.CurrentTama, snack);
             if (!careResult.success)
             {
@@ -229,7 +239,7 @@ namespace CheeseTama.UI
             entry.quantity = Mathf.Max(0, entry.quantity - 1);
             manager.RegisterCareAction("feed_snack");
             var routineMessage = manager.RegisterDailyCareAction("feed_snack")
-                ? "오늘 돌봄 루틴을 완료했습니다."
+                ? GameManager.DailyRoutineRewardMessage
                 : string.Empty;
             var discoveryMessage = RegisterSnackDiscovery(manager, snack);
             if (careResult.hatched)

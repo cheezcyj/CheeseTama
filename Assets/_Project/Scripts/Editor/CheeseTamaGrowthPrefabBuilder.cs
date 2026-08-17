@@ -13,7 +13,7 @@ namespace CheeseTama.Editor
     [InitializeOnLoad]
     public static class CheeseTamaGrowthPrefabBuilder
     {
-        private const int BuilderVersion = 22;
+        private const int BuilderVersion = 27;
         private const string BuilderVersionKey = "CheeseTama.GrowthPrefabBuilder.Version";
         private const string GrowthPaletteShaderName = "CheeseTama/Growth Palette";
         private const string CharacterRoot = "Assets/Characters/CheeseTama";
@@ -23,6 +23,10 @@ namespace CheeseTama.Editor
         private const string ThumbnailRoot = GrowthRoot + "/Thumbnails";
         private const string VisualSetPath = "Assets/_Project/Resources/CheeseTamaGrowthVisualSet.asset";
         private const float CharacterGroundY = -0.53f;
+        private const float CleanCheeseYellowHue = 0.1054054f;
+        private const float CleanCheeseYellowSaturation = 0.925f;
+        private const float CleanCheeseYellowValueScale = 1.05f;
+        private const float CleanCheeseYellowValueOffset = 0.05f;
 
         private static readonly StageSpec[] StageSpecs =
         {
@@ -36,8 +40,8 @@ namespace CheeseTama.Editor
                 -90f,
                 0.122f,
                 0.12f,
-                1.25f,
-                0.3f,
+                1.08f,
+                0.1f,
                 textureMaxSize: 1024,
                 tangentImportMode: ModelImporterTangents.None),
             new StageSpec(
@@ -62,10 +66,10 @@ namespace CheeseTama.Editor
                 0.98f,
                 false,
                 -90f,
-                0.12f,
-                0.64f,
-                1.06f,
-                0.05f,
+                CleanCheeseYellowHue,
+                CleanCheeseYellowSaturation,
+                CleanCheeseYellowValueScale,
+                CleanCheeseYellowValueOffset,
                 textureMaxSize: 1024,
                 tangentImportMode: ModelImporterTangents.None),
             new StageSpec(
@@ -76,10 +80,10 @@ namespace CheeseTama.Editor
                 1.11f,
                 false,
                 -90f,
-                0.116f,
-                0.81f,
-                0.98f,
-                0.02f,
+                CleanCheeseYellowHue,
+                CleanCheeseYellowSaturation,
+                CleanCheeseYellowValueScale,
+                CleanCheeseYellowValueOffset,
                 textureMaxSize: 1024,
                 tangentImportMode: ModelImporterTangents.None),
             new StageSpec(
@@ -90,10 +94,10 @@ namespace CheeseTama.Editor
                 1.14f,
                 false,
                 -90f,
-                0.11f,
-                0.9f,
-                0.97f,
-                0f,
+                CleanCheeseYellowHue,
+                CleanCheeseYellowSaturation,
+                CleanCheeseYellowValueScale,
+                CleanCheeseYellowValueOffset,
                 textureMaxSize: 1024,
                 tangentImportMode: ModelImporterTangents.None),
             new StageSpec(
@@ -104,10 +108,10 @@ namespace CheeseTama.Editor
                 1.22f,
                 false,
                 -90f,
-                0.106f,
-                0.96f,
-                0.91f,
-                -0.01f,
+                CleanCheeseYellowHue,
+                CleanCheeseYellowSaturation,
+                CleanCheeseYellowValueScale,
+                CleanCheeseYellowValueOffset,
                 textureMaxSize: 1024,
                 tangentImportMode: ModelImporterTangents.None)
         };
@@ -336,8 +340,9 @@ namespace CheeseTama.Editor
             material.SetFloat("_PaletteValueScale", spec.PaletteValueScale);
             material.SetFloat("_PaletteValueOffset", spec.PaletteValueOffset);
             material.SetFloat("_PaletteStrength", 1f);
-            material.SetFloat("_PaletteEmission", spec.Stage == CheeseTamaGrowthStage.Egg ? 0.65f : 0f);
+            material.SetFloat("_PaletteEmission", spec.Stage == CheeseTamaGrowthStage.Egg ? 0.1f : 0f);
             material.SetFloat("_EraseBlush", spec.Stage == CheeseTamaGrowthStage.Egg ? 1f : 0f);
+            ConfigureFaceCleanup(material, spec);
             material.SetFloat("_Metallic", 0f);
             material.SetFloat("_Glossiness", 0.25f);
             material.SetColor("_EmissionColor", Color.black);
@@ -346,6 +351,262 @@ namespace CheeseTama.Editor
             material.enableInstancing = true;
             EditorUtility.SetDirty(material);
             return material;
+        }
+
+        private static void ConfigureFaceCleanup(Material material, StageSpec spec)
+        {
+            if (!TryGetFaceCleanupSettings(spec.Stage, out var settings))
+            {
+                material.SetVector("_FaceCleanupRegion", Vector4.zero);
+                material.SetVector("_FaceCleanupSurface0", Vector4.zero);
+                material.SetVector("_FaceCleanupSurface1", Vector4.zero);
+                return;
+            }
+
+            var sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(spec.SourcePrefabPath);
+            var meshFilter = sourcePrefab != null
+                ? sourcePrefab.GetComponentInChildren<MeshFilter>(true)
+                : null;
+            var sourceMesh = meshFilter != null ? meshFilter.sharedMesh : null;
+            if (sourceMesh == null || !TryFitFaceSurface(sourceMesh, settings, out var coefficients))
+            {
+                throw new InvalidOperationException(
+                    $"Unable to fit the clean forehead surface for {spec.PrefabName}.");
+            }
+
+            material.SetVector(
+                "_FaceCleanupRegion",
+                new Vector4(
+                    settings.CenterX,
+                    settings.CenterY,
+                    settings.RadiusX,
+                    settings.RadiusY));
+            material.SetVector(
+                "_FaceCleanupSurface0",
+                new Vector4(
+                    coefficients[0],
+                    coefficients[1],
+                    coefficients[2],
+                    coefficients[3]));
+            material.SetVector(
+                "_FaceCleanupSurface1",
+                new Vector4(
+                    coefficients[4],
+                    coefficients[5],
+                    settings.MinimumPaletteValue,
+                    1f));
+        }
+
+        private static bool TryGetFaceCleanupSettings(
+            CheeseTamaGrowthStage stage,
+            out FaceCleanupSettings settings)
+        {
+            // The previous migration interpreted an authored cheese indentation as
+            // the reported facial decoration. The actual unwanted decoration was
+            // the separate normal-evolution accent presenter, so keep the source
+            // growth meshes intact and clear the mistaken deformation on rebuild.
+            settings = default;
+            return false;
+        }
+
+        private static bool TryFitFaceSurface(
+            Mesh sourceMesh,
+            FaceCleanupSettings settings,
+            out float[] coefficients)
+        {
+            coefficients = null;
+            var vertices = sourceMesh.vertices;
+            var normals = sourceMesh.normals;
+            if (vertices == null || vertices.Length < 6)
+            {
+                return false;
+            }
+
+            var samples = new List<Vector3>();
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                var vertex = vertices[i];
+                var normalFacesForward = normals == null
+                    || normals.Length != vertices.Length
+                    || normals[i].z > 0f;
+                if (vertex.z <= 0f || !normalFacesForward)
+                {
+                    continue;
+                }
+
+                var deltaX = vertex.x - settings.CenterX;
+                var deltaY = vertex.y - settings.CenterY;
+                var normalizedX = deltaX / settings.RadiusX;
+                var normalizedY = deltaY / settings.RadiusY;
+                var ellipseRadius = Mathf.Sqrt(
+                    normalizedX * normalizedX + normalizedY * normalizedY);
+                if (ellipseRadius >= 1.1f && ellipseRadius <= 1.6f)
+                {
+                    samples.Add(new Vector3(deltaX, deltaY, vertex.z));
+                }
+            }
+
+            if (!TrySolveQuadraticSurface(samples, null, out var firstFit))
+            {
+                return false;
+            }
+
+            var absoluteResiduals = new float[samples.Count];
+            for (var i = 0; i < samples.Count; i++)
+            {
+                absoluteResiduals[i] = Mathf.Abs(
+                    samples[i].z - EvaluateQuadraticSurface(firstFit, samples[i].x, samples[i].y));
+            }
+
+            Array.Sort(absoluteResiduals);
+            var medianResidual = absoluteResiduals[absoluteResiduals.Length / 2];
+            var maximumResidual = Mathf.Max(0.0025f, medianResidual * 3f);
+            var accepted = new bool[samples.Count];
+            var acceptedCount = 0;
+            for (var i = 0; i < samples.Count; i++)
+            {
+                accepted[i] = Mathf.Abs(
+                    samples[i].z - EvaluateQuadraticSurface(firstFit, samples[i].x, samples[i].y))
+                    <= maximumResidual;
+                if (accepted[i])
+                {
+                    acceptedCount++;
+                }
+            }
+
+            if (acceptedCount < 6 || !TrySolveQuadraticSurface(samples, accepted, out coefficients))
+            {
+                coefficients = firstFit;
+            }
+
+            var fittedCenterZ = coefficients[0];
+            return float.IsFinite(fittedCenterZ) && fittedCenterZ > 0f;
+        }
+
+        private static bool TrySolveQuadraticSurface(
+            IReadOnlyList<Vector3> samples,
+            IReadOnlyList<bool> accepted,
+            out float[] coefficients)
+        {
+            const int coefficientCount = 6;
+            coefficients = null;
+            if (samples == null || samples.Count < coefficientCount)
+            {
+                return false;
+            }
+
+            var augmented = new double[coefficientCount, coefficientCount + 1];
+            var includedCount = 0;
+            for (var sampleIndex = 0; sampleIndex < samples.Count; sampleIndex++)
+            {
+                if (accepted != null && !accepted[sampleIndex])
+                {
+                    continue;
+                }
+
+                includedCount++;
+                var sample = samples[sampleIndex];
+                var basis = new[]
+                {
+                    1d,
+                    (double)sample.x,
+                    (double)sample.y,
+                    (double)sample.x * sample.x,
+                    (double)sample.x * sample.y,
+                    (double)sample.y * sample.y
+                };
+                for (var row = 0; row < coefficientCount; row++)
+                {
+                    for (var column = 0; column < coefficientCount; column++)
+                    {
+                        augmented[row, column] += basis[row] * basis[column];
+                    }
+
+                    augmented[row, coefficientCount] += basis[row] * sample.z;
+                }
+            }
+
+            if (includedCount < coefficientCount)
+            {
+                return false;
+            }
+
+            for (var pivotColumn = 0; pivotColumn < coefficientCount; pivotColumn++)
+            {
+                var pivotRow = pivotColumn;
+                var pivotMagnitude = Math.Abs(augmented[pivotRow, pivotColumn]);
+                for (var candidateRow = pivotColumn + 1;
+                     candidateRow < coefficientCount;
+                     candidateRow++)
+                {
+                    var candidateMagnitude = Math.Abs(augmented[candidateRow, pivotColumn]);
+                    if (candidateMagnitude > pivotMagnitude)
+                    {
+                        pivotRow = candidateRow;
+                        pivotMagnitude = candidateMagnitude;
+                    }
+                }
+
+                if (pivotMagnitude < 1e-12d)
+                {
+                    return false;
+                }
+
+                if (pivotRow != pivotColumn)
+                {
+                    for (var column = pivotColumn; column <= coefficientCount; column++)
+                    {
+                        var temporary = augmented[pivotColumn, column];
+                        augmented[pivotColumn, column] = augmented[pivotRow, column];
+                        augmented[pivotRow, column] = temporary;
+                    }
+                }
+
+                var divisor = augmented[pivotColumn, pivotColumn];
+                for (var column = pivotColumn; column <= coefficientCount; column++)
+                {
+                    augmented[pivotColumn, column] /= divisor;
+                }
+
+                for (var row = 0; row < coefficientCount; row++)
+                {
+                    if (row == pivotColumn)
+                    {
+                        continue;
+                    }
+
+                    var factor = augmented[row, pivotColumn];
+                    for (var column = pivotColumn; column <= coefficientCount; column++)
+                    {
+                        augmented[row, column] -= factor * augmented[pivotColumn, column];
+                    }
+                }
+            }
+
+            coefficients = new float[coefficientCount];
+            for (var i = 0; i < coefficientCount; i++)
+            {
+                coefficients[i] = (float)augmented[i, coefficientCount];
+                if (!float.IsFinite(coefficients[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static float EvaluateQuadraticSurface(
+            IReadOnlyList<float> coefficients,
+            float deltaX,
+            float deltaY)
+        {
+            return coefficients[0]
+                + coefficients[1] * deltaX
+                + coefficients[2] * deltaY
+                + coefficients[3] * deltaX * deltaX
+                + coefficients[4] * deltaX * deltaY
+                + coefficients[5] * deltaY * deltaY;
         }
 
         private static GameObject BuildStagePrefab(StageSpec spec, GameObject sourcePrefab, Material material)
@@ -657,6 +918,29 @@ namespace CheeseTama.Editor
             public int TextureMaxSize { get; }
             public ModelImporterTangents TangentImportMode { get; }
             public bool UsesCustomMaterial => !string.IsNullOrEmpty(TexturePath);
+        }
+
+        private readonly struct FaceCleanupSettings
+        {
+            public FaceCleanupSettings(
+                float centerX,
+                float centerY,
+                float radiusX,
+                float radiusY,
+                float minimumPaletteValue)
+            {
+                CenterX = centerX;
+                CenterY = centerY;
+                RadiusX = radiusX;
+                RadiusY = radiusY;
+                MinimumPaletteValue = minimumPaletteValue;
+            }
+
+            public float CenterX { get; }
+            public float CenterY { get; }
+            public float RadiusX { get; }
+            public float RadiusY { get; }
+            public float MinimumPaletteValue { get; }
         }
     }
 }

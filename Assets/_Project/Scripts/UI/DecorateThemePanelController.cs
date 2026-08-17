@@ -1,5 +1,6 @@
 using CheeseTama.Core;
 using CheeseTama.Environment;
+using CheeseTama.Gameplay.Decorations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -114,6 +115,7 @@ namespace CheeseTama.UI
             themeController?.ApplyTheme(themeId);
             lightingController?.ApplyTheme(themeId);
             ambientController?.SetTheme(themeId);
+            Object.FindFirstObjectByType<DecorationRoomPresenter>()?.Refresh();
         }
 
         private void CacheControllers()

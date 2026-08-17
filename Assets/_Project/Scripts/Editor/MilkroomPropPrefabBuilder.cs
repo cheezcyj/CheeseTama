@@ -1,7 +1,13 @@
 using CheeseTama.Utilities;
+using CheeseTama.Core;
+using CheeseTama.Environment;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace CheeseTama.Editor
@@ -9,10 +15,38 @@ namespace CheeseTama.Editor
     public static class MilkroomPropPrefabBuilder
     {
         private const string PropsRoot = "Assets/Environments/Milkroom/Props";
-        private const string WindowModelPath = PropsRoot + "/Window_Assets/selected.glb";
-        private const string RugModelPath = PropsRoot + "/Rug_Assets/selected.glb";
-        private const string DresserTableModelPath = PropsRoot + "/DresserTable_Assets/selected.glb";
+        private const string WindowReplacementRoot = PropsRoot + "/Window_Assets/Replacement";
+        private const string WindowModelPath = WindowReplacementRoot + "/WindowReplacement.fbx";
+        private const string WindowTexturePath = WindowReplacementRoot + "/window.JPEG";
+        private const string WindowMaterialPath = WindowReplacementRoot + "/WindowReplacement.mat";
+        private const string RugReplacementRoot = PropsRoot + "/Rug_Assets/Replacement";
+        private const string RugModelPath = RugReplacementRoot + "/RugReplacement.fbx";
+        private const string RugTexturePath = RugReplacementRoot + "/Rug.png";
+        private const string RugMaterialPath = RugReplacementRoot + "/RugReplacement.mat";
+        private const float RugPlanarScale = 1.575f;
+        private const string MilkShelfReplacementRoot = PropsRoot + "/MilkShelf_Assets/Replacement";
+        private const string MilkShelfModelPath = MilkShelfReplacementRoot + "/MilkShelfReplacement.fbx";
+        private const string MilkShelfTexturePath = MilkShelfReplacementRoot + "/shelf.JPEG";
+        private const string MilkShelfMaterialPath = MilkShelfReplacementRoot + "/MilkShelfReplacement.mat";
+        private const string DresserReplacementRoot = PropsRoot + "/DresserTable_Assets/Replacement";
+        private const string DresserTableModelPath = DresserReplacementRoot + "/MilkCabinetReplacement.fbx";
+        private const string DresserTableTexturePath = DresserReplacementRoot + "/milkcabinet.JPEG";
+        private const string DresserTableMaterialPath = DresserReplacementRoot + "/MilkCabinetReplacement.mat";
         private const string ChalkboardModelPath = PropsRoot + "/Chalkboard_Assets/selected.glb";
+        private const string CozyChairModelPath = PropsRoot + "/CozyChair_Assets/selected.glb";
+        private const string CozyChairTexturePath = PropsRoot + "/CozyChair_Assets/CozyChairWhite.png";
+        private const string CozyChairMaterialPath = PropsRoot + "/CozyChair_Assets/CozyChairWhite.mat";
+        private const string CleanCheeseCushionMeshPath = PropsRoot + "/CozyChair_Assets/CleanCheeseCushion.asset";
+        private const string CleanCheeseCushionMaterialPath = PropsRoot + "/CozyChair_Assets/CleanCheeseCushion.mat";
+        private const string CleanCheeseCushionOverlayName = "Clean Cheese Cushion Overlay";
+        private const string CozyChairPrefabPath = PropsRoot + "/CozyChair.prefab";
+        private const string FridgeModelPath = PropsRoot + "/Fridge_Assets/selected.glb";
+        private const string FridgeTexturePath = PropsRoot + "/Fridge_Assets/FridgeWhite.png";
+        private const string FridgeMaterialPath = PropsRoot + "/Fridge_Assets/FridgeWhite.mat";
+        private const string FridgePrefabPath = PropsRoot + "/Fridge.prefab";
+        private const string ChalkboardTexturePath = PropsRoot + "/Chalkboard_Assets/ChalkboardCrisp.png";
+        private const string ChalkboardMaterialPath = PropsRoot + "/Chalkboard_Assets/ChalkboardCrisp.mat";
+        private const string ChalkboardPrefabPath = PropsRoot + "/Chalkboard.prefab";
 
         [MenuItem("CheeseTama/밀크룸 소품 프리팹 생성")]
         public static void BuildMilkroomPropPrefabs()
@@ -20,18 +54,164 @@ namespace CheeseTama.Editor
             EnsurePropsFolder();
             SavePrefab(BuildWindow(), $"{PropsRoot}/Window.prefab");
             SavePrefab(BuildRug(), $"{PropsRoot}/Rug.prefab");
+            SavePrefab(BuildMilkShelf(), $"{PropsRoot}/MilkShelf.prefab");
             SavePrefab(BuildDresserTable(), $"{PropsRoot}/DresserTable.prefab");
             SavePrefab(BuildChalkboard(), $"{PropsRoot}/Chalkboard.prefab");
+            ApplyNaturalMilkroomMaterialsInternal();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("Milkroom prop prefabs generated: Window, Rug, DresserTable, Chalkboard");
+            Debug.Log("Milkroom prop prefabs generated: Window, Rug, MilkShelf, DresserTable, Chalkboard");
+        }
+
+        [MenuItem("CheeseTama/Build Rug Prefab")]
+        public static void BuildRugPrefab()
+        {
+            EnsurePropsFolder();
+            SavePrefab(BuildRug(), $"{PropsRoot}/Rug.prefab");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Milkroom rug prefab rebuilt from RugReplacement.fbx and Rug.png");
+        }
+
+        [MenuItem("CheeseTama/Build Window Prefab")]
+        public static void BuildWindowPrefab()
+        {
+            EnsurePropsFolder();
+            SavePrefab(BuildWindow(), $"{PropsRoot}/Window.prefab");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Milkroom window prefab rebuilt from WindowReplacement.fbx and window.JPEG");
+        }
+
+        [MenuItem("CheeseTama/Build Dresser Table Prefab")]
+        public static void BuildDresserTablePrefab()
+        {
+            EnsurePropsFolder();
+            SavePrefab(BuildDresserTable(), $"{PropsRoot}/DresserTable.prefab");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Milkroom dresser prefab rebuilt from MilkCabinetReplacement.fbx and milkcabinet.JPEG");
+        }
+
+        [MenuItem("CheeseTama/Build Milk Shelf Prefab")]
+        public static void BuildMilkShelfPrefab()
+        {
+            EnsurePropsFolder();
+            SavePrefab(BuildMilkShelf(), $"{PropsRoot}/MilkShelf.prefab");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Milkroom shelf prefab rebuilt from MilkShelfReplacement.fbx and shelf.JPEG");
+        }
+
+        [MenuItem("CheeseTama/Apply Natural Milkroom Materials")]
+        public static void ApplyNaturalMilkroomMaterials()
+        {
+            ApplyNaturalMilkroomMaterialsInternal();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Natural Milkroom materials applied to the chair, fridge, and chalkboard.");
+        }
+
+        [MenuItem("CheeseTama/Apply Current Milkroom Visual Placements")]
+        public static void ApplyCurrentMilkroomVisualPlacements()
+        {
+            var activeScene = SceneManager.GetActiveScene();
+            if (activeScene.IsValid() && activeScene.isDirty)
+            {
+                throw new System.InvalidOperationException(
+                    "Save or discard the active scene changes before applying Milkroom visual placements.");
+            }
+
+            var originalScenePath = activeScene.path;
+            ApplyNaturalMilkroomMaterialsInternal();
+            var placeMethod = typeof(StarterSceneBuilder).GetMethod(
+                "PlaceGeneratedProp",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            var ensureLightMethod = typeof(StarterSceneBuilder).GetMethod(
+                "EnsureLight",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            if (placeMethod == null || ensureLightMethod == null)
+            {
+                throw new System.MissingMethodException("StarterSceneBuilder visual placement helpers were not found.");
+            }
+
+            foreach (var scenePath in new[]
+                     {
+                         "Assets/_Project/Scenes/Milkroom.unity",
+                         "Assets/_Project/Scenes/Debug.unity"
+                     })
+            {
+                var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+                var background = GameObject.Find("Milkroom Background")?.transform;
+                if (background == null)
+                {
+                    throw new MissingReferenceException($"Milkroom Background was not found in {scenePath}.");
+                }
+
+                placeMethod.Invoke(null, new object[]
+                {
+                    background,
+                    $"{PropsRoot}/Window.prefab",
+                    "Window_Model",
+                    new Vector3(0.45f, 0f, 2.366f),
+                    1.72f,
+                    180f,
+                    false,
+                    -0.15f,
+                    -2.13f
+                });
+                placeMethod.Invoke(null, new object[]
+                {
+                    background,
+                    $"{PropsRoot}/MilkShelf.prefab",
+                    "MilkShelf_Model",
+                    new Vector3(2.65f, 0f, 2.295f),
+                    1.3f,
+                    180f,
+                    false,
+                    -0.15f,
+                    -2.13f
+                });
+                placeMethod.Invoke(null, new object[]
+                {
+                    background,
+                    $"{PropsRoot}/DresserTable.prefab",
+                    "DresserTable_Model",
+                    new Vector3(2.807f, 0f, 1.18f),
+                    1.5f,
+                    200f,
+                    true,
+                    0f,
+                    -2.13f
+                });
+                ensureLightMethod.Invoke(null, null);
+                var themeController = Object.FindFirstObjectByType<MilkroomThemeController>();
+                if (themeController != null)
+                {
+                    themeController.ApplyCurrentTheme();
+                }
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+
+            if (!string.IsNullOrWhiteSpace(originalScenePath))
+            {
+                EditorSceneManager.OpenScene(originalScenePath, OpenSceneMode.Single);
+            }
         }
 
         private static GameObject BuildWindow()
         {
-            var imported = BuildImportedGlbProp("Window", WindowModelPath, Quaternion.Euler(0f, -90f, 0f));
+            EnsureImportedModelSettings(WindowModelPath);
+            var imported = BuildImportedGlbProp("Window", WindowModelPath, Quaternion.Euler(-90f, 0f, 0f));
             if (imported != null)
             {
+                ApplyImportedMaterial(
+                    imported,
+                    WindowTexturePath,
+                    WindowMaterialPath,
+                    "WindowReplacement",
+                    0.16f);
                 return imported;
             }
 
@@ -73,9 +253,26 @@ namespace CheeseTama.Editor
 
         private static GameObject BuildRug()
         {
-            var imported = BuildImportedGlbProp("Rug", RugModelPath, Quaternion.Euler(0f, 90f, 0f));
+            EnsureImportedModelSettings(RugModelPath);
+            var imported = BuildImportedGlbProp("Rug", RugModelPath, Quaternion.Euler(-90f, 0f, 0f));
             if (imported != null)
             {
+                var model = imported.transform.Find("Rug_ImportedModel");
+                if (model != null)
+                {
+                    // The replacement mesh is proportionally thick. Preserve its authored
+                    // vertical axis while widening only the floor plane so a thin placed
+                    // rug still occupies the intended footprint.
+                    model.localScale = new Vector3(RugPlanarScale, RugPlanarScale, 1f);
+                }
+
+                ApplyImportedMaterial(
+                    imported,
+                    RugTexturePath,
+                    RugMaterialPath,
+                    "RugReplacement",
+                    0.2f,
+                    new Color(0.74f, 0.72f, 0.68f, 1f));
                 return imported;
             }
 
@@ -117,11 +314,137 @@ namespace CheeseTama.Editor
             return root;
         }
 
+        private static void EnsureImportedModelSettings(string modelPath)
+        {
+            AssetDatabase.ImportAsset(modelPath, ImportAssetOptions.ForceSynchronousImport);
+            if (!(AssetImporter.GetAtPath(modelPath) is ModelImporter importer))
+            {
+                return;
+            }
+
+            var changed = false;
+            changed |= SetIfDifferent(importer.globalScale, 1f, value => importer.globalScale = value);
+            changed |= SetIfDifferent(importer.importAnimation, false, value => importer.importAnimation = value);
+            changed |= SetIfDifferent(importer.isReadable, false, value => importer.isReadable = value);
+            changed |= SetIfDifferent(importer.addCollider, false, value => importer.addCollider = value);
+            changed |= SetIfDifferent(importer.generateSecondaryUV, false, value => importer.generateSecondaryUV = value);
+            changed |= SetIfDifferent(importer.importBlendShapes, false, value => importer.importBlendShapes = value);
+            changed |= SetIfDifferent(importer.importCameras, false, value => importer.importCameras = value);
+            changed |= SetIfDifferent(importer.importLights, false, value => importer.importLights = value);
+            changed |= SetIfDifferent(importer.importTangents, ModelImporterTangents.None, value => importer.importTangents = value);
+            changed |= SetIfDifferent(importer.materialImportMode, ModelImporterMaterialImportMode.None, value => importer.materialImportMode = value);
+            if (changed)
+            {
+                importer.SaveAndReimport();
+            }
+        }
+
+        private static bool SetIfDifferent<T>(T current, T desired, System.Action<T> assign)
+        {
+            if (System.Collections.Generic.EqualityComparer<T>.Default.Equals(current, desired))
+            {
+                return false;
+            }
+
+            assign(desired);
+            return true;
+        }
+
+        private static void ApplyImportedMaterial(
+            GameObject root,
+            string texturePath,
+            string materialPath,
+            string materialName,
+            float smoothness,
+            Color? tint = null)
+        {
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            if (texture == null)
+            {
+                Debug.LogWarning($"Imported prop texture is missing at {texturePath}; keeping the imported material.");
+                return;
+            }
+
+            var shader = GraphicsSettings.currentRenderPipeline != null
+                ? Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")
+                : Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                Debug.LogWarning("No compatible Lit shader was found for the replacement rug.");
+                return;
+            }
+
+            var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material == null)
+            {
+                material = new Material(shader)
+                {
+                    name = materialName
+                };
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
+            else if (material.shader != shader)
+            {
+                material.shader = shader;
+            }
+
+            material.mainTexture = texture;
+            if (material.HasProperty("_BaseMap"))
+            {
+                material.SetTexture("_BaseMap", texture);
+            }
+
+            var baseColor = tint ?? Color.white;
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", baseColor);
+            }
+
+            if (material.HasProperty("_Color"))
+            {
+                material.SetColor("_Color", baseColor);
+            }
+
+            if (material.HasProperty("_Metallic"))
+            {
+                material.SetFloat("_Metallic", 0f);
+            }
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", smoothness);
+            }
+
+            if (material.HasProperty("_Glossiness"))
+            {
+                material.SetFloat("_Glossiness", smoothness);
+            }
+
+            EditorUtility.SetDirty(material);
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var materials = renderer.sharedMaterials;
+                for (var index = 0; index < materials.Length; index += 1)
+                {
+                    materials[index] = material;
+                }
+
+                renderer.sharedMaterials = materials;
+            }
+        }
+
         private static GameObject BuildDresserTable()
         {
-            var imported = BuildImportedGlbProp("DresserTable", DresserTableModelPath, Quaternion.Euler(0f, 90f, 0f));
+            EnsureImportedModelSettings(DresserTableModelPath);
+            var imported = BuildImportedGlbProp("DresserTable", DresserTableModelPath, Quaternion.Euler(-90f, 0f, 0f));
             if (imported != null)
             {
+                ApplyImportedMaterial(
+                    imported,
+                    DresserTableTexturePath,
+                    DresserTableMaterialPath,
+                    "MilkCabinetReplacement",
+                    0.18f);
                 return imported;
             }
 
@@ -162,11 +485,38 @@ namespace CheeseTama.Editor
             return root;
         }
 
+        private static GameObject BuildMilkShelf()
+        {
+            EnsureImportedModelSettings(MilkShelfModelPath);
+            var imported = BuildImportedGlbProp("MilkShelf", MilkShelfModelPath, Quaternion.Euler(-90f, 0f, 0f));
+            if (imported != null)
+            {
+                ApplyImportedMaterial(
+                    imported,
+                    MilkShelfTexturePath,
+                    MilkShelfMaterialPath,
+                    "MilkShelfReplacement",
+                    0.18f);
+                return imported;
+            }
+
+            return new GameObject("MilkShelf");
+        }
+
         private static GameObject BuildChalkboard()
         {
             var imported = BuildImportedGlbProp("Chalkboard", ChalkboardModelPath, Quaternion.Euler(0f, -90f, 0f));
             if (imported != null)
             {
+                var material = EnsureNaturalImportedMaterial(
+                    ChalkboardModelPath,
+                    ChalkboardTexturePath,
+                    ChalkboardMaterialPath,
+                    "ChalkboardCrisp",
+                    0f,
+                    0.5f,
+                    false);
+                AssignMaterial(imported, material);
                 return imported;
             }
 
@@ -187,6 +537,463 @@ namespace CheeseTama.Editor
             CreateCheeseBlock(root.transform, "Chalkboard Tiny Cheese Doodle", new Vector3(0.39f, -0.28f, -0.12f), 0.13f);
             CreatePart(root.transform, "Chalkboard Chalk Stick", PrimitiveType.Cube, new Vector3(0.08f, -0.36f, -0.12f), new Vector3(0.36f, 0.025f, 0.025f), new Color(0.96f, 0.9f, 0.72f));
             return root;
+        }
+
+        private static void ApplyNaturalMilkroomMaterialsInternal()
+        {
+            var chairMaterial = EnsureNaturalImportedMaterial(
+                CozyChairModelPath,
+                CozyChairTexturePath,
+                CozyChairMaterialPath,
+                "CozyChairWhite",
+                0f,
+                0.72f,
+                false);
+            var fridgeMaterial = EnsureNaturalImportedMaterial(
+                FridgeModelPath,
+                FridgeTexturePath,
+                FridgeMaterialPath,
+                "FridgeWhite",
+                0f,
+                0.62f,
+                false);
+            var chalkboardMaterial = EnsureNaturalImportedMaterial(
+                ChalkboardModelPath,
+                ChalkboardTexturePath,
+                ChalkboardMaterialPath,
+                "ChalkboardCrisp",
+                0f,
+                0.5f,
+                false);
+
+            AssignMaterialToPrefab(CozyChairPrefabPath, chairMaterial);
+            AssignMaterialToPrefab(FridgePrefabPath, fridgeMaterial);
+            AssignMaterialToPrefab(ChalkboardPrefabPath, chalkboardMaterial);
+        }
+
+        private static Material EnsureNaturalImportedMaterial(
+            string sourceModelPath,
+            string texturePath,
+            string materialPath,
+            string materialName,
+            float metallic,
+            float roughness,
+            bool preserveSurfaceMaps)
+        {
+            EnsureNaturalTextureSettings(texturePath);
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            var sourceMaterial = FindFirstMaterial(sourceModelPath);
+            if (texture == null || sourceMaterial == null)
+            {
+                Debug.LogWarning($"Natural Milkroom material inputs are missing: {sourceModelPath}, {texturePath}");
+                return null;
+            }
+
+            var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material == null)
+            {
+                material = new Material(sourceMaterial);
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
+            else
+            {
+                EditorUtility.CopySerialized(sourceMaterial, material);
+            }
+
+            material.name = materialName;
+            SetTextureIfPresent(material, "baseColorTexture", texture);
+            SetTextureIfPresent(material, "_BaseMap", texture);
+            SetTextureIfPresent(material, "_MainTex", texture);
+            SetColorIfPresent(material, "baseColorFactor", Color.white);
+            SetColorIfPresent(material, "_BaseColor", Color.white);
+            SetColorIfPresent(material, "_Color", Color.white);
+            SetFloatIfPresent(material, "metallicFactor", metallic);
+            SetFloatIfPresent(material, "roughnessFactor", roughness);
+            SetFloatIfPresent(material, "_Metallic", metallic);
+            SetFloatIfPresent(material, "_Smoothness", 1f - roughness);
+            SetFloatIfPresent(material, "_Glossiness", 1f - roughness);
+            SetColorIfPresent(material, "emissiveFactor", Color.black);
+            SetColorIfPresent(material, "_EmissionColor", Color.black);
+            if (!preserveSurfaceMaps)
+            {
+                SetTextureIfPresent(material, "metallicRoughnessTexture", null);
+                SetTextureIfPresent(material, "normalTexture", null);
+                SetTextureIfPresent(material, "_MetallicGlossMap", null);
+                SetTextureIfPresent(material, "_BumpMap", null);
+                material.DisableKeyword("_METALLICGLOSSMAP");
+                material.DisableKeyword("_NORMALMAP");
+            }
+            material.DisableKeyword("_EMISSION");
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static Material FindFirstMaterial(string modelPath)
+        {
+            foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(modelPath))
+            {
+                if (asset is Material material)
+                {
+                    return material;
+                }
+            }
+
+            return null;
+        }
+
+        private static void EnsureNaturalTextureSettings(string texturePath)
+        {
+            AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceSynchronousImport);
+            if (!(AssetImporter.GetAtPath(texturePath) is TextureImporter importer))
+            {
+                return;
+            }
+
+            var changed = false;
+            changed |= SetIfDifferent(importer.textureType, TextureImporterType.Default, value => importer.textureType = value);
+            changed |= SetIfDifferent(importer.sRGBTexture, true, value => importer.sRGBTexture = value);
+            changed |= SetIfDifferent(importer.mipmapEnabled, true, value => importer.mipmapEnabled = value);
+            changed |= SetIfDifferent(importer.isReadable, false, value => importer.isReadable = value);
+            changed |= SetIfDifferent(importer.maxTextureSize, 2048, value => importer.maxTextureSize = value);
+            changed |= SetIfDifferent(importer.textureCompression, TextureImporterCompression.Compressed, value => importer.textureCompression = value);
+            changed |= SetIfDifferent(importer.wrapMode, TextureWrapMode.Repeat, value => importer.wrapMode = value);
+            changed |= SetIfDifferent(importer.alphaSource, TextureImporterAlphaSource.None, value => importer.alphaSource = value);
+            if (changed)
+            {
+                importer.SaveAndReimport();
+            }
+        }
+
+        private static void AssignMaterialToPrefab(string prefabPath, Material material)
+        {
+            if (material == null || AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) == null)
+            {
+                return;
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                AssignMaterial(root, material);
+                if (prefabPath == CozyChairPrefabPath)
+                {
+                    EnsureCleanCheeseCushionOverlay(root, true);
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void EnsureCleanCheeseCushionOverlay(GameObject prefabRoot)
+        {
+            EnsureCleanCheeseCushionOverlay(prefabRoot, false);
+        }
+
+        private static void EnsureCleanCheeseCushionOverlay(GameObject prefabRoot, bool regenerateAssets)
+        {
+            if (prefabRoot == null)
+            {
+                return;
+            }
+
+            var mesh = EnsureCleanCheeseCushionMesh(regenerateAssets);
+            var material = EnsureCleanCheeseCushionMaterial(regenerateAssets);
+            if (mesh == null || material == null)
+            {
+                return;
+            }
+
+            var parent = prefabRoot.transform.Find("scene") ?? prefabRoot.transform;
+            Transform overlay = null;
+            for (var index = parent.childCount - 1; index >= 0; index -= 1)
+            {
+                var child = parent.GetChild(index);
+                if (child.name != CleanCheeseCushionOverlayName)
+                {
+                    continue;
+                }
+
+                if (overlay == null)
+                {
+                    overlay = child;
+                }
+                else
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+
+            if (overlay == null)
+            {
+                overlay = new GameObject(CleanCheeseCushionOverlayName).transform;
+                overlay.SetParent(parent, false);
+            }
+
+            overlay.localPosition = Vector3.zero;
+            overlay.localRotation = Quaternion.identity;
+            overlay.localScale = Vector3.one;
+
+            var filter = overlay.GetComponent<MeshFilter>();
+            if (filter == null)
+            {
+                filter = overlay.gameObject.AddComponent<MeshFilter>();
+            }
+
+            var renderer = overlay.GetComponent<MeshRenderer>();
+            if (renderer == null)
+            {
+                renderer = overlay.gameObject.AddComponent<MeshRenderer>();
+            }
+
+            filter.sharedMesh = mesh;
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.On;
+            renderer.receiveShadows = true;
+
+            foreach (var collider in overlay.GetComponents<Collider>())
+            {
+                Object.DestroyImmediate(collider);
+            }
+        }
+
+        private static Mesh EnsureCleanCheeseCushionMesh(bool regenerateAsset)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(CleanCheeseCushionMeshPath);
+            if (existing != null && !regenerateAsset)
+            {
+                return existing;
+            }
+
+            const int columns = 64;
+            const int rows = 44;
+            const float centerX = 0.172f;
+            const float centerY = 0.078f;
+            const float centerZ = -0.05f;
+            const float halfWidth = 0.292f;
+            const float halfHeight = 0.168f;
+            const float backX = 0.132f;
+
+            var vertices = new List<Vector3>((columns + 1) * (rows + 1) + ((columns + rows) * 4));
+            var uvs = new List<Vector2>(vertices.Capacity);
+            var triangles = new List<int>(columns * rows * 6 + ((columns + rows) * 12));
+
+            for (var row = 0; row <= rows; row += 1)
+            {
+                var v = (row / (float)rows * 2f) - 1f;
+                var absoluteV = Mathf.Abs(v);
+                var widthFactor = 1f;
+                if (absoluteV > 0.76f)
+                {
+                    var cornerT = Mathf.Clamp01((absoluteV - 0.76f) / 0.24f);
+                    widthFactor = 0.76f + (0.24f * Mathf.Sqrt(Mathf.Max(0f, 1f - (cornerT * cornerT))));
+                }
+
+                for (var column = 0; column <= columns; column += 1)
+                {
+                    var u = (column / (float)columns * 2f) - 1f;
+                    var y = centerY + (v * halfHeight);
+                    var z = centerZ + (u * halfWidth * widthFactor);
+                    var puff = 0.022f * (1f - (u * u)) * (1f - (v * v));
+                    var dimple = ResolveCheeseDimpleDepth(u, v);
+                    vertices.Add(new Vector3(centerX + puff - dimple, y, z));
+                    uvs.Add(new Vector2((u + 1f) * 0.5f, (v + 1f) * 0.5f));
+                }
+            }
+
+            for (var row = 0; row < rows; row += 1)
+            {
+                for (var column = 0; column < columns; column += 1)
+                {
+                    var a = (row * (columns + 1)) + column;
+                    var b = a + 1;
+                    var c = a + columns + 1;
+                    var d = c + 1;
+                    triangles.Add(a);
+                    triangles.Add(c);
+                    triangles.Add(b);
+                    triangles.Add(b);
+                    triangles.Add(c);
+                    triangles.Add(d);
+                }
+            }
+
+            var boundary = BuildCushionBoundaryIndices(columns, rows);
+            for (var index = 0; index < boundary.Count; index += 1)
+            {
+                var next = (index + 1) % boundary.Count;
+                var frontA = vertices[boundary[index]];
+                var frontB = vertices[boundary[next]];
+                var backAIndex = vertices.Count;
+                vertices.Add(new Vector3(backX, centerY + ((frontA.y - centerY) * 0.96f), centerZ + ((frontA.z - centerZ) * 0.96f)));
+                uvs.Add(Vector2.zero);
+                var backBIndex = vertices.Count;
+                vertices.Add(new Vector3(backX, centerY + ((frontB.y - centerY) * 0.96f), centerZ + ((frontB.z - centerZ) * 0.96f)));
+                uvs.Add(Vector2.zero);
+
+                triangles.Add(boundary[index]);
+                triangles.Add(backAIndex);
+                triangles.Add(boundary[next]);
+                triangles.Add(boundary[next]);
+                triangles.Add(backAIndex);
+                triangles.Add(backBIndex);
+            }
+
+            var generated = new Mesh
+            {
+                name = "CleanCheeseCushion"
+            };
+            generated.SetVertices(vertices);
+            generated.SetUVs(0, uvs);
+            generated.SetTriangles(triangles, 0, true);
+            generated.RecalculateNormals();
+            generated.RecalculateTangents();
+            generated.RecalculateBounds();
+
+            if (existing == null)
+            {
+                AssetDatabase.CreateAsset(generated, CleanCheeseCushionMeshPath);
+                return generated;
+            }
+
+            EditorUtility.CopySerialized(generated, existing);
+            existing.name = "CleanCheeseCushion";
+            EditorUtility.SetDirty(existing);
+            Object.DestroyImmediate(generated);
+            return existing;
+        }
+
+        private static List<int> BuildCushionBoundaryIndices(int columns, int rows)
+        {
+            var boundary = new List<int>((columns + rows) * 2);
+            for (var column = 0; column <= columns; column += 1)
+            {
+                boundary.Add(column);
+            }
+
+            for (var row = 1; row <= rows; row += 1)
+            {
+                boundary.Add((row * (columns + 1)) + columns);
+            }
+
+            for (var column = columns - 1; column >= 0; column -= 1)
+            {
+                boundary.Add((rows * (columns + 1)) + column);
+            }
+
+            for (var row = rows - 1; row > 0; row -= 1)
+            {
+                boundary.Add(row * (columns + 1));
+            }
+
+            return boundary;
+        }
+
+        private static float ResolveCheeseDimpleDepth(float u, float v)
+        {
+            var depth = 0f;
+            depth += ResolveRoundDimple(u, v, -0.54f, 0.32f, 0.19f, 0.020f);
+            depth += ResolveRoundDimple(u, v, 0.32f, 0.20f, 0.17f, 0.018f);
+            depth += ResolveRoundDimple(u, v, -0.10f, -0.38f, 0.21f, 0.022f);
+            depth += ResolveRoundDimple(u, v, 0.54f, -0.24f, 0.14f, 0.014f);
+            return Mathf.Min(depth, 0.025f);
+        }
+
+        private static float ResolveRoundDimple(float u, float v, float centerU, float centerV, float radius, float depth)
+        {
+            var normalizedDistance = Vector2.Distance(new Vector2(u, v), new Vector2(centerU, centerV)) / radius;
+            if (normalizedDistance >= 1f)
+            {
+                return 0f;
+            }
+
+            var falloff = 0.5f + (0.5f * Mathf.Cos(normalizedDistance * Mathf.PI));
+            return depth * falloff;
+        }
+
+        private static Material EnsureCleanCheeseCushionMaterial(bool regenerateAsset)
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(CleanCheeseCushionMaterialPath);
+            if (material != null && !regenerateAsset)
+            {
+                return material;
+            }
+
+            var shader = Shader.Find("Standard");
+            if (shader == null)
+            {
+                Debug.LogWarning("Standard shader is unavailable; clean cheese cushion material was not created.");
+                return null;
+            }
+
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, CleanCheeseCushionMaterialPath);
+            }
+            else
+            {
+                material.shader = shader;
+            }
+
+            material.name = "CleanCheeseCushion";
+            material.color = new Color(1f, 0.66f, 0.075f, 1f);
+            SetColorIfPresent(material, "_BaseColor", material.color);
+            SetColorIfPresent(material, "_EmissionColor", Color.black);
+            SetFloatIfPresent(material, "_Metallic", 0f);
+            SetFloatIfPresent(material, "_Glossiness", 0.28f);
+            SetFloatIfPresent(material, "_Smoothness", 0.28f);
+            material.DisableKeyword("_EMISSION");
+            material.DisableKeyword("_NORMALMAP");
+            material.DisableKeyword("_METALLICGLOSSMAP");
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static void AssignMaterial(GameObject root, Material material)
+        {
+            if (root == null || material == null)
+            {
+                return;
+            }
+
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var materials = renderer.sharedMaterials;
+                for (var index = 0; index < materials.Length; index += 1)
+                {
+                    materials[index] = material;
+                }
+
+                renderer.sharedMaterials = materials;
+            }
+        }
+
+        private static void SetTextureIfPresent(Material material, string propertyName, Texture texture)
+        {
+            if (material.HasProperty(propertyName))
+            {
+                material.SetTexture(propertyName, texture);
+            }
+        }
+
+        private static void SetColorIfPresent(Material material, string propertyName, Color color)
+        {
+            if (material.HasProperty(propertyName))
+            {
+                material.SetColor(propertyName, color);
+            }
+        }
+
+        private static void SetFloatIfPresent(Material material, string propertyName, float value)
+        {
+            if (material.HasProperty(propertyName))
+            {
+                material.SetFloat(propertyName, value);
+            }
         }
 
         private static GameObject BuildImportedGlbProp(string rootName, string assetPath, Quaternion modelRotation)

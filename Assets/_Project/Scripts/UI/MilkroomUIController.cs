@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using CheeseTama.Core;
 using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Feeding;
 using CheeseTama.Gameplay.Milk;
 using CheeseTama.Save;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace CheeseTama.UI
         private const string RecordDetailVerticalGap = "\n<size=3> </size>\n";
         private const float RecordPanelWidth = 360f;
         private const float RecordPanelMinHeight = 510f;
+        private const float RecordPanelBottomPadding = 12f;
         private const float RecordSectionLeft = 12f;
         private const float RecordSectionWidth = 336f;
         private const float RecordSectionGap = 12f;
@@ -27,7 +29,21 @@ namespace CheeseTama.UI
         private const float RecordScrollableLineLimit = 3f;
         private const float RecordScrollGapAllowance = 20f;
         private const float RecordCareSummaryMinHeight = 80f;
-        private const float RecordDailyRoutineMinHeight = 100f;
+        private const float RecordDailyRoutineMinHeight = 124f;
+        private const int HungerWarningThreshold = 30;
+        private const int MoodWarningThreshold = 45;
+        private const int CleanlinessWarningThreshold = 35;
+        private const int SleepinessWarningThreshold = 75;
+        private const int HealthWarningThreshold = 35;
+
+        private static readonly Color StatTextColor = new Color(0.22f, 0.17f, 0.12f, 1f);
+        private static readonly Color StatWarningTextColor = new Color(0.64f, 0.12f, 0.08f, 1f);
+        private static readonly Color HungerGaugeColor = new Color(0.96f, 0.62f, 0.18f, 1f);
+        private static readonly Color MoodGaugeColor = new Color(0.92f, 0.42f, 0.54f, 1f);
+        private static readonly Color CleanlinessGaugeColor = new Color(0.26f, 0.68f, 0.82f, 1f);
+        private static readonly Color SleepinessGaugeColor = new Color(0.50f, 0.48f, 0.86f, 1f);
+        private static readonly Color HealthGaugeColor = new Color(0.30f, 0.70f, 0.38f, 1f);
+        private static readonly Color StatWarningGaugeColor = new Color(0.88f, 0.28f, 0.18f, 1f);
 
         [SerializeField] private Text nameText;
         [SerializeField] private Text levelText;
@@ -38,6 +54,11 @@ namespace CheeseTama.UI
         [SerializeField] private Text cleanlinessText;
         [SerializeField] private Text sleepinessText;
         [SerializeField] private Text healthText;
+        [SerializeField] private Image hungerGaugeFill;
+        [SerializeField] private Image moodGaugeFill;
+        [SerializeField] private Image cleanlinessGaugeFill;
+        [SerializeField] private Image sleepinessGaugeFill;
+        [SerializeField] private Image healthGaugeFill;
         [SerializeField] private Text affectionText;
         [SerializeField] private Text maturationText;
         [SerializeField] private Text hatchProgressText;
@@ -62,6 +83,25 @@ namespace CheeseTama.UI
         private CanvasGroup eventMessageCanvasGroup;
         private float eventMessageFadeTarget;
         private int careTipRotationIndex;
+        private FirstMeetingOnboardingController onboardingController;
+        private ReturnSummaryController returnSummaryController;
+        private GrowthMilestoneController growthMilestoneController;
+        private MilkDropMiniGameController milkDropMiniGameController;
+        private CleaningMiniGameController cleaningMiniGameController;
+        private EvolutionMilestoneController evolutionMilestoneController;
+        private CareEventCardController careEventCardController;
+        private NewGameSetupController newGameSetupController;
+        private PlayChoicePanelController playChoicePanelController;
+        private CookingChoicePanelController cookingChoicePanelController;
+        private MilkBlendingPanelController milkBlendingPanelController;
+        private GrowthJourneyController growthJourneyController;
+        private BouncyJumpMiniGameController bouncyJumpMiniGameController;
+        private FirstDayJourneyController firstDayJourneyController;
+        private CheeseStarDeliveryBridge cheeseStarDeliveryBridge;
+        private MemoryJournalPanelController memoryJournalPanelController;
+        private FantasyPowderHiddenRecipePanelController fantasyPowderPanelController;
+        private CheeseTamaProfileMenuController profileMenuController;
+        private SleepSchedulePanelController sleepSchedulePanelController;
 
         private const float EventMessageFadeSeconds = 0.45f;
 
@@ -122,9 +162,77 @@ namespace CheeseTama.UI
             EnsureEventMessageCanvasGroup();
         }
 
+        public void ConfigureStatGauges(
+            Image hungerFill,
+            Image moodFill,
+            Image cleanlinessFill,
+            Image sleepinessFill,
+            Image healthFill)
+        {
+            hungerGaugeFill = hungerFill;
+            moodGaugeFill = moodFill;
+            cleanlinessGaugeFill = cleanlinessFill;
+            sleepinessGaugeFill = sleepinessFill;
+            healthGaugeFill = healthFill;
+
+            ConfigureStatGauge(hungerGaugeFill, HungerGaugeColor);
+            ConfigureStatGauge(moodGaugeFill, MoodGaugeColor);
+            ConfigureStatGauge(cleanlinessGaugeFill, CleanlinessGaugeColor);
+            ConfigureStatGauge(sleepinessGaugeFill, SleepinessGaugeColor);
+            ConfigureStatGauge(healthGaugeFill, HealthGaugeColor);
+
+            if (current != null && current.stats != null)
+            {
+                RefreshStatGauges();
+            }
+        }
+
         private void Update()
         {
             UpdateEventMessageFade();
+
+            onboardingController ??= GetComponent<FirstMeetingOnboardingController>();
+            returnSummaryController ??= GetComponent<ReturnSummaryController>();
+            growthMilestoneController ??= GetComponent<GrowthMilestoneController>();
+            milkDropMiniGameController ??= GetComponent<MilkDropMiniGameController>();
+            cleaningMiniGameController ??= GetComponent<CleaningMiniGameController>();
+            evolutionMilestoneController ??= GetComponent<EvolutionMilestoneController>();
+            careEventCardController ??= GetComponent<CareEventCardController>();
+            newGameSetupController ??= GetComponent<NewGameSetupController>();
+            playChoicePanelController ??= GetComponent<PlayChoicePanelController>();
+            cookingChoicePanelController ??= GetComponent<CookingChoicePanelController>();
+            milkBlendingPanelController ??= GetComponent<MilkBlendingPanelController>();
+            growthJourneyController ??= GetComponent<GrowthJourneyController>();
+            bouncyJumpMiniGameController ??= GetComponent<BouncyJumpMiniGameController>();
+            firstDayJourneyController ??= GetComponent<FirstDayJourneyController>();
+            cheeseStarDeliveryBridge ??= GetComponent<CheeseStarDeliveryBridge>();
+            memoryJournalPanelController ??= GetComponent<MemoryJournalPanelController>();
+            fantasyPowderPanelController ??= GetComponent<FantasyPowderHiddenRecipePanelController>();
+            profileMenuController ??= GetComponent<CheeseTamaProfileMenuController>();
+            sleepSchedulePanelController ??= GetComponent<SleepSchedulePanelController>();
+            if ((onboardingController != null && onboardingController.IsBlockingGameplay)
+                || (returnSummaryController != null && returnSummaryController.IsBlockingGameplay)
+                || (growthMilestoneController != null && growthMilestoneController.IsBlockingGameplay)
+                || (milkDropMiniGameController != null && milkDropMiniGameController.IsBlockingGameplay)
+                || (cleaningMiniGameController != null && cleaningMiniGameController.IsBlockingGameplay)
+                || (evolutionMilestoneController != null && evolutionMilestoneController.IsBlockingGameplay)
+                || (careEventCardController != null && careEventCardController.IsBlockingGameplay)
+                || (newGameSetupController != null && newGameSetupController.IsBlockingGameplay)
+                || (playChoicePanelController != null && playChoicePanelController.IsBlockingGameplay)
+                || (cookingChoicePanelController != null && cookingChoicePanelController.IsBlockingGameplay)
+                || (milkBlendingPanelController != null && milkBlendingPanelController.IsBlockingGameplay)
+                || (growthJourneyController != null && growthJourneyController.IsBlockingGameplay)
+                || (bouncyJumpMiniGameController != null && bouncyJumpMiniGameController.IsBlockingGameplay)
+                || (firstDayJourneyController != null && firstDayJourneyController.IsBlockingGameplay)
+                || (cheeseStarDeliveryBridge != null && cheeseStarDeliveryBridge.IsBlockingGameplay)
+                || (memoryJournalPanelController != null && memoryJournalPanelController.IsBlockingGameplay)
+                || (fantasyPowderPanelController != null && fantasyPowderPanelController.IsBlockingGameplay)
+                || (profileMenuController != null && profileMenuController.IsBlockingGameplay)
+                || (sleepSchedulePanelController != null && sleepSchedulePanelController.BlocksGameplayInput)
+                || GameManager.Instance?.IsSleepScheduleActive == true)
+            {
+                return;
+            }
 
             if (currentSave == null || GameManager.Instance == null)
             {
@@ -176,12 +284,8 @@ namespace CheeseTama.UI
             SetText(nameText, current.name);
             SetText(levelText, $"레벨 {current.level} ({current.levelProgress}%)");
             SetText(formText, FormatRecordLine("형태", FormatFormName(current.form)));
-            SetText(conditionText, FormatRecordLine("상태", FormatCondition(current)));
-            SetText(hungerText, FormatStatLine("포만감", current.stats.hunger));
-            SetText(moodText, FormatStatLine("기분", current.stats.mood));
-            SetText(cleanlinessText, FormatStatLine("청결", current.stats.cleanliness));
-            SetText(sleepinessText, FormatStatLine("졸림", current.stats.sleepiness));
-            SetText(healthText, FormatStatLine("건강", current.stats.health));
+            SetText(conditionText, FormatRecordLine("상태", FormatCondition(currentSave, current)));
+            RefreshStatGauges();
             SetText(affectionText, FormatRecordLine("애정", current.stats.affection.ToString()));
             SetText(maturationText, FormatRecordLine("성숙도", current.stats.maturation.ToString()));
             SetText(hatchProgressText, FormatHatchProgress(current));
@@ -330,6 +434,84 @@ namespace CheeseTama.UI
             }
         }
 
+        private void RefreshStatGauges()
+        {
+            var stats = current.stats;
+            ApplyStatGauge(
+                hungerText,
+                hungerGaugeFill,
+                "포만감",
+                stats.hunger,
+                stats.hunger < HungerWarningThreshold,
+                HungerGaugeColor);
+            ApplyStatGauge(
+                moodText,
+                moodGaugeFill,
+                "기분",
+                stats.mood,
+                stats.mood < MoodWarningThreshold,
+                MoodGaugeColor);
+            ApplyStatGauge(
+                cleanlinessText,
+                cleanlinessGaugeFill,
+                "청결",
+                stats.cleanliness,
+                stats.cleanliness < CleanlinessWarningThreshold,
+                CleanlinessGaugeColor);
+            ApplyStatGauge(
+                sleepinessText,
+                sleepinessGaugeFill,
+                "졸림",
+                stats.sleepiness,
+                stats.sleepiness > SleepinessWarningThreshold,
+                SleepinessGaugeColor);
+            ApplyStatGauge(
+                healthText,
+                healthGaugeFill,
+                "건강",
+                stats.health,
+                stats.health < HealthWarningThreshold,
+                HealthGaugeColor);
+        }
+
+        private static void ConfigureStatGauge(Image fill, Color normalColor)
+        {
+            if (fill == null)
+            {
+                return;
+            }
+
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fill.fillAmount = 0f;
+            fill.color = normalColor;
+            fill.preserveAspect = false;
+            fill.raycastTarget = false;
+        }
+
+        private static void ApplyStatGauge(
+            Text label,
+            Image fill,
+            string statName,
+            int rawValue,
+            bool warning,
+            Color normalColor)
+        {
+            var value = Mathf.Clamp(rawValue, 0, 100);
+            if (label != null)
+            {
+                label.text = FormatStatLine(statName, value, warning);
+                label.color = warning ? StatWarningTextColor : StatTextColor;
+            }
+
+            if (fill != null)
+            {
+                fill.fillAmount = value * 0.01f;
+                fill.color = warning ? StatWarningGaugeColor : normalColor;
+            }
+        }
+
         public void RefreshRecordPanelLayout()
         {
             var careSection = GetSection(careSummaryText);
@@ -368,14 +550,17 @@ namespace CheeseTama.UI
                 true,
                 true);
             var dailyY = careY - careHeight - RecordSectionGap;
-            RefreshScrollableRecordSection(
+            var dailyHeight = RefreshScrollableRecordSection(
                 dailyRoutineText,
                 dailyY,
                 RecordDailyRoutineMinHeight,
                 true,
                 true);
 
-            panel.sizeDelta = new Vector2(RecordPanelWidth, RecordPanelMinHeight);
+            var requiredPanelHeight = -dailyY + dailyHeight + RecordPanelBottomPadding;
+            panel.sizeDelta = new Vector2(
+                RecordPanelWidth,
+                Mathf.Ceil(Mathf.Max(RecordPanelMinHeight, requiredPanelHeight)));
         }
 
         private static RectTransform FindRecordSection(RectTransform panel, string sectionName)
@@ -547,13 +732,20 @@ namespace CheeseTama.UI
             return FormatRecordLine("부화 진행", $"{HatchingSystem.GetHatchProgressPercent(tama)}%");
         }
 
-        private static string FormatStatLine(string label, int value)
+        private static string FormatStatLine(string label, int value, bool warning)
         {
-            return $"{label}  {Mathf.Clamp(value, 0, 100)}/100";
+            var valueText = $"{label}  {Mathf.Clamp(value, 0, 100)}/100";
+            return warning ? $"{valueText} · 주의" : valueText;
         }
 
         private static string FormatFormName(string form)
         {
+            var normalEvolution = EvolutionSystem.FindNormalEvolution(form);
+            if (normalEvolution != null)
+            {
+                return normalEvolution.DisplayName;
+            }
+
             if (form == "egg")
             {
                 return "알";
@@ -607,7 +799,7 @@ namespace CheeseTama.UI
         {
             if (saveData == null || saveData.unlocks == null || !saveData.unlocks.starMilkUnlocked)
             {
-                return FormatRecordLine("별빛 우유", "조건 충족 후 표시");
+                return FormatRecordLine("숨겨진 기록", "아직 발견되지 않음");
             }
 
             return FormatMilkGrowthLine(saveData, MilkCatalog.StarMilk);
@@ -674,7 +866,7 @@ namespace CheeseTama.UI
         {
             if (saveData == null)
             {
-                return FormatRecordLine("별빛 조건", "저장 데이터 없음");
+                return FormatRecordLine("다음 성장 목표", "저장 데이터 없음");
             }
 
             saveData.EnsureRuntimeDefaults();
@@ -683,18 +875,7 @@ namespace CheeseTama.UI
                 return FormatRecordLine("별빛 조건", "별빛 알 / 별빛 우유 해금");
             }
 
-            var completedMainMilks = 0;
-            foreach (var milk in MilkCatalog.MainMilks)
-            {
-                if (milk != null && GetMilkGrowthLevel(saveData, milk.id) >= MilkCatalog.MainMilkMaxGrowthLevel)
-                {
-                    completedMainMilks += 1;
-                }
-            }
-
-            var level = saveData.cheeseTama != null ? saveData.cheeseTama.level : 0;
-            var starMilkState = $"주요 우유 {completedMainMilks}/{MilkCatalog.MainMilks.Length}개 Lv.5 · 치즈타마 Lv.{level}/33";
-            return FormatRecordLine("별빛 조건", starMilkState);
+            return FormatRecordLine("다음 성장 목표", "새로운 성장 길은 조건 달성 후 발견");
         }
 
         private static string FormatCareSummary(CheeseTamaSaveData saveData)
@@ -702,10 +883,10 @@ namespace CheeseTama.UI
             var history = saveData?.careHistory;
             if (history == null)
             {
-                return "<b>돌봄 누적</b>  0회" + RecordDetailVerticalGap + "놀이 0  청소 0  휴식 0";
+                return "<b>돌봄 누적</b>  0회" + RecordDetailVerticalGap + "쓰다듬기 0  놀이 0  청소 0  휴식 0";
             }
 
-            return $"<b>돌봄 누적</b>  {history.totalCareActions}회{RecordDetailVerticalGap}놀이 {history.playSessions}  청소 {history.cleanings}  휴식 {history.rests}";
+            return $"<b>돌봄 누적</b>  {history.totalCareActions}회{RecordDetailVerticalGap}쓰다듬기 {history.petSessions}  놀이 {history.playSessions}  청소 {history.cleanings}  휴식 {history.rests}";
         }
 
         private static string FormatDailyRoutine(CheeseTamaSaveData saveData)
@@ -713,11 +894,11 @@ namespace CheeseTama.UI
             var daily = saveData?.dailyCare;
             if (daily == null)
             {
-                return "<b>오늘 루틴</b>" + RecordDetailVerticalGap + "먹기 0/3  요리 0/2\n놀이 0/3  청소 0/2  휴식 0/2";
+                return "<b>오늘 루틴</b>" + RecordDetailVerticalGap + "먹기 0/3  요리 0/2\n놀이 0/3  청소 0/2  휴식 0/2\n<size=14>완료 보상  코인 20 · 우유방울 5 · 도감조각 1</size>";
             }
 
             var eatingCount = daily.milkFeeds + daily.snacksFed;
-            return $"<b>오늘 루틴</b>{RecordDetailVerticalGap}먹기 {ClampGoal(eatingCount, DailyCareSaveData.EatingGoal)}/{DailyCareSaveData.EatingGoal}  요리 {ClampGoal(daily.cookings, DailyCareSaveData.CookingGoal)}/{DailyCareSaveData.CookingGoal}\n놀이 {ClampGoal(daily.playSessions, DailyCareSaveData.PlayGoal)}/{DailyCareSaveData.PlayGoal}  청소 {ClampGoal(daily.cleanings, DailyCareSaveData.CleanGoal)}/{DailyCareSaveData.CleanGoal}  휴식 {ClampGoal(daily.rests, DailyCareSaveData.RestGoal)}/{DailyCareSaveData.RestGoal}";
+            return $"<b>오늘 루틴</b>{RecordDetailVerticalGap}먹기 {ClampGoal(eatingCount, DailyCareSaveData.EatingGoal)}/{DailyCareSaveData.EatingGoal}  요리 {ClampGoal(daily.cookings, DailyCareSaveData.CookingGoal)}/{DailyCareSaveData.CookingGoal}\n놀이 {ClampGoal(daily.playSessions, DailyCareSaveData.PlayGoal)}/{DailyCareSaveData.PlayGoal}  청소 {ClampGoal(daily.cleanings, DailyCareSaveData.CleanGoal)}/{DailyCareSaveData.CleanGoal}  휴식 {ClampGoal(daily.rests, DailyCareSaveData.RestGoal)}/{DailyCareSaveData.RestGoal}\n<size=14>완료 보상  코인 20 · 우유방울 5 · 도감조각 1</size>";
         }
 
         private static string FormatRecordLine(string title, string value)
@@ -767,27 +948,37 @@ namespace CheeseTama.UI
             }
 
             var tips = new List<string>();
-            if (tama.stats.health < 35)
+            if (tama.growthHistory != null
+                && tama.growthHistory.sameMilkFeedStreak >= FeedingStatusSystem.MilkAversionStreakThreshold)
+            {
+                tips.Add("우유가 질렸어요. 다른 종류의 우유를 골라 주세요.");
+            }
+
+            if (tama.stats.overfullness > 0)
+            {
+                tips.Add($"과포만 {tama.stats.overfullness}/100 · 놀아주거나 잠시 기다리면 회복해요.");
+            }
+            if (tama.stats.health < HealthWarningThreshold)
             {
                 tips.Add("건강이 낮아요. 휴식과 청소를 먼저 해주세요.");
             }
 
-            if (tama.stats.hunger < 30)
+            if (tama.stats.hunger < HungerWarningThreshold)
             {
                 tips.Add("포만감이 낮아요. 우유주기나 간식을 챙겨주세요.");
             }
 
-            if (tama.stats.cleanliness < 35)
+            if (tama.stats.cleanliness < CleanlinessWarningThreshold)
             {
                 tips.Add("청결이 낮아요. 청소하기로 방을 정리하세요.");
             }
 
-            if (tama.stats.sleepiness > 75)
+            if (tama.stats.sleepiness > SleepinessWarningThreshold)
             {
                 tips.Add("졸림이 높아요. 휴식하기로 쉬게 해주세요.");
             }
 
-            if (tama.stats.mood < 45)
+            if (tama.stats.mood < MoodWarningThreshold)
             {
                 tips.Add("기분이 낮아요. 놀아주기나 간식이 좋아요.");
             }
@@ -837,7 +1028,7 @@ namespace CheeseTama.UI
             tips.Add("놀아주기는 기분을 빠르게 올려줘요.");
             tips.Add("청소하기는 건강 관리에도 도움이 돼요.");
             tips.Add("휴식하기는 졸림을 낮추고 건강을 지켜줘요.");
-            tips.Add("오늘 루틴을 채우면 돌봄 기록이 쌓여요.");
+            tips.Add("오늘 루틴을 채우면 코인·우유방울·도감조각을 받아요.");
             tips.Add("해금 조건은 밀크룸 기록과 도감에서 확인하세요.");
             tips.Add("상태 수치가 고르게 높으면 안정적이에요.");
 
@@ -903,11 +1094,29 @@ namespace CheeseTama.UI
             return "오늘 루틴 완료.";
         }
 
-        private static string FormatCondition(CheeseTamaModel tama)
+        private static string FormatCondition(CheeseTamaSaveData saveData, CheeseTamaModel tama)
         {
             if (tama == null || tama.stats == null)
             {
                 return "알 수 없음";
+            }
+
+            var milkAverse = tama.growthHistory != null
+                && tama.growthHistory.sameMilkFeedStreak >= FeedingStatusSystem.MilkAversionStreakThreshold;
+            var overfull = tama.stats.overfullness > 0;
+            if (milkAverse && overfull)
+            {
+                return "우유 질림 · 과포만";
+            }
+
+            if (milkAverse)
+            {
+                return "우유 질림";
+            }
+
+            if (overfull)
+            {
+                return $"과포만 {tama.stats.overfullness}";
             }
 
             if (tama.stats.health < 35)

@@ -1,5 +1,6 @@
 using CheeseTama.Core;
 using CheeseTama.Save;
+using CheeseTama.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,8 @@ namespace CheeseTama.UI
         private static readonly Vector2 BaseReferenceResolution = new Vector2(1920f, 1080f);
 
         [SerializeField] private Slider masterVolumeSlider;
+        [SerializeField] private Slider musicVolumeSlider;
+        [SerializeField] private Slider effectVolumeSlider;
         [SerializeField] private Toggle muteToggle;
         [SerializeField] private Toggle fullScreenToggle;
         [SerializeField] private Toggle careTipToggle;
@@ -21,6 +24,8 @@ namespace CheeseTama.UI
         [SerializeField] private Button frameRate120Button;
         [SerializeField] private Button resetSettingsButton;
         [SerializeField] private Text masterVolumeValueText;
+        [SerializeField] private Text musicVolumeValueText;
+        [SerializeField] private Text effectVolumeValueText;
         [SerializeField] private Text uiScaleValueText;
         [SerializeField] private Text frameRateValueText;
         [SerializeField] private Text statusText;
@@ -44,7 +49,52 @@ namespace CheeseTama.UI
             Text frameRateValue,
             Text settingsStatus)
         {
+            Configure(
+                masterVolume,
+                null,
+                null,
+                mute,
+                fullScreen,
+                uiScale90,
+                uiScale100,
+                uiScale110,
+                frameRate30,
+                frameRate60,
+                frameRate120,
+                careTip,
+                resetSettings,
+                masterVolumeValue,
+                null,
+                null,
+                uiScaleValue,
+                frameRateValue,
+                settingsStatus);
+        }
+
+        public void Configure(
+            Slider masterVolume,
+            Slider musicVolume,
+            Slider effectVolume,
+            Toggle mute,
+            Toggle fullScreen,
+            Button uiScale90,
+            Button uiScale100,
+            Button uiScale110,
+            Button frameRate30,
+            Button frameRate60,
+            Button frameRate120,
+            Toggle careTip,
+            Button resetSettings,
+            Text masterVolumeValue,
+            Text musicVolumeValue,
+            Text effectVolumeValue,
+            Text uiScaleValue,
+            Text frameRateValue,
+            Text settingsStatus)
+        {
             masterVolumeSlider = masterVolume;
+            musicVolumeSlider = musicVolume;
+            effectVolumeSlider = effectVolume;
             muteToggle = mute;
             fullScreenToggle = fullScreen;
             uiScale90Button = uiScale90;
@@ -56,6 +106,8 @@ namespace CheeseTama.UI
             careTipToggle = careTip;
             resetSettingsButton = resetSettings;
             masterVolumeValueText = masterVolumeValue;
+            musicVolumeValueText = musicVolumeValue;
+            effectVolumeValueText = effectVolumeValue;
             uiScaleValueText = uiScaleValue;
             frameRateValueText = frameRateValue;
             statusText = settingsStatus;
@@ -76,6 +128,18 @@ namespace CheeseTama.UI
             {
                 masterVolumeSlider.onValueChanged.RemoveListener(SetMasterVolume);
                 masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
+            }
+
+            if (musicVolumeSlider != null)
+            {
+                musicVolumeSlider.onValueChanged.RemoveListener(SetMusicVolume);
+                musicVolumeSlider.onValueChanged.AddListener(SetMusicVolume);
+            }
+
+            if (effectVolumeSlider != null)
+            {
+                effectVolumeSlider.onValueChanged.RemoveListener(SetEffectVolume);
+                effectVolumeSlider.onValueChanged.AddListener(SetEffectVolume);
             }
 
             if (muteToggle != null)
@@ -147,6 +211,17 @@ namespace CheeseTama.UI
                 masterVolumeSlider.SetValueWithoutNotify(settings.masterVolume);
             }
 
+
+            if (musicVolumeSlider != null)
+            {
+                musicVolumeSlider.SetValueWithoutNotify(settings.musicVolume);
+            }
+
+            if (effectVolumeSlider != null)
+            {
+                effectVolumeSlider.SetValueWithoutNotify(settings.effectVolume);
+            }
+
             if (muteToggle != null)
             {
                 muteToggle.SetIsOnWithoutNotify(settings.muteAudio);
@@ -182,6 +257,30 @@ namespace CheeseTama.UI
             var settings = GetSettings(StarterSceneBuilder.EnsureCoreSystems());
             settings.masterVolume = Mathf.Clamp01(value);
             ApplyAndSave(settings, "소리 설정을 저장했습니다.");
+        }
+
+        private void SetMusicVolume(float value)
+        {
+            if (isRefreshing)
+            {
+                return;
+            }
+
+            var settings = GetSettings(StarterSceneBuilder.EnsureCoreSystems());
+            settings.musicVolume = Mathf.Clamp01(value);
+            ApplyAndSave(settings, "배경음 볼륨을 저장했습니다.");
+        }
+
+        private void SetEffectVolume(float value)
+        {
+            if (isRefreshing)
+            {
+                return;
+            }
+
+            var settings = GetSettings(StarterSceneBuilder.EnsureCoreSystems());
+            settings.effectVolume = Mathf.Clamp01(value);
+            ApplyAndSave(settings, "효과음 볼륨을 저장했습니다.");
         }
 
         private void SetUiScale(float value)
@@ -265,6 +364,7 @@ namespace CheeseTama.UI
 
             settings.EnsureRuntimeDefaults();
             AudioListener.volume = settings.muteAudio ? 0f : settings.masterVolume;
+            CheeseTamaAudioController.Instance?.ApplyVolumeSettings(settings);
             ApplyScreenMode(settings.fullScreen);
             Application.targetFrameRate = settings.targetFrameRate;
             ApplyUiScale(settings.uiScale);
@@ -311,6 +411,8 @@ namespace CheeseTama.UI
         private void RefreshLabels(GameSettingsSaveData settings, string message)
         {
             SetText(masterVolumeValueText, settings.muteAudio ? "음소거" : $"{Mathf.RoundToInt(settings.masterVolume * 100f)}%");
+            SetText(musicVolumeValueText, $"{Mathf.RoundToInt(settings.musicVolume * 100f)}%");
+            SetText(effectVolumeValueText, $"{Mathf.RoundToInt(settings.effectVolume * 100f)}%");
             SetText(uiScaleValueText, $"{Mathf.RoundToInt(settings.uiScale * 100f)}%");
             SetText(frameRateValueText, $"{settings.targetFrameRate} FPS · {(settings.fullScreen ? "전체" : "창")}");
             SetText(statusText, message);

@@ -15,6 +15,7 @@ namespace CheeseTama.Gameplay.Stats
         public int maturation;
         public int affection;
         public int milkSatisfaction;
+        public int overfullness;
 
         public static StatBlock CreateDefault()
         {
@@ -27,7 +28,8 @@ namespace CheeseTama.Gameplay.Stats
                 health = 100,
                 maturation = 0,
                 affection = 10,
-                milkSatisfaction = 50
+                milkSatisfaction = 50,
+                overfullness = 0
             };
         }
 
@@ -54,7 +56,7 @@ namespace CheeseTama.Gameplay.Stats
             maturation = Mathf.Clamp(maturation, 0, 100);
             affection = Mathf.Clamp(affection, 0, 100);
             milkSatisfaction = Mathf.Clamp(milkSatisfaction, 0, 100);
+            overfullness = Mathf.Clamp(overfullness, 0, 100);
         }
     }
 }
-

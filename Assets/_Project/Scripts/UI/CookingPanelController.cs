@@ -235,7 +235,7 @@ namespace CheeseTama.UI
             AddSnackToInventory(saveData, selectedRecipe.id, 1);
             manager.RegisterCareAction("cook");
             var routineMessage = manager.RegisterDailyCareAction("cook")
-                ? "오늘 돌봄 루틴을 완료했습니다."
+                ? GameManager.DailyRoutineRewardMessage
                 : string.Empty;
             manager.RegisterEventDiscovery(selectedRecipe.eventId);
 

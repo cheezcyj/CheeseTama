@@ -17,7 +17,8 @@ namespace CheeseTama.UI
         Cook,
         LevelUp,
         Hatch,
-        Event
+        Event,
+        Pet
     }
 
     // Displays the stage-specific CheeseTama 3D mesh and provides lightweight
@@ -95,6 +96,7 @@ namespace CheeseTama.UI
         private Transform restDreamRoot;
         private Transform sparkleRoot;
         private Transform cookSteamRoot;
+        private Transform petHeartRoot;
 
         private CheeseTamaExpression forcedExpression = CheeseTamaExpression.Idle;
         private float forcedExpressionUntil;
@@ -334,6 +336,14 @@ namespace CheeseTama.UI
         }
 
         public bool IsReacting => isReacting;
+        public Transform ModelInstance => modelInstance;
+
+        internal void SetRestingWorldPosition(Vector3 worldPosition)
+        {
+            transform.position = worldPosition;
+            restingLocalPosition = transform.localPosition;
+            hasRestingLocalPosition = true;
+        }
 
         public void ReactAction(CheeseTamaVisualAction action, bool celebrate = false)
         {
@@ -430,6 +440,13 @@ namespace CheeseTama.UI
                     flashColor = new Color(1f, 0.78f, 0.32f);
                     flashStrength = 0.28f;
                     break;
+                case CheeseTamaVisualAction.Pet:
+                    reactionDuration = 0.78f;
+                    reactionHopHeight = 0.09f;
+                    reactionPunch = 0.08f;
+                    flashColor = new Color(1f, 0.64f, 0.72f);
+                    flashStrength = 0.26f;
+                    break;
                 default:
                     reactionDuration = CareReactionDuration;
                     reactionHopHeight = CareReactionHopHeight;
@@ -485,6 +502,12 @@ namespace CheeseTama.UI
                 case CheeseTamaVisualAction.Cook:
                     side = Mathf.Sin(normalized * Mathf.PI * 2f) * 0.035f * settle;
                     roll = Mathf.Sin(normalized * Mathf.PI * 3f) * 4.5f * settle;
+                    break;
+                case CheeseTamaVisualAction.Pet:
+                    hop *= 0.55f;
+                    side = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.035f * settle;
+                    roll = Mathf.Sin(normalized * Mathf.PI * 4f) * 6.5f * settle;
+                    punch *= 0.9f;
                     break;
                 case CheeseTamaVisualAction.LevelUp:
                 case CheeseTamaVisualAction.Hatch:
@@ -778,6 +801,14 @@ namespace CheeseTama.UI
             SetPart(cookSteamRoot.Find("Cook Steam B"), new Vector3(0.02f, 0.04f, 0f), new Vector3(0.016f, 0.09f, 0.016f), Quaternion.Euler(0f, 0f, 15f));
             SetPart(cookSteamRoot.Find("Cook Steam C"), new Vector3(0.11f, -0.01f, 0f), new Vector3(0.014f, 0.075f, 0.014f), Quaternion.Euler(0f, 0f, 28f));
 
+            petHeartRoot = EnsureChild(propRoot, "Pet Heart Action Prop");
+            EnsureText(petHeartRoot, "Pet Heart Text", "♥", new Color(1f, 0.35f, 0.5f), 0.2f);
+            SetPart(
+                petHeartRoot.Find("Pet Heart Text"),
+                Vector3.zero,
+                Vector3.one,
+                Quaternion.Euler(0f, 180f, 0f));
+
             HideActionProps();
         }
 
@@ -841,6 +872,14 @@ namespace CheeseTama.UI
                         Vector3.one * (0.8f + arc * 0.3f),
                         Quaternion.Euler(0f, 0f, normalized * 120f));
                     break;
+                case CheeseTamaVisualAction.Pet:
+                    SetActive(petHeartRoot, true);
+                    SetPart(
+                        petHeartRoot,
+                        new Vector3(0.36f + Mathf.Sin(normalized * Mathf.PI * 2f) * 0.035f, 0.48f + normalized * 0.18f, PropZ),
+                        Vector3.one * (0.85f + arc * 0.28f),
+                        Quaternion.identity);
+                    break;
                 case CheeseTamaVisualAction.LevelUp:
                 case CheeseTamaVisualAction.Hatch:
                 case CheeseTamaVisualAction.Event:
@@ -863,6 +902,7 @@ namespace CheeseTama.UI
             SetActive(restDreamRoot, false);
             SetActive(sparkleRoot, false);
             SetActive(cookSteamRoot, false);
+            SetActive(petHeartRoot, false);
         }
 
         private CheeseTamaExpression ResolveExpression()
@@ -1024,7 +1064,8 @@ namespace CheeseTama.UI
             }
 
             propertyBlock ??= new MaterialPropertyBlock();
-            var tint = Color.Lerp(Color.white, flashColor, Mathf.Clamp01(strength));
+            var baseTint = GetBaseTint(current);
+            var tint = Color.Lerp(baseTint, flashColor, Mathf.Clamp01(strength));
             var condition = hasActiveCondition ? activeCondition : ResolveCareCondition(current);
             var conditionColor = GetConditionBodyColor(condition);
             var conditionStrength = GetConditionBodyStrength(condition);
@@ -1044,6 +1085,33 @@ namespace CheeseTama.UI
                 propertyBlock.SetFloat(ConditionValueScaleId, conditionValueScale);
                 r.SetPropertyBlock(propertyBlock);
             }
+        }
+
+        private static Color GetBaseTint(CheeseTamaModel tama)
+        {
+            if (tama == null)
+            {
+                return Color.white;
+            }
+
+            if (tama.isHatched)
+            {
+                // Growth-stage materials own the hatched character's body color.
+                // Evolution ids must not multiply the face or shift stages 3-6
+                // away from their shared clean-cheese yellow palette.
+                return Color.white;
+            }
+
+            return tama.eggType switch
+            {
+                "egg_butter" => new Color(1f, 0.8f, 0.3f, 1f),
+                "egg_strawberry" => new Color(1f, 0.62f, 0.72f, 1f),
+                "egg_mint" => new Color(0.58f, 0.9f, 0.76f, 1f),
+                "egg_coffee" => new Color(0.58f, 0.38f, 0.24f, 1f),
+                "egg_cream" or "cream_egg" => new Color(1f, 0.94f, 0.72f, 1f),
+                StarEggEmmentalEvolutionSystem.StarEggTypeId => new Color(0.82f, 0.77f, 1f, 1f),
+                _ => Color.white
+            };
         }
 
         private void CaptureRestingPosition()
@@ -1296,6 +1364,7 @@ namespace CheeseTama.UI
                 CheeseTamaVisualAction.LevelUp => CheeseTamaExpression.Sparkle,
                 CheeseTamaVisualAction.Hatch => CheeseTamaExpression.Sparkle,
                 CheeseTamaVisualAction.Event => CheeseTamaExpression.Sparkle,
+                CheeseTamaVisualAction.Pet => CheeseTamaExpression.Happy,
                 _ => CheeseTamaExpression.Happy
             };
         }

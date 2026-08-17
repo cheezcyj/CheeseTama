@@ -75,11 +75,11 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _PaletteEmission: 0
-    - _PaletteHue: 0.12
-    - _PaletteSaturation: 0.64
+    - _PaletteHue: 0.1054054
+    - _PaletteSaturation: 0.925
     - _PaletteStrength: 1
     - _PaletteValueOffset: 0.05
-    - _PaletteValueScale: 1.06
+    - _PaletteValueScale: 1.05
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -90,5 +90,8 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ConditionColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FaceCleanupRegion: {r: 0, g: 0, b: 0, a: 0}
+    - _FaceCleanupSurface0: {r: 0, g: 0, b: 0, a: 0}
+    - _FaceCleanupSurface1: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
