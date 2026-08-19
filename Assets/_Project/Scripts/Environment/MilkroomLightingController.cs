@@ -45,7 +45,7 @@ namespace CheeseTama.Environment
             if (keyLight != null)
             {
                 keyLight.color = Color.Lerp(palette.Glow, Color.white, KeyWhiteBlend);
-                keyLight.intensity = themeId == MilkroomThemeController.NightThemeId
+                keyLight.intensity = IsLowLightTheme(themeId)
                     ? NightKeyIntensity
                     : DayKeyIntensity;
                 keyLight.shadows = LightShadows.Soft;
@@ -59,7 +59,7 @@ namespace CheeseTama.Environment
             if (fillLight != null)
             {
                 fillLight.color = Color.Lerp(palette.WindowSky, Color.white, FillWhiteBlend);
-                fillLight.intensity = themeId == MilkroomThemeController.NightThemeId
+                fillLight.intensity = IsLowLightTheme(themeId)
                     ? NightFillIntensity
                     : DayFillIntensity;
                 fillLight.shadows = LightShadows.None;
@@ -69,7 +69,7 @@ namespace CheeseTama.Environment
             if (rimLight != null)
             {
                 rimLight.color = Color.Lerp(palette.Celestial, new Color(1f, 0.82f, 0.38f), 0.35f);
-                rimLight.intensity = themeId == MilkroomThemeController.NightThemeId
+                rimLight.intensity = IsLowLightTheme(themeId)
                     ? NightRimIntensity
                     : DayRimIntensity;
                 rimLight.shadows = LightShadows.None;
@@ -84,10 +84,17 @@ namespace CheeseTama.Environment
 
         internal static Color ResolveAmbientColor(string themeId, MilkroomThemePalette palette)
         {
-            var whiteBlend = themeId == MilkroomThemeController.NightThemeId
+            var whiteBlend = IsLowLightTheme(themeId)
                 ? NightAmbientWhiteBlend
                 : DayAmbientWhiteBlend;
             return Color.Lerp(palette.Ambient, Color.white, whiteBlend);
+        }
+
+        internal static bool IsLowLightTheme(string themeId)
+        {
+            return themeId == MilkroomThemeController.NightThemeId
+                || themeId == MilkroomThemeController.StarlightThemeId
+                || themeId == MilkroomThemeController.VintageThemeId;
         }
 
         private void CacheSceneReferences()

@@ -131,6 +131,71 @@ namespace CheeseTama.Tests.EditMode
         }
 
         [Test]
+        public void LegacyReservedBindingsRepairWithoutDisplacingValidCustomKeys()
+        {
+            var state = new GameInputBindingSaveData();
+            GameInputBindingSystem.EnsureDefaults(state);
+            state.schemaVersion = GameInputBindingSaveData.CurrentSchemaVersion - 1;
+            SetPrimary(state, GameInputActionIds.Care1, KeyCode.Return);
+            SetPrimary(state, GameInputActionIds.Care2, KeyCode.KeypadEnter);
+            SetPrimary(state, GameInputActionIds.Care3, KeyCode.Tab);
+            SetPrimary(state, GameInputActionIds.Collection, KeyCode.Space);
+            SetPrimary(state, GameInputActionIds.Decorate, KeyCode.C);
+
+            Assert.That(GameInputBindingSystem.EnsureDefaults(state), Is.True);
+            Assert.That(state.schemaVersion, Is.EqualTo(GameInputBindingSaveData.CurrentSchemaVersion));
+            Assert.That(GameInputBindingSystem.FormatBinding(state, GameInputActionIds.Care1), Is.EqualTo("1 / Keypad1"));
+            Assert.That(GameInputBindingSystem.FormatBinding(state, GameInputActionIds.Care2), Is.EqualTo("2 / Keypad2"));
+            Assert.That(GameInputBindingSystem.FormatBinding(state, GameInputActionIds.Care3), Is.EqualTo("3 / Keypad3"));
+            Assert.That(GameInputBindingSystem.FormatBinding(state, GameInputActionIds.Collection), Is.EqualTo("A"));
+            Assert.That(GameInputBindingSystem.FormatBinding(state, GameInputActionIds.Decorate), Is.EqualTo("C"));
+
+            foreach (var definition in GameInputBindingSystem.All)
+            {
+                Assert.That(
+                    GameInputBindingSystem.TryResolve(state, definition.id, out var primary, out var secondary),
+                    Is.True,
+                    definition.id);
+                Assert.That(
+                    !GameInputBindingSystem.IsReservedUiKey(primary)
+                        || (definition.id == GameInputActionIds.Cancel && primary == KeyCode.Escape),
+                    Is.True,
+                    $"reserved primary survived: {definition.id}={primary}");
+                Assert.That(
+                    secondary == KeyCode.None || !GameInputBindingSystem.IsReservedUiKey(secondary),
+                    Is.True,
+                    $"reserved secondary survived: {definition.id}={secondary}");
+            }
+
+            var migratedJson = JsonUtility.ToJson(state);
+            Assert.That(GameInputBindingSystem.EnsureDefaults(state), Is.False);
+            Assert.That(JsonUtility.ToJson(state), Is.EqualTo(migratedJson));
+        }
+
+        [Test]
+        public void ReservedSecondaryUnbindsWhenItsDefaultBelongsToAValidCustomPrimary()
+        {
+            var state = new GameInputBindingSaveData();
+            GameInputBindingSystem.EnsureDefaults(state);
+            state.schemaVersion = GameInputBindingSaveData.CurrentSchemaVersion - 1;
+            SetSecondary(state, GameInputActionIds.Care1, KeyCode.Space);
+            SetPrimary(state, GameInputActionIds.Collection, KeyCode.Keypad1);
+
+            Assert.That(GameInputBindingSystem.EnsureDefaults(state), Is.True);
+            Assert.That(
+                GameInputBindingSystem.TryResolve(
+                    state,
+                    GameInputActionIds.Care1,
+                    out var carePrimary,
+                    out var careSecondary),
+                Is.True);
+            Assert.That(carePrimary, Is.EqualTo(KeyCode.Alpha1));
+            Assert.That(careSecondary, Is.EqualTo(KeyCode.None));
+            Assert.That(GameInputBindingSystem.FormatBinding(state, GameInputActionIds.Collection), Is.EqualTo("Keypad1"));
+            Assert.That(GameInputBindingSystem.EnsureDefaults(state), Is.False);
+        }
+
+        [Test]
         public void ResetActionWithDefaultConflictLeavesStateUnchanged()
         {
             var state = new GameInputBindingSaveData();
@@ -208,6 +273,40 @@ namespace CheeseTama.Tests.EditMode
             {
                 Object.DestroyImmediate(canvasObject);
             }
+        }
+
+        private static void SetPrimary(
+            GameInputBindingSaveData state,
+            string actionId,
+            KeyCode key)
+        {
+            foreach (var entry in state.bindings)
+            {
+                if (entry.actionId == actionId)
+                {
+                    entry.primaryKey = key.ToString();
+                    return;
+                }
+            }
+
+            Assert.Fail($"missing input action: {actionId}");
+        }
+
+        private static void SetSecondary(
+            GameInputBindingSaveData state,
+            string actionId,
+            KeyCode key)
+        {
+            foreach (var entry in state.bindings)
+            {
+                if (entry.actionId == actionId)
+                {
+                    entry.secondaryKey = key.ToString();
+                    return;
+                }
+            }
+
+            Assert.Fail($"missing input action: {actionId}");
         }
     }
 }

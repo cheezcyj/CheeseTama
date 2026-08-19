@@ -168,7 +168,7 @@ namespace CheeseTama.Tests
         }
 
         [Test]
-        public void ResetProgressRestartsOnboardingAndPreservesSettings()
+        public void ResetProgressPreservesCompletedOnboardingAndSettings()
         {
             var testFileName = $"cheesetama_onboarding_test_{Guid.NewGuid():N}.json";
             var managerObject = new GameObject("GameManager Reset Test");
@@ -206,10 +206,10 @@ namespace CheeseTama.Tests
                 Assert.That(saveDataReplacedCount, Is.EqualTo(1));
                 Assert.That(preservedMuteWasVisibleToListeners, Is.True);
                 Assert.That(gameManager.CurrentSave.settings.muteAudio, Is.True);
-                Assert.That(gameManager.CurrentSave.onboarding.completed, Is.False);
+                Assert.That(gameManager.CurrentSave.onboarding.completed, Is.True);
                 Assert.That(
                     gameManager.CurrentSave.onboarding.currentStep,
-                    Is.EqualTo(FirstMeetingOnboardingStep.Welcome));
+                    Is.EqualTo(FirstMeetingOnboardingStep.Complete));
             }
             finally
             {

@@ -235,7 +235,8 @@ namespace CheeseTama.Gameplay.HiddenRecipes
 
         public FantasyPowderPanelSnapshot BuildSnapshot(
             UnlockSaveData unlocks,
-            FantasyPowderSaveData state)
+            FantasyPowderSaveData state,
+            int recipeHintProgress = 0)
         {
             if (!IsFeatureUnlocked(unlocks) || state == null)
             {
@@ -243,9 +244,14 @@ namespace CheeseTama.Gameplay.HiddenRecipes
             }
 
             state.EnsureRuntimeDefaults();
-            var hintLevel = Math.Max(
-                state.pityHintLevel,
-                CalculatePityHintLevel(state.attemptCount));
+            var hintLevel = Math.Min(
+                FantasyPowderSaveData.MaximumPityHintLevel,
+                Math.Max(
+                    state.pityHintLevel,
+                    CalculatePityHintLevel(state.attemptCount))
+                    + Math.Max(0, Math.Min(
+                        FantasyPowderSaveData.MaximumPityHintLevel,
+                        recipeHintProgress)));
             var recipes = new FantasyPowderRecipeView[
                 FantasyPowderHiddenRecipeCatalog.All.Length];
             for (var index = 0; index < recipes.Length; index += 1)
@@ -290,7 +296,8 @@ namespace CheeseTama.Gameplay.HiddenRecipes
             EconomySaveData economy,
             string recipeId,
             string receiptKey,
-            double successRoll)
+            double successRoll,
+            int rareByproductWeightPercent = 0)
         {
             if (!IsFeatureUnlocked(unlocks))
             {
@@ -358,7 +365,8 @@ namespace CheeseTama.Gameplay.HiddenRecipes
                     state);
             }
 
-            var success = successRoll < SuccessChance;
+            var success = successRoll < CalculateSuccessChance(
+                rareByproductWeightPercent);
             var wasDiscovered = state.HasDiscovered(definition.id);
             var canDiscover = !wasDiscovered
                 && state.discoveredHiddenRecipeIds.Count
@@ -457,6 +465,14 @@ namespace CheeseTama.Gameplay.HiddenRecipes
             }
 
             return safeAttemptCount >= HintLevelOneAttemptCount ? 1 : 0;
+        }
+
+        public static double CalculateSuccessChance(int rareByproductWeightPercent)
+        {
+            var bonusPercentagePoints = Math.Max(
+                0,
+                Math.Min(100, rareByproductWeightPercent));
+            return Math.Min(1d, SuccessChance + (bonusPercentagePoints / 100d));
         }
 
         public static string GetPityHintText(int hintLevel)

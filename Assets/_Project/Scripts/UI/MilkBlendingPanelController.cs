@@ -274,7 +274,7 @@ namespace CheeseTama.UI
             snapshot ??= MilkBlendingPanelSnapshot.CreateDefault();
             SetText(
                 balanceText,
-                $"우유코인 {snapshot.milkCoins} · 우유방울 {snapshot.milkDrops} · 수집 조각 {snapshot.collectionFragments}");
+                $"코인 {snapshot.milkCoins} · 우유방울 {snapshot.milkDrops} · 수집 조각 {snapshot.collectionFragments}");
             RenderMilkOptions();
             RenderIngredientOptions();
             RenderSelection();
@@ -320,7 +320,9 @@ namespace CheeseTama.UI
                 var ingredient = MilkBlendingCatalog.AllIngredients[index];
                 var useCount = snapshot.GetIngredientBlendCount(ingredient.id);
                 SetText(Get(ingredientNameTexts, index), ingredient.displayName);
-                SetText(Get(ingredientStateTexts, index), $"사용 {useCount}회");
+                SetText(
+                    Get(ingredientStateTexts, index),
+                    BuildCompactMasteryProgress(ingredient.id, useCount));
                 SetInteractable(Get(ingredientButtons, index), true);
                 SetSelected(
                     Get(ingredientButtons, index),
@@ -349,21 +351,84 @@ namespace CheeseTama.UI
             SetText(
                 detailText,
                 $"<b>{milk.displayName} + {ingredient.displayName}</b>\n{ingredient.description}\n"
+                + BuildMasteryProgressLine(ingredient.id)
+                + "\n"
                 + "서로 어울리지 않는 조합은 재화를 소비하지 않습니다.");
 
             var recipe = MilkBlendingCatalog.FindRecipe(milk.id, ingredient.id);
+            var specialResultLine = BuildSpecialResultLine(recipe, ingredient.id);
+            var masteryResearchLine = BuildMasteryResearchLine(ingredient.id);
             if (recipe == null || !snapshot.IsDiscovered(recipe.resultSnackId))
             {
-                SetText(resultText, "완성 결과  ???");
+                SetText(
+                    resultText,
+                    "완성 결과  ???" + specialResultLine + masteryResearchLine);
                 return;
             }
 
             var resultSnack = recipe.ResultSnack;
-            var useCount = snapshot.GetBlendCount(ingredient.id, recipe.resultSnackId);
+            var useCount = snapshot.GetIngredientBlendCount(ingredient.id);
             SetText(
                 resultText,
                 $"발견한 결과  {resultSnack?.displayName ?? recipe.resultSnackId}\n"
-                + $"비용  {MilkBlendingCatalog.FormatCost(recipe)} · 만든 횟수 {useCount}회");
+                + $"비용  {MilkBlendingCatalog.FormatCost(recipe)} · 블렌딩 횟수 {useCount}회"
+                + specialResultLine
+                + masteryResearchLine);
+        }
+
+        private string BuildCompactMasteryProgress(string ingredientId, int useCount)
+        {
+            var stage = snapshot.GetMasteryStage(ingredientId);
+            var next = MilkBlendingCatalog.GetNextMasteryMilestone(useCount);
+            return next == null
+                ? $"숙련 Lv.{stage} · 연구 완료"
+                : $"숙련 Lv.{stage} · {useCount}/{next.requiredUseCount}회";
+        }
+
+        private string BuildMasteryProgressLine(string ingredientId)
+        {
+            var useCount = snapshot.GetIngredientBlendCount(ingredientId);
+            var stage = snapshot.GetMasteryStage(ingredientId);
+            var next = MilkBlendingCatalog.GetNextMasteryMilestone(useCount);
+            if (next == null)
+            {
+                return $"숙련 Lv.{stage} · 재료 연구 완료";
+            }
+
+            var remaining = Math.Max(0, next.requiredUseCount - useCount);
+            return $"숙련 Lv.{stage} · 다음 연구까지 {remaining}회";
+        }
+
+        private string BuildMasteryResearchLine(string ingredientId)
+        {
+            var recordCount = snapshot.GetMasteryResearchRecordCount(ingredientId);
+            var totalCount = MilkBlendingCatalog.AllMasteryMilestones.Length;
+            var latest = snapshot.GetLatestMasteryResearchRecord(ingredientId);
+            return latest == null
+                ? $"\n연구 기록  {recordCount}/{totalCount}"
+                : $"\n연구 기록  {recordCount}/{totalCount} · {latest.title}";
+        }
+
+        private string BuildSpecialResultLine(
+            MilkBlendRecipeDefinition recipe,
+            string ingredientId)
+        {
+            if (recipe == null || !recipe.HasSpecialResult)
+            {
+                return string.Empty;
+            }
+
+            if (!snapshot.IsDiscovered(recipe.specialResultSnackId))
+            {
+                return "\n특별 결과  낮은 확률로 ???";
+            }
+
+            var specialSnack = recipe.SpecialResultSnack;
+            var specialCount = snapshot.GetBlendCount(
+                ingredientId,
+                recipe.specialResultSnackId);
+            return $"\n특별 결과  {specialSnack?.displayName ?? recipe.specialResultSnackId}"
+                + $" · 발견 {specialCount}회";
         }
 
         private void HandleCloseClicked()

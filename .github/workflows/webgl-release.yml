@@ -1,0 +1,67 @@
+name: WebGL 릴리스 아티팩트
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webgl-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-webgl:
+    name: WebGL 빌드와 배포 계약 검증
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 소스 가져오기
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Unity Library 캐시
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'Packages/packages-lock.json') }}
+          restore-keys: |
+            Library-WebGL-
+
+      - name: CheeseTama WebGL 릴리스 빌드
+        uses: game-ci/unity-builder@d829bfc901f2347c8fe18898f06712b66916ef42 # v5
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          unityVersion: auto
+          buildMethod: CheeseTama.Editor.CheeseTamaWebGlBuildValidator.BuildReleaseFromCommandLine
+          customParameters: -buildOutput Builds/WebGL/Release
+          versioning: None
+
+      - name: 고정 /play/ 사이트 조립
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Artifacts/WebGlSite/play
+          cp -R Builds/WebGL/Release/. Artifacts/WebGlSite/play/
+          cp Deploy/WebGL/index.html Artifacts/WebGlSite/index.html
+          cp Deploy/WebGL/_headers Artifacts/WebGlSite/_headers
+          cp Deploy/WebGL/_redirects Artifacts/WebGlSite/_redirects
+
+      - name: 배포 계약과 게시 안전 검사
+        shell: pwsh
+        run: ./Tools/WebGL/Validate-WebGlRelease.ps1 -SiteRoot Artifacts/WebGlSite -PublicBasePath /play/
+
+      - name: 검증된 정적 사이트 업로드
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cheesetama-webgl-site
+          path: Artifacts/WebGlSite
+          if-no-files-found: error
+          retention-days: 14

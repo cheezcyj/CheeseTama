@@ -118,6 +118,11 @@ namespace CheeseTama.UI
                 builder.Append(card.Quote);
                 builder.AppendLine("”");
                 builder.AppendLine(card.DeepText);
+                if (!string.IsNullOrWhiteSpace(card.EffectDescription))
+                {
+                    builder.Append("효과 · ");
+                    builder.AppendLine(card.EffectDescription);
+                }
                 builder.Append("획득  ");
                 builder.Append(card.AcquiredDateText);
                 appended += 1;

@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using CheeseTama.Gameplay;
+using CheeseTama.Gameplay.Care;
 using CheeseTama.Gameplay.Events;
 using CheeseTama.Gameplay.Feeding;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Milk;
 using CheeseTama.Gameplay.MiniGames;
+using CheeseTama.Gameplay.Snacks;
+using CheeseTama.Gameplay.Stats;
 using CheeseTama.Save;
+using CheeseTama.UI;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -90,6 +95,215 @@ namespace CheeseTama.Tests
             var finalHour = system.RecoverByTime(tama, 1);
             Assert.That(finalHour.overfullnessRecovered, Is.True);
             Assert.That(tama.stats.overfullness, Is.Zero);
+        }
+
+        [Test]
+        public void NightAftereffectsUseExactTwentyTwoHundredBoundary()
+        {
+            var system = new FeedingStatusSystem();
+            var beforeBoundary = new DateTimeOffset(2026, 8, 17, 21, 59, 0, TimeSpan.FromHours(9));
+            var atBoundary = new DateTimeOffset(2026, 8, 17, 22, 0, 0, TimeSpan.FromHours(9));
+
+            var earlyCold = new CheeseTamaModel();
+            var earlyResult = system.ApplyMilk(
+                earlyCold,
+                MilkCatalog.ColdMilkId,
+                0,
+                0,
+                beforeBoundary);
+            Assert.That(earlyResult.bodyChillActivated, Is.False);
+            Assert.That(earlyCold.stats.bodyChillIntensity, Is.Zero);
+
+            var nightCold = new CheeseTamaModel();
+            var nightColdResult = system.ApplyMilk(
+                nightCold,
+                MilkCatalog.ColdMilkId,
+                0,
+                0,
+                atBoundary);
+            Assert.That(nightColdResult.bodyChillActivated, Is.True);
+            Assert.That(nightCold.stats.bodyChillIntensity, Is.EqualTo(FeedingStatusSystem.BodyChillIntensityPerFeed));
+            Assert.That(nightCold.stats.bodyChillHoursRemaining, Is.EqualTo(FeedingStatusSystem.BodyChillDurationPerFeed));
+
+            var earlyCoffee = new CheeseTamaModel();
+            system.ApplyMilk(earlyCoffee, MilkCatalog.CoffeeMilkId, 0, 0, beforeBoundary);
+            Assert.That(earlyCoffee.stats.sleepRhythmDisruptionIntensity, Is.Zero);
+
+            var nightCoffee = new CheeseTamaModel();
+            var nightCoffeeResult = system.ApplyMilk(
+                nightCoffee,
+                MilkCatalog.CoffeeMilkId,
+                0,
+                0,
+                atBoundary);
+            Assert.That(nightCoffeeResult.sleepRhythmDisruptionActivated, Is.True);
+            Assert.That(
+                nightCoffee.stats.sleepRhythmDisruptionIntensity,
+                Is.EqualTo(FeedingStatusSystem.SleepRhythmIntensityPerFeed));
+        }
+
+        [Test]
+        public void FermentedMilkAndYogurtSnackLeaveBoundedAftertaste()
+        {
+            var system = new FeedingStatusSystem();
+            var milkTama = new CheeseTamaModel();
+            var milkResult = system.ApplyMilk(milkTama, MilkCatalog.FermentedMilkId, 0, 0);
+            Assert.That(milkResult.fermentedAftertasteActivated, Is.True);
+            Assert.That(
+                milkTama.stats.fermentedAftertasteIntensity,
+                Is.EqualTo(FeedingStatusSystem.FermentedAftertasteIntensityPerFeed));
+
+            var snackTama = new CheeseTamaModel();
+            var snackResult = system.ApplySnack(
+                snackTama,
+                SnackCatalog.FermentedYogurtBowlId,
+                MilkCatalog.FermentedMilkId,
+                0,
+                0,
+                new DateTimeOffset(2026, 8, 17, 12, 0, 0, TimeSpan.FromHours(9)));
+            Assert.That(snackResult.fermentedAftertasteActivated, Is.True);
+            Assert.That(
+                snackTama.stats.fermentedAftertasteHoursRemaining,
+                Is.EqualTo(FeedingStatusSystem.FermentedAftertasteDurationPerFeed));
+        }
+
+        [Test]
+        public void AftereffectsClampAndRecoverWithoutPermanentStatLoss()
+        {
+            var tama = new CheeseTamaModel();
+            var system = new FeedingStatusSystem();
+            var night = new DateTimeOffset(2026, 8, 17, 22, 0, 0, TimeSpan.FromHours(9));
+            var healthBefore = tama.stats.health;
+            var moodBefore = tama.stats.mood;
+
+            for (var i = 0; i < 20; i++)
+            {
+                system.ApplyMilk(tama, MilkCatalog.ColdMilkId, 0, 0, night);
+                system.ApplyMilk(tama, MilkCatalog.FermentedMilkId, 0, 0, night);
+                system.ApplyMilk(tama, MilkCatalog.CoffeeMilkId, 0, 0, night);
+            }
+
+            Assert.That(tama.stats.bodyChillIntensity, Is.EqualTo(FeedingStatusSystem.MaximumAftereffectIntensity));
+            Assert.That(tama.stats.bodyChillHoursRemaining, Is.EqualTo(FeedingStatusSystem.MaximumAftereffectDurationHours));
+            Assert.That(tama.stats.fermentedAftertasteIntensity, Is.EqualTo(FeedingStatusSystem.MaximumAftereffectIntensity));
+            Assert.That(tama.stats.fermentedAftertasteHoursRemaining, Is.EqualTo(FeedingStatusSystem.MaximumAftereffectDurationHours));
+            Assert.That(tama.stats.sleepRhythmDisruptionIntensity, Is.EqualTo(FeedingStatusSystem.MaximumAftereffectIntensity));
+            Assert.That(tama.stats.sleepRhythmDisruptionHoursRemaining, Is.EqualTo(FeedingStatusSystem.MaximumAftereffectDurationHours));
+            Assert.That(tama.stats.health, Is.EqualTo(healthBefore));
+            Assert.That(tama.stats.mood, Is.EqualTo(moodBefore));
+
+            system.RecoverByClean(tama);
+            Assert.That(tama.stats.fermentedAftertasteIntensity, Is.EqualTo(40));
+            system.RecoverByRest(tama);
+            Assert.That(tama.stats.bodyChillIntensity, Is.EqualTo(70));
+            Assert.That(tama.stats.sleepRhythmDisruptionIntensity, Is.EqualTo(50));
+            system.RecoverByWarmMilk(tama);
+            Assert.That(tama.stats.bodyChillIntensity, Is.EqualTo(20));
+            Assert.That(tama.stats.sleepRhythmDisruptionIntensity, Is.EqualTo(40));
+
+            var elapsed = new TimeProgressionSystem().ApplyCareTicks(tama, 12);
+            Assert.That(elapsed.bodyChillRecovered, Is.True);
+            Assert.That(elapsed.fermentedAftertasteRecovered, Is.True);
+            Assert.That(elapsed.sleepRhythmRecovered, Is.True);
+            Assert.That(tama.stats.bodyChillIntensity, Is.Zero);
+            Assert.That(tama.stats.fermentedAftertasteIntensity, Is.Zero);
+            Assert.That(tama.stats.sleepRhythmDisruptionIntensity, Is.Zero);
+        }
+
+        [Test]
+        public void CareActionTimeOverloadsApplyAndRecoverAftereffects()
+        {
+            var tama = new CheeseTamaModel();
+            var care = new CareActionSystem();
+            var night = new DateTimeOffset(2026, 8, 17, 22, 0, 0, TimeSpan.FromHours(9));
+            var noon = new DateTimeOffset(2026, 8, 18, 12, 0, 0, TimeSpan.FromHours(9));
+
+            care.FeedMilk(tama, MilkCatalog.ColdMilk, night);
+            Assert.That(care.LastFeedingStatusResult.bodyChillActivated, Is.True);
+
+            care.FeedSnack(tama, SnackCatalog.FermentedYogurtBowl, noon);
+            Assert.That(care.LastFeedingStatusResult.fermentedAftertasteActivated, Is.True);
+
+            care.FeedMilk(tama, MilkCatalog.CoffeeMilk, night);
+            Assert.That(care.LastFeedingStatusResult.sleepRhythmDisruptionActivated, Is.True);
+
+            care.Clean(tama);
+            Assert.That(tama.stats.fermentedAftertasteIntensity, Is.Zero);
+            care.Rest(tama);
+            Assert.That(tama.stats.sleepRhythmDisruptionIntensity, Is.Zero);
+            care.FeedMilk(tama, MilkCatalog.WarmMilk, noon);
+            Assert.That(tama.stats.bodyChillIntensity, Is.Zero);
+        }
+
+        [Test]
+        public void FeedingAftereffectsRoundTripThroughUnityJsonAndCoexistWithLegacyStatuses()
+        {
+            var tama = new CheeseTamaModel();
+            tama.growthHistory.lastFedMilkId = MilkCatalog.ColdMilkId;
+            tama.growthHistory.sameMilkFeedStreak = FeedingStatusSystem.MilkAversionStreakThreshold - 1;
+            tama.stats.overfullness = 20;
+            tama.stats.fermentedAftertasteIntensity = 30;
+            tama.stats.fermentedAftertasteHoursRemaining = 6;
+            tama.stats.sleepRhythmDisruptionIntensity = 40;
+            tama.stats.sleepRhythmDisruptionHoursRemaining = 8;
+
+            var result = new FeedingStatusSystem().ApplyMilk(
+                tama,
+                MilkCatalog.ColdMilkId,
+                FeedingStatusSystem.OverfullnessRawHungerThreshold,
+                10,
+                new DateTimeOffset(2026, 8, 17, 22, 0, 0, TimeSpan.FromHours(9)));
+
+            Assert.That(result.milkAversionActivated, Is.True);
+            Assert.That(result.overfullnessActivated, Is.False);
+            Assert.That(result.bodyChillActivated, Is.True);
+            Assert.That(tama.stats.overfullness, Is.EqualTo(30));
+            Assert.That(tama.stats.fermentedAftertasteIntensity, Is.EqualTo(30));
+            Assert.That(tama.stats.sleepRhythmDisruptionIntensity, Is.EqualTo(40));
+
+            var json = JsonUtility.ToJson(tama);
+            var restored = JsonUtility.FromJson<CheeseTamaModel>(json);
+            restored.EnsureRuntimeDefaults();
+
+            Assert.That(restored.stats.overfullness, Is.EqualTo(30));
+            Assert.That(restored.stats.bodyChillIntensity, Is.EqualTo(FeedingStatusSystem.BodyChillIntensityPerFeed));
+            Assert.That(restored.stats.bodyChillHoursRemaining, Is.EqualTo(FeedingStatusSystem.BodyChillDurationPerFeed));
+            Assert.That(restored.stats.fermentedAftertasteIntensity, Is.EqualTo(30));
+            Assert.That(restored.stats.fermentedAftertasteHoursRemaining, Is.EqualTo(6));
+            Assert.That(restored.stats.sleepRhythmDisruptionIntensity, Is.EqualTo(40));
+            Assert.That(restored.stats.sleepRhythmDisruptionHoursRemaining, Is.EqualTo(8));
+            Assert.That(
+                restored.growthHistory.sameMilkFeedStreak,
+                Is.EqualTo(FeedingStatusSystem.MilkAversionStreakThreshold));
+        }
+
+        [Test]
+        public void MilkroomStatusTextExposesActiveFeedingAftereffects()
+        {
+            var tama = new CheeseTamaModel();
+            tama.stats.bodyChillIntensity = 35;
+            tama.stats.bodyChillHoursRemaining = 4;
+            tama.stats.fermentedAftertasteIntensity = 30;
+            tama.stats.fermentedAftertasteHoursRemaining = 6;
+            tama.stats.sleepRhythmDisruptionIntensity = 40;
+            tama.stats.sleepRhythmDisruptionHoursRemaining = 8;
+
+            var conditionMethod = typeof(MilkroomUIController).GetMethod(
+                "FormatCondition",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(conditionMethod, Is.Not.Null);
+            var condition = (string)conditionMethod.Invoke(null, new object[] { null, tama });
+            Assert.That(condition, Does.Contain("몸 떨림 35"));
+            Assert.That(condition, Does.Contain("발효 뒷맛 30"));
+            Assert.That(condition, Does.Contain("수면 리듬 40"));
+
+            var tipMethod = typeof(MilkroomUIController).GetMethod(
+                "FormatCareTip",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(tipMethod, Is.Not.Null);
+            var tip = (string)tipMethod.Invoke(null, new object[] { null, tama, 0 });
+            Assert.That(tip, Does.Contain("몸 떨림 35/100"));
+            Assert.That(tip, Does.Contain("따뜻한 우유나 휴식"));
         }
 
         [TestCase("small_fever", "따뜻한 온기가 필요해요")]

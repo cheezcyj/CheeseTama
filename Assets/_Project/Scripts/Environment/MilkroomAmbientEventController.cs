@@ -24,15 +24,20 @@ namespace CheeseTama.Environment
             var rainy = themeId == MilkroomThemeController.RainyThemeId;
             var night = themeId == MilkroomThemeController.NightThemeId;
             var evening = themeId == MilkroomThemeController.EveningThemeId;
+            var starlight = themeId == MilkroomThemeController.StarlightThemeId;
+            var winter = themeId == MilkroomThemeController.WinterThemeId;
+            var vintage = themeId == MilkroomThemeController.VintageThemeId;
 
             foreach (Transform child in themeVfxRoot)
             {
                 var childName = child.name;
                 child.gameObject.SetActive(
                     childName.Contains("Rain") && rainy ||
-                    childName.Contains("Night") && night ||
-                    childName.Contains("Star") && night ||
-                    childName.Contains("Evening") && evening);
+                    childName.Contains("Night") && (night || starlight) ||
+                    childName.Contains("Starlight") && starlight ||
+                    childName.Contains("Evening") && evening ||
+                    childName.Contains("Winter") && winter ||
+                    childName.Contains("Vintage") && vintage);
             }
         }
     }

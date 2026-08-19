@@ -236,6 +236,7 @@ namespace CheeseTama.UI
                 ,"Cooking Panel"
                 ,CookingChoicePanelController.OverlayObjectName
                 ,NpcVisitCardController.OverlayObjectName
+                ,JourneyHubPanelController.OverlayObjectName
                 ,SleepSchedulePanelController.OverlayObjectName
             };
 

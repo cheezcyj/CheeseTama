@@ -32,6 +32,7 @@ namespace CheeseTama.UI
             CheeseTamaProfileMenuController.OverlayObjectName,
             InputBindingsPanelController.OverlayObjectName,
             NpcVisitCardController.OverlayObjectName,
+            JourneyHubPanelController.OverlayObjectName,
             "Milk Blending Overlay",
             CookingChoicePanelController.OverlayObjectName,
             "Decoration Shop Overlay",

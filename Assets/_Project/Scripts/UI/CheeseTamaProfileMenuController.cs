@@ -46,6 +46,7 @@ namespace CheeseTama.UI
             ,"Milk Blending Overlay"
             ,CookingChoicePanelController.OverlayObjectName
             ,NpcVisitCardController.OverlayObjectName
+            ,JourneyHubPanelController.OverlayObjectName
             ,SleepSchedulePanelController.OverlayObjectName
         };
 

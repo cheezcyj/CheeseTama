@@ -18,6 +18,9 @@ namespace CheeseTama.UI
         [SerializeField] private Button eveningButton;
         [SerializeField] private Button nightButton;
         [SerializeField] private Button rainyButton;
+        [SerializeField] private Button starlightButton;
+        [SerializeField] private Button winterButton;
+        [SerializeField] private Button vintageButton;
 
         private MilkroomThemeController themeController;
         private MilkroomLightingController lightingController;
@@ -33,7 +36,10 @@ namespace CheeseTama.UI
             Button morning,
             Button evening,
             Button night,
-            Button rainy)
+            Button rainy,
+            Button starlight = null,
+            Button winter = null,
+            Button vintage = null)
         {
             stateText = currentState;
             themeText = selectedTheme;
@@ -45,6 +51,9 @@ namespace CheeseTama.UI
             eveningButton = evening;
             nightButton = night;
             rainyButton = rainy;
+            starlightButton = starlight;
+            winterButton = winter;
+            vintageButton = vintage;
 
             BindButtons();
             RefreshFromSave();
@@ -67,6 +76,9 @@ namespace CheeseTama.UI
             BindButton(eveningButton, MilkroomThemeController.EveningThemeId);
             BindButton(nightButton, MilkroomThemeController.NightThemeId);
             BindButton(rainyButton, MilkroomThemeController.RainyThemeId);
+            BindButton(starlightButton, MilkroomThemeController.StarlightThemeId);
+            BindButton(winterButton, MilkroomThemeController.WinterThemeId);
+            BindButton(vintageButton, MilkroomThemeController.VintageThemeId);
         }
 
         private void BindButton(Button button, string themeId)
@@ -82,31 +94,66 @@ namespace CheeseTama.UI
 
         private void SelectTheme(string themeId)
         {
-            var normalizedThemeId = NormalizeThemeId(themeId);
+            var definition = MilkroomThemeCatalog.Find(themeId);
             var manager = StarterSceneBuilder.EnsureCoreSystems();
-            if (manager.CurrentSave != null)
+            if (definition == null || manager.CurrentSave == null)
             {
-                manager.CurrentSave.EnsureRuntimeDefaults();
-                manager.CurrentSave.milkroomThemeId = normalizedThemeId;
-                manager.SaveGame();
+                RefreshFromSave("선택한 테마를 찾을 수 없습니다.");
+                return;
             }
 
-            ApplyTheme(normalizedThemeId);
-            RefreshTexts(normalizedThemeId);
+            manager.CurrentSave.EnsureRuntimeDefaults();
+            var unlockSystem = new MilkroomThemeUnlockSystem();
+            if (!unlockSystem.IsVisible(manager.CurrentSave, definition.Id))
+            {
+                RefreshFromSave("아직 이 테마의 흔적을 발견하지 못했습니다.");
+                return;
+            }
+
+            if (!unlockSystem.IsOwned(manager.CurrentSave, definition.Id))
+            {
+                var unlockResult = manager.TryUnlockMilkroomTheme(definition.Id);
+                if (!unlockResult.Succeeded)
+                {
+                    RefreshFromSave(unlockResult.Message);
+                    return;
+                }
+
+                ApplyTheme(unlockResult.ThemeId);
+                RefreshTexts(unlockResult.ThemeId, unlockResult.Message);
+                RefreshButtonStates(manager.CurrentSave);
+                return;
+            }
+
+            if (!manager.TrySelectMilkroomTheme(definition.Id))
+            {
+                RefreshFromSave("이 테마는 아직 선택할 수 없습니다.");
+                return;
+            }
+
+            ApplyTheme(definition.Id);
+            RefreshTexts(definition.Id);
+            RefreshButtonStates(manager.CurrentSave);
         }
 
         public void RefreshFromSave()
+        {
+            RefreshFromSave(string.Empty);
+        }
+
+        private void RefreshFromSave(string statusMessage)
         {
             var manager = StarterSceneBuilder.EnsureCoreSystems();
             var themeId = MilkroomThemeController.MorningThemeId;
             if (manager.CurrentSave != null)
             {
                 manager.CurrentSave.EnsureRuntimeDefaults();
-                themeId = NormalizeThemeId(manager.CurrentSave.milkroomThemeId);
+                themeId = MilkroomThemeCatalog.Normalize(manager.CurrentSave.milkroomThemeId);
             }
 
             ApplyTheme(themeId);
-            RefreshTexts(themeId);
+            RefreshTexts(themeId, statusMessage);
+            RefreshButtonStates(manager.CurrentSave);
         }
 
         private void ApplyTheme(string themeId)
@@ -125,15 +172,63 @@ namespace CheeseTama.UI
             ambientController ??= Object.FindFirstObjectByType<MilkroomAmbientEventController>();
         }
 
-        private void RefreshTexts(string themeId)
+        private void RefreshTexts(string themeId, string statusMessage = "")
         {
-            var displayName = GetThemeName(themeId);
-            SetText(stateText, $"현재 테마: {displayName}");
-            SetText(themeText, displayName);
-            SetText(detailText, GetThemeDetail(themeId));
-            SetText(lightingText, GetLightingDetail(themeId));
-            SetText(furnitureText, "GLB 소품 재질 유지 / 벽과 바닥 팔레트만 전환");
-            SetText(propsText, GetPropsDetail(themeId));
+            var definition = MilkroomThemeCatalog.Find(themeId)
+                ?? MilkroomThemeCatalog.Find(MilkroomThemeController.MorningThemeId);
+            var starDrops = GameManager.Instance?.CurrentSave?.economy?.starDrops ?? 0;
+            var statusPrefix = string.IsNullOrWhiteSpace(statusMessage)
+                ? string.Empty
+                : $"{statusMessage}  ";
+            SetText(stateText, $"{statusPrefix}현재 테마: {definition.DisplayName} · 별방울 {starDrops}");
+            SetText(themeText, definition.DisplayName);
+            SetText(detailText, definition.Detail);
+            SetText(lightingText, definition.LightingDetail);
+            SetText(furnitureText, "가구 배치와 소품 재질은 유지됩니다.");
+            SetText(propsText, definition.PropsDetail);
+        }
+
+        private void RefreshButtonStates(CheeseTama.Save.CheeseTamaSaveData saveData)
+        {
+            var unlockSystem = new MilkroomThemeUnlockSystem();
+            RefreshButton(morningButton, MilkroomThemeController.MorningThemeId, saveData, unlockSystem);
+            RefreshButton(eveningButton, MilkroomThemeController.EveningThemeId, saveData, unlockSystem);
+            RefreshButton(nightButton, MilkroomThemeController.NightThemeId, saveData, unlockSystem);
+            RefreshButton(rainyButton, MilkroomThemeController.RainyThemeId, saveData, unlockSystem);
+            RefreshButton(starlightButton, MilkroomThemeController.StarlightThemeId, saveData, unlockSystem);
+            RefreshButton(winterButton, MilkroomThemeController.WinterThemeId, saveData, unlockSystem);
+            RefreshButton(vintageButton, MilkroomThemeController.VintageThemeId, saveData, unlockSystem);
+        }
+
+        private static void RefreshButton(
+            Button button,
+            string themeId,
+            CheeseTama.Save.CheeseTamaSaveData saveData,
+            MilkroomThemeUnlockSystem unlockSystem)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var definition = MilkroomThemeCatalog.Find(themeId);
+            var visible = definition != null && unlockSystem.IsVisible(saveData, themeId);
+            button.gameObject.SetActive(visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            button.interactable = saveData != null;
+            var owned = unlockSystem.IsOwned(saveData, themeId);
+            var label = owned
+                ? definition.ShortName
+                : $"{definition.ShortName} · 별방울 {definition.StarDropCost}";
+            var text = button.GetComponentInChildren<Text>(true);
+            if (text != null)
+            {
+                text.text = label;
+            }
         }
 
         private static void SetText(Text label, string value)
@@ -144,59 +239,5 @@ namespace CheeseTama.UI
             }
         }
 
-        private static string NormalizeThemeId(string themeId)
-        {
-            return themeId switch
-            {
-                MilkroomThemeController.EveningThemeId => MilkroomThemeController.EveningThemeId,
-                MilkroomThemeController.NightThemeId => MilkroomThemeController.NightThemeId,
-                MilkroomThemeController.RainyThemeId => MilkroomThemeController.RainyThemeId,
-                _ => MilkroomThemeController.MorningThemeId
-            };
-        }
-
-        private static string GetThemeName(string themeId)
-        {
-            return themeId switch
-            {
-                MilkroomThemeController.EveningThemeId => "따뜻한 오후 밀크룸",
-                MilkroomThemeController.NightThemeId => "별빛 밤 밀크룸",
-                MilkroomThemeController.RainyThemeId => "비 오는 밀크룸",
-                _ => "따뜻한 아침 밀크룸"
-            };
-        }
-
-        private static string GetThemeDetail(string themeId)
-        {
-            return themeId switch
-            {
-                MilkroomThemeController.EveningThemeId => "노을빛 벽 / 따뜻한 그림자 / 창가의 주황빛",
-                MilkroomThemeController.NightThemeId => "차분한 밤색 벽 / 푸른 창빛 / 별빛 포인트",
-                MilkroomThemeController.RainyThemeId => "흐린 벽색 / 차분한 바닥 / 창밖 빗방울 분위기",
-                _ => "크림색 벽 / 정돈된 바닥 / 포근한 아침빛"
-            };
-        }
-
-        private static string GetLightingDetail(string themeId)
-        {
-            return themeId switch
-            {
-                MilkroomThemeController.EveningThemeId => "노을빛 키라이트 + 낮은 림라이트",
-                MilkroomThemeController.NightThemeId => "부드러운 푸른 주변광 + 낮은 조도",
-                MilkroomThemeController.RainyThemeId => "흐린 하늘빛 필라이트 + 따뜻한 실내등",
-                _ => "따뜻한 햇살 + 부드러운 림라이트"
-            };
-        }
-
-        private static string GetPropsDetail(string themeId)
-        {
-            return themeId switch
-            {
-                MilkroomThemeController.EveningThemeId => "오후 빛줄기 표시",
-                MilkroomThemeController.NightThemeId => "별빛 표시",
-                MilkroomThemeController.RainyThemeId => "빗줄기 표시",
-                _ => "기본 소품 배치 유지"
-            };
-        }
     }
 }

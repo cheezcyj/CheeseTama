@@ -25,7 +25,7 @@ namespace CheeseTama.Gameplay
         {
             stats ??= StatBlock.CreateDefault();
             growthHistory ??= new GrowthHistory();
-            stats.overfullness = Math.Max(0, Math.Min(100, stats.overfullness));
+            stats.ClampFeedingStatuses();
             growthHistory.lastFedMilkId ??= string.Empty;
             growthHistory.sameMilkFeedStreak = Math.Max(0, growthHistory.sameMilkFeedStreak);
             if (string.IsNullOrWhiteSpace(growthHistory.lastFedMilkId))

@@ -11,6 +11,7 @@ namespace CheeseTama.Gameplay.Snacks
         public const string RichMilkRisottoId = "recipe_rich_milk_risotto";
         public const string FermentedYogurtBowlId = "recipe_fermented_yogurt_bowl";
         public const string CoffeeMilkJellyId = "recipe_coffee_milk_jelly";
+        public const string CreamSoupId = "recipe_cream_soup";
         public const string StarCreamId = "recipe_star_cream";
 
         public static readonly SnackDefinition WarmMilkSoup = new SnackDefinition(
@@ -160,6 +161,27 @@ namespace CheeseTama.Gameplay.Snacks
             1,
             "happy_wiggle");
 
+        public static readonly SnackDefinition CreamSoup = new SnackDefinition(
+            CreamSoupId,
+            "크림 수프",
+            "우유 블렌딩 중 드물게 완성되는 포근하고 부드러운 특별 수프입니다.",
+            0,
+            0,
+            0,
+            false,
+            25,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            string.Empty,
+            0,
+            "happy_wiggle");
+
         public static readonly SnackDefinition StarCream = new SnackDefinition(
             StarCreamId,
             "별빛 크림",
@@ -200,7 +222,8 @@ namespace CheeseTama.Gameplay.Snacks
             NuttyCheeseCracker,
             RichMilkRisotto,
             FermentedYogurtBowl,
-            CoffeeMilkJelly
+            CoffeeMilkJelly,
+            CreamSoup
         };
 
         public static readonly SnackDefinition[] All =
@@ -212,6 +235,7 @@ namespace CheeseTama.Gameplay.Snacks
             RichMilkRisotto,
             FermentedYogurtBowl,
             CoffeeMilkJelly,
+            CreamSoup,
             StarCream
         };
 

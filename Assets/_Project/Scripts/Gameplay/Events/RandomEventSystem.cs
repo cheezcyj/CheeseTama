@@ -337,7 +337,8 @@ namespace CheeseTama.Gameplay.Events
             CareEventResult pendingOccurrence,
             string choiceId,
             CheeseTamaModel tama,
-            EconomySaveData economy)
+            EconomySaveData economy,
+            int negativeEffectMitigationPercent = 0)
         {
             if (!pendingOccurrence.occurred || string.IsNullOrWhiteSpace(pendingOccurrence.occurrenceId))
             {
@@ -384,7 +385,10 @@ namespace CheeseTama.Gameplay.Events
                     choiceId);
             }
 
-            ApplyEffect(choice.effect, tama, economy);
+            var appliedEffect = ApplyNegativeEffectMitigation(
+                choice.effect,
+                negativeEffectMitigationPercent);
+            ApplyEffect(appliedEffect, tama, economy);
             var result = new CareEventChoiceResult(
                 CareEventChoiceResolutionStatus.Applied,
                 pendingOccurrence.occurrenceId,
@@ -392,7 +396,7 @@ namespace CheeseTama.Gameplay.Events
                 choice.id,
                 choice.resultTitle,
                 choice.resultMessage,
-                choice.effect);
+                appliedEffect);
             resolvedByOccurrence.Add(pendingOccurrence.occurrenceId, result);
             return result;
         }
@@ -412,6 +416,32 @@ namespace CheeseTama.Gameplay.Events
         public void Clear()
         {
             resolvedByOccurrence.Clear();
+        }
+
+        public static CareEventChoiceEffect ApplyNegativeEffectMitigation(
+            CareEventChoiceEffect effect,
+            int percent)
+        {
+            var safePercent = Math.Max(0, Math.Min(100, percent));
+            if (safePercent <= 0)
+            {
+                return effect;
+            }
+
+            return new CareEventChoiceEffect(
+                milkCoins: MitigateDecrease(effect.milkCoins, safePercent),
+                milkDrops: MitigateDecrease(effect.milkDrops, safePercent),
+                starDrops: MitigateDecrease(effect.starDrops, safePercent),
+                collectionFragments: MitigateDecrease(effect.collectionFragments, safePercent),
+                hunger: MitigateDecrease(effect.hunger, safePercent),
+                mood: MitigateDecrease(effect.mood, safePercent),
+                cleanliness: MitigateDecrease(effect.cleanliness, safePercent),
+                sleepiness: MitigateIncrease(effect.sleepiness, safePercent),
+                health: MitigateDecrease(effect.health, safePercent),
+                maturation: MitigateDecrease(effect.maturation, safePercent),
+                affection: MitigateDecrease(effect.affection, safePercent),
+                followUpAction: effect.followUpAction,
+                followUpHint: effect.followUpHint);
         }
 
         private static void ApplyEffect(
@@ -447,6 +477,21 @@ namespace CheeseTama.Gameplay.Events
             }
 
             return value >= int.MaxValue ? int.MaxValue : (int)value;
+        }
+
+        private static int MitigateDecrease(int value, int percent)
+        {
+            return value < 0 ? ScaleTowardZero(value, percent) : value;
+        }
+
+        private static int MitigateIncrease(int value, int percent)
+        {
+            return value > 0 ? ScaleTowardZero(value, percent) : value;
+        }
+
+        private static int ScaleTowardZero(int value, int percent)
+        {
+            return (int)((long)value * (100 - percent) / 100L);
         }
 
         private static CareEventChoiceResult Failure(
@@ -690,7 +735,10 @@ namespace CheeseTama.Gameplay.Events
             return null;
         }
 
-        public CareEventResult RollCareEvent(CheeseTamaModel tama, bool force = false)
+        public CareEventResult RollCareEvent(
+            CheeseTamaModel tama,
+            bool force = false,
+            int randomEventWeightPercent = 0)
         {
             return RollCareEvent(
                 tama,
@@ -699,7 +747,8 @@ namespace CheeseTama.Gameplay.Events
                 UnityEngine.Random.value,
                 UnityEngine.Random.value,
                 UnityEngine.Random.value,
-                force);
+                force,
+                randomEventWeightPercent);
         }
 
         // Deterministic overload for boundary tests and non-Unity callers.
@@ -707,14 +756,16 @@ namespace CheeseTama.Gameplay.Events
             CheeseTamaModel tama,
             float conditionChanceRoll,
             float ambientChanceRoll,
-            bool force = false)
+            bool force = false,
+            int randomEventWeightPercent = 0)
         {
             return RollCareEvent(
                 tama,
                 0f,
                 conditionChanceRoll,
                 ambientChanceRoll,
-                force);
+                force,
+                randomEventWeightPercent);
         }
 
         // Selection is independent from occurrence chance so multiple simultaneous
@@ -724,7 +775,8 @@ namespace CheeseTama.Gameplay.Events
             float conditionSelectionRoll,
             float conditionChanceRoll,
             float ambientChanceRoll,
-            bool force = false)
+            bool force = false,
+            int randomEventWeightPercent = 0)
         {
             // The legacy deterministic overload intentionally suppresses choice events.
             // Existing boundary tests and callers therefore retain their exact behavior.
@@ -735,7 +787,8 @@ namespace CheeseTama.Gameplay.Events
                 0f,
                 1f,
                 ambientChanceRoll,
-                force);
+                force,
+                randomEventWeightPercent);
         }
 
         public CareEventResult RollCareEvent(
@@ -745,7 +798,8 @@ namespace CheeseTama.Gameplay.Events
             float choiceSelectionRoll,
             float choiceChanceRoll,
             float ambientChanceRoll,
-            bool force = false)
+            bool force = false,
+            int randomEventWeightPercent = 0)
         {
             if (tama == null || tama.stats == null)
             {
@@ -753,7 +807,9 @@ namespace CheeseTama.Gameplay.Events
             }
 
             var candidate = PickConditionEvent(tama, conditionSelectionRoll);
-            if (candidate != null && (force || PassesChance(conditionChanceRoll, candidate.chance)))
+            if (candidate != null && (force || PassesChance(
+                    conditionChanceRoll,
+                    ApplyWeightPercent(candidate.chance, randomEventWeightPercent))))
             {
                 return CreateResult(candidate);
             }
@@ -761,12 +817,16 @@ namespace CheeseTama.Gameplay.Events
             var choiceCandidate = PickChoiceEvent(tama, choiceSelectionRoll);
             if (!force
                 && choiceCandidate != null
-                && PassesChance(choiceChanceRoll, choiceCandidate.chance))
+                && PassesChance(
+                    choiceChanceRoll,
+                    ApplyWeightPercent(choiceCandidate.chance, randomEventWeightPercent)))
             {
                 return CreateResult(choiceCandidate);
             }
 
-            if (force || PassesChance(ambientChanceRoll, AmbientEventDefinition.chance))
+            if (force || PassesChance(
+                    ambientChanceRoll,
+                    ApplyWeightPercent(AmbientEventDefinition.chance, randomEventWeightPercent)))
             {
                 return CreateResult(AmbientEventDefinition);
             }
@@ -809,6 +869,11 @@ namespace CheeseTama.Gameplay.Events
                     definition = AmbientEventDefinition;
                     return true;
                 }
+
+                if (SeasonalCareEventCatalog.TryGetCareEventDefinition(eventId, out definition))
+                {
+                    return true;
+                }
             }
 
             definition = null;
@@ -828,6 +893,17 @@ namespace CheeseTama.Gameplay.Events
             }
 
             return roll >= 0f && roll < chance;
+        }
+
+        public static float ApplyWeightPercent(float chance, int percent)
+        {
+            if (float.IsNaN(chance) || chance <= 0f)
+            {
+                return 0f;
+            }
+
+            var safePercent = Math.Max(0, Math.Min(1000, percent));
+            return Mathf.Clamp01(chance * (100f + safePercent) / 100f);
         }
 
         private static CareEventDefinition PickConditionEvent(

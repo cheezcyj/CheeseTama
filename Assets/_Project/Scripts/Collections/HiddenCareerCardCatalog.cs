@@ -76,6 +76,8 @@ namespace CheeseTama.Collections.HiddenCareers
             Quote = definition?.Quote ?? string.Empty;
             DeepText = definition?.DeepText ?? string.Empty;
             ImageResourceKey = definition?.ImageResourceKey ?? string.Empty;
+            EffectDescription = HiddenCareerCardCatalog.FormatBenefitDescription(
+                definition?.Benefit);
             AcquiredAtIso = acquiredAtIso ?? string.Empty;
         }
 
@@ -85,6 +87,7 @@ namespace CheeseTama.Collections.HiddenCareers
         public string Quote { get; }
         public string DeepText { get; }
         public string ImageResourceKey { get; }
+        public string EffectDescription { get; }
         public string AcquiredAtIso { get; }
 
         public string AcquiredDateText
@@ -205,6 +208,33 @@ namespace CheeseTama.Collections.HiddenCareers
                 Rarity.Unique => "unique",
                 Rarity.Legendary => "Legendary",
                 _ => "common"
+            };
+        }
+
+        public static string FormatBenefitDescription(HiddenCareerBenefit benefit)
+        {
+            if (benefit == null || benefit.Magnitude <= 0)
+            {
+                return string.Empty;
+            }
+
+            return benefit.Kind switch
+            {
+                HiddenCareerBenefitKind.RecipeHintProgress =>
+                    $"환상가루 조합 단서가 {benefit.Magnitude}단계 더 선명해집니다.",
+                HiddenCareerBenefitKind.CollectionInterpretation =>
+                    "발견한 도감 기록에 해석 문장이 추가됩니다.",
+                HiddenCareerBenefitKind.RecoveryEffectPercent =>
+                    $"돌봄 행동의 건강 회복량이 {benefit.Magnitude}% 증가합니다.",
+                HiddenCareerBenefitKind.RandomEventWeightPercent =>
+                    $"돌봄 랜덤 이벤트 발견 확률이 {benefit.Magnitude}% 증가합니다.",
+                HiddenCareerBenefitKind.NegativeEffectMitigationPercent =>
+                    $"선택 이벤트의 부정 효과가 {benefit.Magnitude}% 완화됩니다.",
+                HiddenCareerBenefitKind.RareByproductWeightPercent =>
+                    $"환상가루 조합의 희귀 결과 확률이 {benefit.Magnitude}%p 증가합니다.",
+                HiddenCareerBenefitKind.DeepLoreSignal =>
+                    "발견한 특별 기록에 심층 이야기 단서가 추가됩니다.",
+                _ => string.Empty
             };
         }
     }

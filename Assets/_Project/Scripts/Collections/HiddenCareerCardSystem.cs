@@ -6,6 +6,84 @@ using CheeseTama.Save;
 
 namespace CheeseTama.Collections.HiddenCareers
 {
+    /// <summary>
+    /// Runtime-only aggregate derived from already-unlocked known cards. It is
+    /// intentionally not serialized, so existing saves remain authoritative.
+    /// </summary>
+    public readonly struct HiddenCareerBenefitSet
+    {
+        internal HiddenCareerBenefitSet(
+            int recipeHintProgress,
+            int collectionInterpretation,
+            int recoveryEffectPercent,
+            int randomEventWeightPercent,
+            int negativeEffectMitigationPercent,
+            int rareByproductWeightPercent,
+            int deepLoreSignal)
+        {
+            RecipeHintProgress = Math.Max(0, recipeHintProgress);
+            CollectionInterpretation = Math.Max(0, collectionInterpretation);
+            RecoveryEffectPercent = Math.Max(0, recoveryEffectPercent);
+            RandomEventWeightPercent = Math.Max(0, randomEventWeightPercent);
+            NegativeEffectMitigationPercent = Math.Max(0, negativeEffectMitigationPercent);
+            RareByproductWeightPercent = Math.Max(0, rareByproductWeightPercent);
+            DeepLoreSignal = Math.Max(0, deepLoreSignal);
+        }
+
+        public int RecipeHintProgress { get; }
+        public int CollectionInterpretation { get; }
+        public int RecoveryEffectPercent { get; }
+        public int RandomEventWeightPercent { get; }
+        public int NegativeEffectMitigationPercent { get; }
+        public int RareByproductWeightPercent { get; }
+        public int DeepLoreSignal { get; }
+
+        public int GetMagnitude(HiddenCareerBenefitKind kind)
+        {
+            return kind switch
+            {
+                HiddenCareerBenefitKind.RecipeHintProgress => RecipeHintProgress,
+                HiddenCareerBenefitKind.CollectionInterpretation => CollectionInterpretation,
+                HiddenCareerBenefitKind.RecoveryEffectPercent => RecoveryEffectPercent,
+                HiddenCareerBenefitKind.RandomEventWeightPercent => RandomEventWeightPercent,
+                HiddenCareerBenefitKind.NegativeEffectMitigationPercent => NegativeEffectMitigationPercent,
+                HiddenCareerBenefitKind.RareByproductWeightPercent => RareByproductWeightPercent,
+                HiddenCareerBenefitKind.DeepLoreSignal => DeepLoreSignal,
+                _ => 0
+            };
+        }
+
+        public string BuildCollectionInterpretation(string recordId)
+        {
+            if (CollectionInterpretation <= 0 || string.IsNullOrWhiteSpace(recordId))
+            {
+                return string.Empty;
+            }
+
+            if (recordId.Contains("growth") || recordId.Contains("level"))
+            {
+                return "해석 · 반복된 돌봄의 순서가 이 성장 기록에 겹쳐 보여요.";
+            }
+
+            if (recordId.Contains("recipe") || recordId.Contains("blend"))
+            {
+                return "해석 · 재료보다 함께한 돌봄의 흐름이 이 조합을 완성했어요.";
+            }
+
+            return "해석 · 이 기록은 앞뒤의 돌봄을 함께 읽을 때 더 또렷해져요.";
+        }
+
+        public string BuildDeepLoreSignal(string recordId)
+        {
+            if (DeepLoreSignal <= 0 || string.IsNullOrWhiteSpace(recordId))
+            {
+                return string.Empty;
+            }
+
+            return "심층 단서 · 기록의 가장자리에서 검은 별빛이 다음 이야기를 가리켜요.";
+        }
+    }
+
     public readonly struct HiddenCareerUnlockResult
     {
         internal HiddenCareerUnlockResult(bool unlocked, HiddenCareerCardViewData card)
@@ -152,6 +230,37 @@ namespace CheeseTama.Collections.HiddenCareers
             }
 
             return benefits;
+        }
+
+        public HiddenCareerBenefitSet GetBenefitSet(CollectionSaveData collections)
+        {
+            var values = new int[Enum.GetValues(typeof(HiddenCareerBenefitKind)).Length];
+            var benefits = GetUnlockedBenefits(collections);
+            for (var index = 0; index < benefits.Count; index += 1)
+            {
+                var benefit = benefits[index];
+                if (benefit == null)
+                {
+                    continue;
+                }
+
+                var kindIndex = (int)benefit.Kind;
+                if (kindIndex < 0 || kindIndex >= values.Length)
+                {
+                    continue;
+                }
+
+                values[kindIndex] = SafeSum(values[kindIndex], benefit.Magnitude);
+            }
+
+            return new HiddenCareerBenefitSet(
+                values[(int)HiddenCareerBenefitKind.RecipeHintProgress],
+                values[(int)HiddenCareerBenefitKind.CollectionInterpretation],
+                values[(int)HiddenCareerBenefitKind.RecoveryEffectPercent],
+                values[(int)HiddenCareerBenefitKind.RandomEventWeightPercent],
+                values[(int)HiddenCareerBenefitKind.NegativeEffectMitigationPercent],
+                values[(int)HiddenCareerBenefitKind.RareByproductWeightPercent],
+                values[(int)HiddenCareerBenefitKind.DeepLoreSignal]);
         }
 
         private static bool IsHiddenRouteAvailable(CheeseTamaSaveData saveData)

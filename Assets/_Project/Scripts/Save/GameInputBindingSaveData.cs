@@ -6,7 +6,7 @@ namespace CheeseTama.Save
     [Serializable]
     public sealed class GameInputBindingSaveData
     {
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
 
         public int schemaVersion = CurrentSchemaVersion;
         public List<GameInputBindingSaveEntry> bindings = new List<GameInputBindingSaveEntry>();

@@ -159,6 +159,7 @@ namespace CheeseTama.UI
                 "Memory Journal Overlay", "Fantasy Powder Overlay", SaveRecoveryNoticeController.OverlayObjectName,
                 InputBindingsPanelController.OverlayObjectName, "Milk Blending Overlay", CookingChoicePanelController.OverlayObjectName,
                 NpcVisitCardController.OverlayObjectName,
+                JourneyHubPanelController.OverlayObjectName,
                 SleepSchedulePanelController.OverlayObjectName
             };
 

@@ -20,6 +20,7 @@ namespace CheeseTama.UI
         private const float PresentationStartScale = 0.94f;
         private const string FirstChoiceButtonName = "Care Event First Choice Button";
         private const string SecondChoiceButtonName = "Care Event Second Choice Button";
+        private const string FollowUpButtonName = "Care Event Follow Up Button";
 
         private static readonly string[] BlockingUiNames =
         {
@@ -52,6 +53,7 @@ namespace CheeseTama.UI
             ,"Milk Blending Overlay"
             ,CookingChoicePanelController.OverlayObjectName
             ,NpcVisitCardController.OverlayObjectName
+            ,JourneyHubPanelController.OverlayObjectName
             ,SleepSchedulePanelController.OverlayObjectName
         };
 
@@ -70,7 +72,9 @@ namespace CheeseTama.UI
         private CanvasGroup overlayCanvasGroup;
         private Button firstChoiceButton;
         private Button secondChoiceButton;
+        private Button followUpButton;
         private CareEventDefinition displayedDefinition;
+        private CareEventFollowUpAction pendingFollowUpAction;
         private CardStage cardStage;
         private bool configured;
         private string displayedOccurrenceId = string.Empty;
@@ -445,9 +449,12 @@ namespace CheeseTama.UI
             }
 
             ShowChoiceResult(result);
-            if (EventSystem.current != null && confirmButton != null)
+            if (EventSystem.current != null)
             {
-                EventSystem.current.SetSelectedGameObject(confirmButton.gameObject);
+                var selectedButton = followUpButton != null && followUpButton.gameObject.activeInHierarchy
+                    ? followUpButton
+                    : confirmButton;
+                EventSystem.current.SetSelectedGameObject(selectedButton != null ? selectedButton.gameObject : null);
             }
         }
 
@@ -467,7 +474,75 @@ namespace CheeseTama.UI
 
             SetButtonVisible(firstChoiceButton, false);
             SetButtonVisible(secondChoiceButton, false);
+            pendingFollowUpAction = result.effect.followUpAction;
+            var followUpLabel = GetFollowUpButtonLabel(pendingFollowUpAction);
+            ConfigureChoiceButtonLabel(followUpButton, followUpLabel);
+            SetButtonVisible(followUpButton, !string.IsNullOrWhiteSpace(followUpLabel));
             SetButtonVisible(confirmButton, true);
+        }
+
+        private void HandleFollowUpRequested()
+        {
+            if (cardStage != CardStage.ChoiceResult
+                || pendingFollowUpAction == CareEventFollowUpAction.None)
+            {
+                return;
+            }
+
+            var action = pendingFollowUpAction;
+            Confirm();
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+
+            OpenFollowUpDestination(action);
+        }
+
+        private void OpenFollowUpDestination(CareEventFollowUpAction action)
+        {
+            switch (action)
+            {
+                case CareEventFollowUpAction.FeedMilk:
+                    GetComponent<MilkPanelController>()?.Open();
+                    break;
+                case CareEventFollowUpAction.Cook:
+                    GetComponent<CookingPanelController>()?.Open();
+                    break;
+                case CareEventFollowUpAction.Clean:
+                    GetComponent<CleaningMiniGameController>()?.Open();
+                    break;
+                case CareEventFollowUpAction.Rest:
+                    GetComponent<SleepScheduleBridge>()?.Open();
+                    break;
+                case CareEventFollowUpAction.Play:
+                    GetComponent<PlayChoicePanelController>()?.Open();
+                    break;
+                case CareEventFollowUpAction.OpenCollection:
+                    topMenuController?.OpenCollection();
+                    break;
+            }
+        }
+
+        private static string GetFollowUpButtonLabel(CareEventFollowUpAction action)
+        {
+            switch (action)
+            {
+                case CareEventFollowUpAction.FeedMilk:
+                    return "우유 챙기러 가기";
+                case CareEventFollowUpAction.Cook:
+                    return "요리하러 가기";
+                case CareEventFollowUpAction.Clean:
+                    return "청소하러 가기";
+                case CareEventFollowUpAction.Rest:
+                    return "쉬게 하러 가기";
+                case CareEventFollowUpAction.Play:
+                    return "함께 놀러 가기";
+                case CareEventFollowUpAction.OpenCollection:
+                    return "도감 보러 가기";
+                default:
+                    return string.Empty;
+            }
         }
 
         private void SuspendControls()
@@ -544,6 +619,22 @@ namespace CheeseTama.UI
         private void BeginPresentation()
         {
             EnsureCanvasGroup();
+            if (AccessibilityRuntime.ReducedMotion)
+            {
+                if (overlayCanvasGroup != null)
+                {
+                    overlayCanvasGroup.alpha = 1f;
+                }
+
+                if (cardTransform != null)
+                {
+                    cardTransform.localScale = cardRestingScale;
+                }
+
+                presentationAnimating = false;
+                return;
+            }
+
             if (overlayCanvasGroup != null)
             {
                 overlayCanvasGroup.alpha = 0f;
@@ -612,6 +703,9 @@ namespace CheeseTama.UI
             secondChoiceButton = FindOrCreateChoiceButton(
                 SecondChoiceButtonName,
                 new Vector2(348f, -350f));
+            followUpButton = FindOrCreateChoiceButton(
+                FollowUpButtonName,
+                new Vector2(48f, -350f));
         }
 
         private Button FindOrCreateChoiceButton(string buttonName, Vector2 anchoredPosition)
@@ -661,6 +755,7 @@ namespace CheeseTama.UI
             label.resizeTextForBestFit = true;
             label.resizeTextMinSize = 13;
             label.resizeTextMaxSize = 18;
+            AccessibilityRuntime.ApplyCurrent(label);
         }
 
         private void BindButtons()
@@ -683,6 +778,12 @@ namespace CheeseTama.UI
                 secondChoiceButton.onClick.RemoveListener(ChooseSecond);
                 secondChoiceButton.onClick.AddListener(ChooseSecond);
             }
+
+            if (followUpButton != null)
+            {
+                followUpButton.onClick.RemoveListener(HandleFollowUpRequested);
+                followUpButton.onClick.AddListener(HandleFollowUpRequested);
+            }
         }
 
         private void UnbindButtons()
@@ -690,14 +791,17 @@ namespace CheeseTama.UI
             confirmButton?.onClick.RemoveListener(Confirm);
             firstChoiceButton?.onClick.RemoveListener(ChooseFirst);
             secondChoiceButton?.onClick.RemoveListener(ChooseSecond);
+            followUpButton?.onClick.RemoveListener(HandleFollowUpRequested);
         }
 
         private void ResetCardState()
         {
             displayedDefinition = null;
+            pendingFollowUpAction = CareEventFollowUpAction.None;
             cardStage = CardStage.AutomaticEvent;
             SetButtonVisible(firstChoiceButton, false);
             SetButtonVisible(secondChoiceButton, false);
+            SetButtonVisible(followUpButton, false);
             SetButtonVisible(confirmButton, true);
         }
 

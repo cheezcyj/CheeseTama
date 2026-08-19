@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using CheeseTama.UI;
 
 namespace CheeseTama.Core
 {
@@ -36,11 +37,13 @@ namespace CheeseTama.Core
 
             if (StarterSceneBuilder.TryBindExistingSceneForRuntime(scene.name))
             {
+                KoreanUiFontRuntime.ApplyToLoadedTextComponents();
                 preparedSceneHandle = scene.handle;
                 return;
             }
 
             StarterSceneBuilder.BuildForScene(scene.name);
+            KoreanUiFontRuntime.ApplyToLoadedTextComponents();
             preparedSceneHandle = scene.handle;
         }
     }

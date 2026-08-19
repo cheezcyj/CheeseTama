@@ -5,6 +5,7 @@ using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Decorations;
 using CheeseTama.Gameplay.Events;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Environment;
 
 namespace CheeseTama.Save
 {
@@ -43,6 +44,11 @@ namespace CheeseTama.Save
         public AutonomousLifeSaveData autonomousLife;
         public LateLevelGrowthSaveData lateLevelGrowth;
         public SleepScheduleSaveData sleepSchedule;
+        public NpcRelationshipQuestSaveData npcRelationshipQuests;
+        public NpcRelationshipEpisodeSaveData npcRelationshipEpisodes;
+        public WeeklyCareJourneySaveData weeklyCareJourney;
+        public DecorationWorkshopSaveData decorationWorkshop;
+        public CollectionSetAlbumSaveData collectionSetAlbum;
 
         public void EnsureRuntimeDefaults()
         {
@@ -97,9 +103,20 @@ namespace CheeseTama.Save
             lateLevelGrowth ??= new LateLevelGrowthSaveData();
             sleepSchedule ??= new SleepScheduleSaveData();
             sleepSchedule.EnsureRuntimeDefaults(DateTimeOffset.Now);
-            if (string.IsNullOrWhiteSpace(milkroomThemeId))
+            npcRelationshipQuests ??= new NpcRelationshipQuestSaveData();
+            npcRelationshipQuests.EnsureRuntimeDefaults();
+            npcRelationshipEpisodes ??= new NpcRelationshipEpisodeSaveData();
+            npcRelationshipEpisodes.EnsureRuntimeDefaults();
+            weeklyCareJourney ??= new WeeklyCareJourneySaveData();
+            weeklyCareJourney.EnsureRuntimeDefaults();
+            decorationWorkshop ??= new DecorationWorkshopSaveData();
+            decorationWorkshop.EnsureRuntimeDefaults();
+            collectionSetAlbum ??= new CollectionSetAlbumSaveData();
+            collectionSetAlbum.EnsureRuntimeDefaults();
+            milkroomThemeId = MilkroomThemeCatalog.Normalize(milkroomThemeId);
+            if (!decorations.ContainsOwnedTheme(milkroomThemeId))
             {
-                milkroomThemeId = "milkroom_morning";
+                milkroomThemeId = MilkroomThemeController.MorningThemeId;
             }
         }
     }
@@ -162,6 +179,7 @@ namespace CheeseTama.Save
     public sealed class DecorationSaveData
     {
         public List<string> ownedItemIds = new List<string>();
+        public List<string> ownedThemeIds = new List<string>();
         public string equippedWallId = "wall_cream";
         public string equippedFloorId = "floor_cream_rug";
         public string equippedAccentId = "accent_milk_bottle";
@@ -172,18 +190,82 @@ namespace CheeseTama.Save
         public void EnsureRuntimeDefaults()
         {
             ownedItemIds ??= new List<string>();
+            ownedThemeIds ??= new List<string>();
+            NormalizeOwnedThemes();
             AddOwnedDefault(DecorationSlot.Wall);
             AddOwnedDefault(DecorationSlot.Floor);
             AddOwnedDefault(DecorationSlot.Accent);
             AddOwnedDefault(DecorationSlot.Window);
             AddOwnedDefault(DecorationSlot.Shelf);
             AddOwnedDefault(DecorationSlot.Bedside);
+            AddOwnedDefaultThemes();
             equippedWallId = NormalizeEquipped(equippedWallId, DecorationSlot.Wall);
             equippedFloorId = NormalizeEquipped(equippedFloorId, DecorationSlot.Floor);
             equippedAccentId = NormalizeEquipped(equippedAccentId, DecorationSlot.Accent);
             equippedWindowId = NormalizeEquipped(equippedWindowId, DecorationSlot.Window);
             equippedShelfId = NormalizeEquipped(equippedShelfId, DecorationSlot.Shelf);
             equippedBedsideId = NormalizeEquipped(equippedBedsideId, DecorationSlot.Bedside);
+        }
+
+        private void AddOwnedDefaultThemes()
+        {
+            var themes = MilkroomThemeCatalog.All;
+            for (var index = 0; index < themes.Count; index += 1)
+            {
+                var definition = themes[index];
+                if (definition.IsOwnedByDefault && !ContainsOwnedTheme(definition.Id))
+                {
+                    ownedThemeIds.Add(definition.Id);
+                }
+            }
+        }
+
+        private void NormalizeOwnedThemes()
+        {
+            var normalized = new List<string>(MilkroomThemeCatalog.All.Count);
+            for (var index = 0; index < ownedThemeIds.Count; index += 1)
+            {
+                var definition = MilkroomThemeCatalog.Find(ownedThemeIds[index]);
+                if (definition == null || Contains(normalized, definition.Id))
+                {
+                    continue;
+                }
+
+                normalized.Add(definition.Id);
+            }
+
+            ownedThemeIds = normalized;
+        }
+
+        private static bool Contains(List<string> values, string value)
+        {
+            for (var index = 0; index < values.Count; index += 1)
+            {
+                if (string.Equals(values[index], value, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool ContainsOwnedTheme(string themeId)
+        {
+            if (string.IsNullOrWhiteSpace(themeId) || ownedThemeIds == null)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < ownedThemeIds.Count; index += 1)
+            {
+                if (string.Equals(ownedThemeIds[index], themeId, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void AddOwnedDefault(DecorationSlot slot)
@@ -547,6 +629,9 @@ namespace CheeseTama.Save
     {
         public const float MinUiScale = 0.9f;
         public const float MaxUiScale = 1.1f;
+        public const float DefaultTextScale = 1f;
+        public const float MediumTextScale = 1.25f;
+        public const float LargeTextScale = 1.4f;
 
         public float masterVolume = 1f;
         public float musicVolume = 1f;
@@ -556,6 +641,10 @@ namespace CheeseTama.Save
         public int targetFrameRate = 60;
         public float uiScale = 1f;
         public bool showCareTips = true;
+        public int graphicsQualityPreset = (int)GraphicsQualityPreset.High;
+        public float textScale = DefaultTextScale;
+        public bool highContrastUi;
+        public bool reduceMotion;
         public GameInputBindingSaveData inputBindings = new GameInputBindingSaveData();
 
         public static GameSettingsSaveData CreateDefault()
@@ -576,8 +665,25 @@ namespace CheeseTama.Save
                 120 => 120,
                 _ => 60
             };
+            graphicsQualityPreset = (int)GraphicsQualityCatalog.Normalize(graphicsQualityPreset);
+            textScale = NormalizeTextScale(textScale);
             inputBindings ??= new GameInputBindingSaveData();
             CheeseTama.Gameplay.Input.GameInputBindingSystem.EnsureDefaults(inputBindings);
+        }
+
+        public static float NormalizeTextScale(float value)
+        {
+            if (float.IsNaN(value)
+                || float.IsInfinity(value)
+                || value <= 0f
+                || value < (DefaultTextScale + MediumTextScale) * 0.5f)
+            {
+                return DefaultTextScale;
+            }
+
+            return value < (MediumTextScale + LargeTextScale) * 0.5f
+                ? MediumTextScale
+                : LargeTextScale;
         }
 
         private static float Clamp(float value, float min, float max)

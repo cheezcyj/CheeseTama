@@ -316,7 +316,7 @@ namespace CheeseTama.Tests
         }
 
         [Test]
-        public void EnsureMilkroomAtmosphereRemovesLegacyVisualsWithoutRecreatingThem()
+        public void EnsureMilkroomAtmosphereReusesSubtleOverlayAndRemovesLegacyLight()
         {
             Assert.That(
                 GameObject.Find(AtmosphereLightName),
@@ -347,11 +347,17 @@ namespace CheeseTama.Tests
                 Assert.That(method, Is.Not.Null, "Missing StarterSceneBuilder.EnsureMilkroomAtmosphere.");
 
                 method.Invoke(null, new object[] { canvasObject.transform, null });
+                method.Invoke(null, new object[] { canvasObject.transform, null });
 
-                Assert.That(overlayObject == null, Is.True, "The existing overlay was not removed.");
+                Assert.That(overlayObject == null, Is.False, "The atmosphere overlay was removed.");
                 Assert.That(lightObject == null, Is.True, "The existing atmosphere light was not removed.");
-                Assert.That(canvasObject.transform.Find(AtmosphereOverlayName), Is.Null,
-                    "EnsureMilkroomAtmosphere recreated an overlay.");
+                var retainedOverlay = canvasObject.transform.Find(AtmosphereOverlayName);
+                Assert.That(retainedOverlay, Is.SameAs(overlayObject.transform));
+                Assert.That(retainedOverlay.GetSiblingIndex(), Is.Zero);
+                Assert.That(retainedOverlay.GetComponent<Image>()?.raycastTarget, Is.False);
+                Assert.That(
+                    retainedOverlay.GetComponents<MilkroomAtmosphereLayerController>(),
+                    Has.Length.EqualTo(1));
                 Assert.That(GameObject.Find(AtmosphereLightName), Is.Null,
                     "EnsureMilkroomAtmosphere recreated an atmosphere light.");
             }

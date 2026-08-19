@@ -167,6 +167,23 @@ namespace CheeseTama.UI
             for (var i = 0; i < snacks.Length; i++)
             {
                 var snack = snacks[i];
+                if (snack?.id == SnackCatalog.CreamSoupId
+                    && !(saveData?.milkBlending?.HasDiscovered(snack.id) ?? false))
+                {
+                    SetText(Get(titleTexts, i), "특별 음식 ???");
+                    SetText(
+                        Get(detailTexts, i),
+                        "우유 블렌딩 중 낮은 확률로 발견할 수 있습니다.");
+                    SetText(Get(quantityTexts, i), "미발견");
+                    var hiddenFeedButton = Get(feedButtons, i);
+                    if (hiddenFeedButton != null)
+                    {
+                        hiddenFeedButton.interactable = false;
+                    }
+
+                    continue;
+                }
+
                 var quantity = GetQuantity(saveData, snack.id);
                 hasAnySnack |= quantity > 0;
                 inventoryList = AppendInventoryLine(inventoryList, snack, quantity);
@@ -228,7 +245,12 @@ namespace CheeseTama.UI
             careActions.ConfigureLateLevelGrowth(
                 manager.CurrentSave?.lateLevelGrowth,
                 manager.CurrentSave?.milkGrowth);
-            var careResult = careActions.FeedSnack(manager.CurrentTama, snack);
+            careActions.ConfigureRecoveryEffectPercent(
+                manager.GetHiddenCareerBenefits().RecoveryEffectPercent);
+            var careResult = careActions.FeedSnack(
+                manager.CurrentTama,
+                snack,
+                System.DateTimeOffset.Now);
             if (!careResult.success)
             {
                 statusMessage = careResult.message;
@@ -361,6 +383,7 @@ namespace CheeseTama.UI
                 SnackCatalog.RichMilkRisottoId => "밀크 리조또",
                 SnackCatalog.FermentedYogurtBowlId => "요거트볼",
                 SnackCatalog.CoffeeMilkJellyId => "커피 젤리",
+                SnackCatalog.CreamSoupId => "크림 수프",
                 _ => snack?.displayName ?? "알 수 없음"
             };
         }

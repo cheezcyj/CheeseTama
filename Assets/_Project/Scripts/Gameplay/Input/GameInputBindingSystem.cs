@@ -75,26 +75,6 @@ namespace CheeseTama.Gameplay.Input
                     changed = true;
                     continue;
                 }
-
-                if (!TryParseBindableKey(entry.primaryKey, out _))
-                {
-                    entry.primaryKey = definition.defaultPrimary.ToString();
-                    changed = true;
-                }
-
-                if (definition.defaultSecondary == KeyCode.None)
-                {
-                    if (!string.IsNullOrEmpty(entry.secondaryKey))
-                    {
-                        entry.secondaryKey = string.Empty;
-                        changed = true;
-                    }
-                }
-                else if (!TryParseBindableKey(entry.secondaryKey, out _))
-                {
-                    entry.secondaryKey = definition.defaultSecondary.ToString();
-                    changed = true;
-                }
             }
 
             foreach (var definition in Definitions)
@@ -106,33 +86,6 @@ namespace CheeseTama.Gameplay.Input
 
                 state.bindings.Add(CreateDefaultEntry(definition));
                 changed = true;
-            }
-
-            var occupiedKeys = new HashSet<KeyCode>();
-            foreach (var definition in Definitions)
-            {
-                var entry = FindEntry(state, definition.id);
-                if (!TryParseBindableKey(entry.primaryKey, out var primary)
-                    || occupiedKeys.Contains(primary))
-                {
-                    primary = FindAvailablePrimaryKey(definition, occupiedKeys);
-                    entry.primaryKey = primary.ToString();
-                    changed = true;
-                }
-
-                occupiedKeys.Add(primary);
-                if (TryParseBindableKey(entry.secondaryKey, out var secondary))
-                {
-                    if (occupiedKeys.Contains(secondary))
-                    {
-                        entry.secondaryKey = string.Empty;
-                        changed = true;
-                    }
-                    else
-                    {
-                        occupiedKeys.Add(secondary);
-                    }
-                }
             }
 
             // Keep the serialized list in the same stable order as the public action catalog.
@@ -149,6 +102,72 @@ namespace CheeseTama.Gameplay.Input
                 state.bindings.RemoveAt(currentIndex);
                 state.bindings.Insert(targetIndex, targetEntry);
                 changed = true;
+            }
+
+            // Protect every valid saved key before repairing invalid or newly reserved UI keys.
+            // A migrated action therefore never takes a still-valid custom key from another action.
+            var protectedKeys = new HashSet<KeyCode>();
+            foreach (var definition in Definitions)
+            {
+                var entry = FindEntry(state, definition.id);
+                if (TryParseActionKey(definition, entry.primaryKey, out var primary))
+                {
+                    protectedKeys.Add(primary);
+                }
+
+                if (definition.defaultSecondary != KeyCode.None
+                    && TryParseActionKey(definition, entry.secondaryKey, out var secondary))
+                {
+                    protectedKeys.Add(secondary);
+                }
+            }
+
+            var occupiedKeys = new HashSet<KeyCode>();
+            foreach (var definition in Definitions)
+            {
+                var entry = FindEntry(state, definition.id);
+                if (!TryParseActionKey(definition, entry.primaryKey, out var primary)
+                    || occupiedKeys.Contains(primary))
+                {
+                    primary = FindAvailablePrimaryKey(definition, protectedKeys);
+                    entry.primaryKey = primary.ToString();
+                    protectedKeys.Add(primary);
+                    changed = true;
+                }
+
+                occupiedKeys.Add(primary);
+                if (definition.defaultSecondary == KeyCode.None)
+                {
+                    if (!string.IsNullOrEmpty(entry.secondaryKey))
+                    {
+                        entry.secondaryKey = string.Empty;
+                        changed = true;
+                    }
+                }
+                else if (TryParseActionKey(definition, entry.secondaryKey, out var secondary))
+                {
+                    if (!occupiedKeys.Add(secondary))
+                    {
+                        entry.secondaryKey = string.Empty;
+                        changed = true;
+                    }
+                }
+                else if (!protectedKeys.Contains(definition.defaultSecondary)
+                         && !occupiedKeys.Contains(definition.defaultSecondary))
+                {
+                    entry.secondaryKey = definition.defaultSecondary.ToString();
+                    protectedKeys.Add(definition.defaultSecondary);
+                    occupiedKeys.Add(definition.defaultSecondary);
+                    changed = true;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(entry.secondaryKey))
+                    {
+                        entry.secondaryKey = string.Empty;
+                        changed = true;
+                    }
+                }
             }
 
             return changed;
@@ -335,17 +354,39 @@ namespace CheeseTama.Gameplay.Input
                 && !name.StartsWith("Joystick", StringComparison.Ordinal);
         }
 
+        public static bool IsReservedUiKey(KeyCode key)
+        {
+            return IsReservedNavigationKey(key);
+        }
+
         private static bool IsReservedNavigationKey(KeyCode key)
         {
             return key == KeyCode.Escape
                 || key == KeyCode.Return
                 || key == KeyCode.KeypadEnter
+                || key == KeyCode.Space
                 || key == KeyCode.Tab;
         }
 
         private static bool TryParseBindableKey(string serialized, out KeyCode key)
         {
             return Enum.TryParse(serialized, out key) && IsBindableKey(key);
+        }
+
+        private static bool TryParseActionKey(
+            GameInputActionDefinition definition,
+            string serialized,
+            out KeyCode key)
+        {
+            if (!TryParseBindableKey(serialized, out key))
+            {
+                return false;
+            }
+
+            // Escape remains the intentional built-in binding for the Cancel action. Other common
+            // UI keys must stay out of saved gameplay bindings to prevent submit + action overlap.
+            return !IsReservedNavigationKey(key)
+                || (definition.id == GameInputActionIds.Cancel && key == KeyCode.Escape);
         }
 
         private static GameInputBindingSaveEntry FindEntry(GameInputBindingSaveData state, string actionId)
@@ -423,9 +464,17 @@ namespace CheeseTama.Gameplay.Input
             GameInputActionDefinition definition,
             ISet<KeyCode> occupiedKeys)
         {
-            if (!occupiedKeys.Contains(definition.defaultPrimary))
+            if (!IsReservedNavigationKey(definition.defaultPrimary)
+                && !occupiedKeys.Contains(definition.defaultPrimary))
             {
                 return definition.defaultPrimary;
+            }
+
+            if (definition.id == GameInputActionIds.Cancel
+                && definition.defaultPrimary == KeyCode.Escape
+                && !occupiedKeys.Contains(KeyCode.Escape))
+            {
+                return KeyCode.Escape;
             }
 
             for (var value = (int)KeyCode.A; value <= (int)KeyCode.Z; value += 1)
@@ -446,13 +495,53 @@ namespace CheeseTama.Gameplay.Input
                 }
             }
 
-            return KeyCode.Space;
+            for (var value = (int)KeyCode.F1; value <= (int)KeyCode.F11; value += 1)
+            {
+                var key = (KeyCode)value;
+                if (!occupiedKeys.Contains(key))
+                {
+                    return key;
+                }
+            }
+
+            // The catalog currently has nine actions, so the safe candidate pool above cannot be
+            // exhausted by valid entries. Keep a non-reserved defensive fallback for corrupted data.
+            return KeyCode.BackQuote;
         }
     }
 
     public static class GameInputRouter
     {
         public static bool GameplayInputSuppressed { get; set; }
+
+        public static bool WasSubmitPressed()
+        {
+            return UnityEngine.Input.GetKeyDown(KeyCode.Return)
+                || UnityEngine.Input.GetKeyDown(KeyCode.KeypadEnter)
+                || UnityEngine.Input.GetKeyDown(KeyCode.Space);
+        }
+
+        public static bool WasNextPanelPressed()
+        {
+            return UnityEngine.Input.GetKeyDown(KeyCode.Tab);
+        }
+
+        public static bool WasItemDetailsPressed()
+        {
+            return UnityEngine.Input.GetMouseButtonDown(1);
+        }
+
+        public static bool IsSubmitKey(KeyCode key)
+        {
+            return key == KeyCode.Return
+                || key == KeyCode.KeypadEnter
+                || key == KeyCode.Space;
+        }
+
+        public static bool IsNextPanelKey(KeyCode key)
+        {
+            return key == KeyCode.Tab;
+        }
 
         public static bool WasPressed(string actionId)
         {

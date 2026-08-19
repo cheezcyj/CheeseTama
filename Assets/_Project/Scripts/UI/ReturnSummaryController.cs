@@ -232,6 +232,7 @@ namespace CheeseTama.UI
                 || IsActive("Milk Blending Overlay")
                 || IsActive(CookingChoicePanelController.OverlayObjectName)
                 || IsActive(NpcVisitCardController.OverlayObjectName)
+                || IsActive(JourneyHubPanelController.OverlayObjectName)
                 || IsActive(SleepSchedulePanelController.OverlayObjectName)
                 || IsActive("Star Legacy Overlay")
                 || IsActive("Bond Status Overlay")

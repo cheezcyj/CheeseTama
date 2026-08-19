@@ -651,6 +651,7 @@ namespace CheeseTama.UI
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Overflow;
             label.lineSpacing = 1.12f;
+            AccessibilityRuntime.ApplyCurrent(label);
         }
 
         private static void ConfigureFixedRecordText(Text label, int lineIndex)
@@ -958,6 +959,21 @@ namespace CheeseTama.UI
             {
                 tips.Add($"과포만 {tama.stats.overfullness}/100 · 놀아주거나 잠시 기다리면 회복해요.");
             }
+
+            if (tama.stats.bodyChillIntensity > 0)
+            {
+                tips.Add($"몸 떨림 {tama.stats.bodyChillIntensity}/100 · {tama.stats.bodyChillHoursRemaining}시간 남음 · 따뜻한 우유나 휴식이 좋아요.");
+            }
+
+            if (tama.stats.fermentedAftertasteIntensity > 0)
+            {
+                tips.Add($"발효 뒷맛 {tama.stats.fermentedAftertasteIntensity}/100 · {tama.stats.fermentedAftertasteHoursRemaining}시간 남음 · 청소하거나 기다리면 옅어져요.");
+            }
+
+            if (tama.stats.sleepRhythmDisruptionIntensity > 0)
+            {
+                tips.Add($"수면 리듬 흐트러짐 {tama.stats.sleepRhythmDisruptionIntensity}/100 · {tama.stats.sleepRhythmDisruptionHoursRemaining}시간 남음 · 휴식으로 진정시켜 주세요.");
+            }
             if (tama.stats.health < HealthWarningThreshold)
             {
                 tips.Add("건강이 낮아요. 휴식과 청소를 먼저 해주세요.");
@@ -1104,19 +1120,35 @@ namespace CheeseTama.UI
             var milkAverse = tama.growthHistory != null
                 && tama.growthHistory.sameMilkFeedStreak >= FeedingStatusSystem.MilkAversionStreakThreshold;
             var overfull = tama.stats.overfullness > 0;
-            if (milkAverse && overfull)
-            {
-                return "우유 질림 · 과포만";
-            }
-
+            var feedingConditions = new List<string>();
             if (milkAverse)
             {
-                return "우유 질림";
+                feedingConditions.Add("우유 질림");
             }
 
             if (overfull)
             {
-                return $"과포만 {tama.stats.overfullness}";
+                feedingConditions.Add($"과포만 {tama.stats.overfullness}");
+            }
+
+            if (tama.stats.bodyChillIntensity > 0)
+            {
+                feedingConditions.Add($"몸 떨림 {tama.stats.bodyChillIntensity}");
+            }
+
+            if (tama.stats.fermentedAftertasteIntensity > 0)
+            {
+                feedingConditions.Add($"발효 뒷맛 {tama.stats.fermentedAftertasteIntensity}");
+            }
+
+            if (tama.stats.sleepRhythmDisruptionIntensity > 0)
+            {
+                feedingConditions.Add($"수면 리듬 {tama.stats.sleepRhythmDisruptionIntensity}");
+            }
+
+            if (feedingConditions.Count > 0)
+            {
+                return string.Join(" · ", feedingConditions);
             }
 
             if (tama.stats.health < 35)

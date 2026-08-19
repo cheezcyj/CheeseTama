@@ -22,6 +22,15 @@ namespace CheeseTama.UI
         private GameManager subscribedManager;
 
         public bool IsActive => presenter != null && presenter.IsActive;
+        public AutonomousLifeDiscoveryItemSnapshot LastObservedDiscovery { get; private set; }
+
+        public event Action<AutonomousLifeDiscoveryItemSnapshot> DiscoveryObserved;
+
+        public AutonomousLifeDiscoveryCollectionSnapshot GetDiscoverySnapshot()
+        {
+            return AutonomousLifeDiscoveryCatalog.CreateSnapshot(
+                manager?.CurrentSave?.autonomousLife);
+        }
 
         public void Configure(
             AutonomousLifePresenter targetPresenter,
@@ -46,7 +55,8 @@ namespace CheeseTama.UI
                         saveProvider: () => manager?.CurrentSave?.autonomousLife,
                         persistFirstDiscovery: PersistFirstDiscovery,
                         interactionBlockedProvider: IsInteractionBlocked,
-                        behaviourStarted: HandleBehaviourStarted));
+                        behaviourStarted: HandleBehaviourStarted,
+                        discoveryObserved: HandleDiscoveryObserved));
             }
 
             Subscribe(gameManager);
@@ -141,6 +151,7 @@ namespace CheeseTama.UI
         private bool IsInteractionBlocked()
         {
             return dialogueBridge?.IsModalBlocking == true
+                || JourneyHubPanelController.IsAnyOpen()
                 || manager?.IsSleepScheduleActive == true
                 || UnityEngine.Input.GetMouseButton(0)
                 || UnityEngine.Input.anyKeyDown;
@@ -152,8 +163,22 @@ namespace CheeseTama.UI
                 AutonomousLifePresenter.ResolveVisualAction(behaviour));
         }
 
+        private void HandleDiscoveryObserved(AutonomousLifeDiscoveryResult result)
+        {
+            if (!AutonomousLifeDiscoveryCatalog.TryCreateObservedSnapshot(
+                    result,
+                    out var snapshot))
+            {
+                return;
+            }
+
+            LastObservedDiscovery = snapshot;
+            DiscoveryObserved?.Invoke(snapshot);
+        }
+
         private void HandleSaveDataReplaced()
         {
+            LastObservedDiscovery = null;
             presenter?.BeginSession();
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using CheeseTama.Platform;
 using CheeseTama.Utilities;
 using UnityEngine;
 
@@ -12,6 +13,10 @@ namespace CheeseTama.Save
         private const string TemporaryFileSuffix = ".tmp";
         private const string CorruptFileSuffix = ".corrupt";
         private const string DefaultSaveFileName = "cheesetama_save.json";
+        private const string RuntimeDiagnosticSaveFileNamePrefix = "cheesetama_diagnostic_";
+        private const int MaximumCloudSavePayloadBytes = 8 * 1024 * 1024;
+
+        private static string runtimeDiagnosticSaveFileNameOverride;
 
         [SerializeField] private string saveFileName = DefaultSaveFileName;
 
@@ -21,6 +26,57 @@ namespace CheeseTama.Save
         public bool HasSaveFile => File.Exists(SaveFilePath);
         public bool LastLoadMigratedData { get; private set; }
         public SaveRecoveryReport LastRecoveryReport { get; private set; } = SaveRecoveryReport.NoRecovery;
+
+        public static string RuntimeDiagnosticSaveFileNameOverride =>
+            runtimeDiagnosticSaveFileNameOverride;
+
+        public static string CreateRuntimeDiagnosticSaveFileName()
+        {
+            return $"{RuntimeDiagnosticSaveFileNamePrefix}{Guid.NewGuid():N}.json";
+        }
+
+        public static bool IsValidRuntimeDiagnosticSaveFileName(string isolatedFileName)
+        {
+            if (string.IsNullOrWhiteSpace(isolatedFileName)
+                || isolatedFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
+                || !string.Equals(Path.GetFileName(isolatedFileName), isolatedFileName, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var extension = Path.GetExtension(isolatedFileName);
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(isolatedFileName);
+            var identifier = fileNameWithoutExtension.StartsWith(
+                RuntimeDiagnosticSaveFileNamePrefix,
+                StringComparison.Ordinal)
+                ? fileNameWithoutExtension.Substring(RuntimeDiagnosticSaveFileNamePrefix.Length)
+                : string.Empty;
+            return string.Equals(extension, ".json", StringComparison.OrdinalIgnoreCase)
+                && Guid.TryParseExact(identifier, "N", out _);
+        }
+
+        public static void SetRuntimeDiagnosticSaveFileNameOverride(string isolatedFileName)
+        {
+            if (!IsValidRuntimeDiagnosticSaveFileName(isolatedFileName))
+            {
+                throw new ArgumentException(
+                    "A GUID-based diagnostic save file name without path segments is required.",
+                    nameof(isolatedFileName));
+            }
+
+            runtimeDiagnosticSaveFileNameOverride = isolatedFileName;
+        }
+
+        public static void ClearRuntimeDiagnosticSaveFileNameOverride(string expectedIsolatedFileName)
+        {
+            if (string.Equals(
+                    runtimeDiagnosticSaveFileNameOverride,
+                    expectedIsolatedFileName,
+                    StringComparison.Ordinal))
+            {
+                runtimeDiagnosticSaveFileNameOverride = null;
+            }
+        }
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         public const string PlayModeTestSaveFileNamePrefix = "cheesetama_playmode_test_";
@@ -125,6 +181,17 @@ namespace CheeseTama.Save
                 return playModeTestSaveFileNameOverride;
             }
 #endif
+            if (!string.IsNullOrWhiteSpace(runtimeDiagnosticSaveFileNameOverride))
+            {
+                if (!IsValidRuntimeDiagnosticSaveFileName(runtimeDiagnosticSaveFileNameOverride))
+                {
+                    throw new InvalidOperationException(
+                        "Invalid runtime diagnostic save override; refusing to resolve a save path.");
+                }
+
+                return runtimeDiagnosticSaveFileNameOverride;
+            }
+
             return saveFileName;
         }
 
@@ -145,6 +212,7 @@ namespace CheeseTama.Save
             {
                 var quarantinedCount = primaryExists ? QuarantineFile(SaveFilePath) : 0;
                 File.Move(TemporaryFilePath, SaveFilePath);
+                BrowserPersistence.RequestSync();
                 LastRecoveryReport = new SaveRecoveryReport(
                     SaveRecoveryOutcome.RecoveredFromTemporaryFile,
                     quarantinedCount);
@@ -220,9 +288,18 @@ namespace CheeseTama.Save
             var hasSerializedAutonomousLife = HasSerializedField(json, "autonomousLife");
             var hasSerializedLateLevelGrowth = HasSerializedField(json, "lateLevelGrowth");
             var hasSerializedSleepSchedule = HasSerializedField(json, "sleepSchedule");
+            var hasSerializedNpcRelationshipQuests = HasSerializedField(json, "npcRelationshipQuests");
+            var hasSerializedNpcRelationshipEpisodes = HasSerializedField(json, "npcRelationshipEpisodes");
+            var hasSerializedWeeklyCareJourney = HasSerializedField(json, "weeklyCareJourney");
+            var hasSerializedDecorationWorkshop = HasSerializedField(json, "decorationWorkshop");
+            var hasSerializedCollectionSetAlbum = HasSerializedField(json, "collectionSetAlbum");
             var hasSerializedMusicVolume = HasSerializedField(json, "musicVolume");
             var hasSerializedEffectVolume = HasSerializedField(json, "effectVolume");
             var hasSerializedInputBindings = HasSerializedField(json, "inputBindings");
+            var hasSerializedGraphicsQuality = HasSerializedField(json, "graphicsQualityPreset");
+            var hasSerializedTextScale = HasSerializedField(json, "textScale");
+            var hasSerializedHighContrastUi = HasSerializedField(json, "highContrastUi");
+            var hasSerializedReduceMotion = HasSerializedField(json, "reduceMotion");
 
             var migratedOnboarding = !hasSerializedOnboarding || loaded.onboarding == null;
             if (migratedOnboarding)
@@ -373,6 +450,56 @@ namespace CheeseTama.Save
                 LastLoadMigratedData = true;
             }
 
+            if (!hasSerializedNpcRelationshipQuests || loaded.npcRelationshipQuests == null)
+            {
+                loaded.npcRelationshipQuests = new NpcRelationshipQuestSaveData();
+                LastLoadMigratedData = true;
+            }
+            else if (loaded.npcRelationshipQuests.EnsureRuntimeDefaults())
+            {
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedNpcRelationshipEpisodes || loaded.npcRelationshipEpisodes == null)
+            {
+                loaded.npcRelationshipEpisodes = new NpcRelationshipEpisodeSaveData();
+                LastLoadMigratedData = true;
+            }
+            else if (loaded.npcRelationshipEpisodes.EnsureRuntimeDefaults())
+            {
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedWeeklyCareJourney || loaded.weeklyCareJourney == null)
+            {
+                loaded.weeklyCareJourney = new WeeklyCareJourneySaveData();
+                LastLoadMigratedData = true;
+            }
+            else if (loaded.weeklyCareJourney.EnsureRuntimeDefaults())
+            {
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedDecorationWorkshop || loaded.decorationWorkshop == null)
+            {
+                loaded.decorationWorkshop = new DecorationWorkshopSaveData();
+                LastLoadMigratedData = true;
+            }
+            else if (loaded.decorationWorkshop.EnsureRuntimeDefaults())
+            {
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedCollectionSetAlbum || loaded.collectionSetAlbum == null)
+            {
+                loaded.collectionSetAlbum = new CollectionSetAlbumSaveData();
+                LastLoadMigratedData = true;
+            }
+            else if (loaded.collectionSetAlbum.EnsureRuntimeDefaults())
+            {
+                LastLoadMigratedData = true;
+            }
+
             if (loaded.fantasyPowder != null && loaded.fantasyPowder.EnsureRuntimeDefaults())
             {
                 LastLoadMigratedData = true;
@@ -402,6 +529,31 @@ namespace CheeseTama.Save
                 LastLoadMigratedData = true;
             }
 
+            if (!hasSerializedGraphicsQuality)
+            {
+                loaded.settings.graphicsQualityPreset =
+                    (int)CheeseTama.Environment.GraphicsQualityPreset.High;
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedTextScale)
+            {
+                loaded.settings.textScale = GameSettingsSaveData.DefaultTextScale;
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedHighContrastUi)
+            {
+                loaded.settings.highContrastUi = false;
+                LastLoadMigratedData = true;
+            }
+
+            if (!hasSerializedReduceMotion)
+            {
+                loaded.settings.reduceMotion = false;
+                LastLoadMigratedData = true;
+            }
+
             loaded.EnsureRuntimeDefaults();
             if (!hasSerializedMilkGrowthRewardKeys
                 || !hasSerializedDecorations
@@ -420,7 +572,102 @@ namespace CheeseTama.Save
 
         internal void SaveMigration(CheeseTamaSaveData saveData)
         {
+            SaveWithoutAdvancingTimestamp(saveData);
+        }
+
+        internal void SaveWithoutAdvancingTimestamp(CheeseTamaSaveData saveData)
+        {
             SaveInternal(saveData, false);
+        }
+
+        /// <summary>
+        /// Validates and atomically commits an explicitly selected cloud copy. Invalid,
+        /// oversized, mismatched-slot, or unreadable payloads never touch the local files.
+        /// The existing primary becomes the recovery backup only after all validation passes.
+        /// </summary>
+        public bool TryReplaceFromCloudPayload(
+            CloudSavePayload payload,
+            out CheeseTamaSaveData restored)
+        {
+            restored = null;
+            if (payload == null
+                || !payload.IsValid()
+                || !string.Equals(
+                    payload.slotId,
+                    CloudSaveSlotRules.PrimarySlotId,
+                    StringComparison.Ordinal)
+                || string.IsNullOrWhiteSpace(payload.contentJson)
+                || Encoding.UTF8.GetByteCount(payload.contentJson) > MaximumCloudSavePayloadBytes)
+            {
+                return false;
+            }
+
+            var trimmedJson = payload.contentJson.Trim();
+            if (trimmedJson.Length < 2
+                || trimmedJson[0] != '{'
+                || trimmedJson[trimmedJson.Length - 1] != '}'
+                || !HasSerializedField(trimmedJson, "version")
+                || !HasSerializedField(trimmedJson, "cheeseTama"))
+            {
+                return false;
+            }
+
+            CheeseTamaSaveData candidate;
+            string normalizedJson;
+            try
+            {
+                candidate = JsonUtility.FromJson<CheeseTamaSaveData>(trimmedJson);
+                if (candidate == null)
+                {
+                    return false;
+                }
+
+                candidate.EnsureRuntimeDefaults();
+                normalizedJson = JsonUtility.ToJson(candidate, true);
+                if (string.IsNullOrWhiteSpace(normalizedJson)
+                    || Encoding.UTF8.GetByteCount(normalizedJson) > MaximumCloudSavePayloadBytes)
+                {
+                    return false;
+                }
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(SaveFilePath));
+                WriteTextDurably(TemporaryFilePath, normalizedJson);
+                CommitTemporaryFile();
+                BrowserPersistence.RequestSync();
+                restored = candidate;
+                return true;
+            }
+            catch (IOException)
+            {
+                RecoverPrimaryAfterFailedCommit();
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                RecoverPrimaryAfterFailedCommit();
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                RecoverPrimaryAfterFailedCommit();
+                return false;
+            }
+            catch (NotSupportedException)
+            {
+                RecoverPrimaryAfterFailedCommit();
+                return false;
+            }
+            finally
+            {
+                TryDeleteTemporaryFileAfterCloudCommit();
+            }
         }
 
         private void SaveInternal(CheeseTamaSaveData saveData, bool updateLastSavedAt)
@@ -440,6 +687,7 @@ namespace CheeseTama.Save
             Directory.CreateDirectory(Path.GetDirectoryName(SaveFilePath));
             WriteTextDurably(TemporaryFilePath, json);
             CommitTemporaryFile();
+            BrowserPersistence.RequestSync();
         }
 
         public bool DeleteSave()
@@ -459,7 +707,59 @@ namespace CheeseTama.Save
             }
 
             LastRecoveryReport = SaveRecoveryReport.NoRecovery;
+            BrowserPersistence.RequestSync();
             return deletedAnyFile;
+        }
+
+        /// <summary>
+        /// Removes only recovery artifacts after a confirmed full reset. The newly
+        /// committed primary is never targeted, so it remains authoritative throughout.
+        /// </summary>
+        public bool TryPurgeRecoveryArtifacts()
+        {
+            try
+            {
+                DeleteFileIfPresent(BackupFilePath);
+                DeleteFileIfPresent(TemporaryFilePath);
+
+                var directoryPath = Path.GetDirectoryName(SaveFilePath);
+                if (!string.IsNullOrEmpty(directoryPath) && Directory.Exists(directoryPath))
+                {
+                    var searchPattern = Path.GetFileName(SaveFilePath)
+                        + "*"
+                        + CorruptFileSuffix
+                        + ".*";
+                    foreach (var corruptFilePath in Directory.GetFiles(directoryPath, searchPattern))
+                    {
+                        DeleteFileIfPresent(corruptFilePath);
+                    }
+                }
+
+                LastRecoveryReport = SaveRecoveryReport.NoRecovery;
+                return !File.Exists(BackupFilePath)
+                    && !File.Exists(TemporaryFilePath)
+                    && !HasCorruptRecoveryArtifacts();
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
+            {
+                return false;
+            }
+            finally
+            {
+                BrowserPersistence.RequestSync();
+            }
         }
 
         public static CheeseTamaSaveData CreateDefaultSave()
@@ -482,6 +782,21 @@ namespace CheeseTama.Save
         private static bool HasSerializedOnboardingField(string json)
         {
             return HasSerializedField(json, "onboarding");
+        }
+
+        private bool HasCorruptRecoveryArtifacts()
+        {
+            var directoryPath = Path.GetDirectoryName(SaveFilePath);
+            if (string.IsNullOrEmpty(directoryPath) || !Directory.Exists(directoryPath))
+            {
+                return false;
+            }
+
+            var searchPattern = Path.GetFileName(SaveFilePath)
+                + "*"
+                + CorruptFileSuffix
+                + ".*";
+            return Directory.GetFiles(directoryPath, searchPattern).Length > 0;
         }
 
         private static bool HasSerializedField(string json, string fieldName)
@@ -562,6 +877,12 @@ namespace CheeseTama.Save
                 return;
             }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Web uses Emscripten's virtual file system. File.Replace has no portable
+            // atomic-replace contract there, so keep the existing backup-first fallback.
+            CommitTemporaryFileWithoutReplace();
+            return;
+#else
             try
             {
                 File.Replace(TemporaryFilePath, SaveFilePath, BackupFilePath, true);
@@ -570,6 +891,7 @@ namespace CheeseTama.Save
             {
                 CommitTemporaryFileWithoutReplace();
             }
+#endif
         }
 
         private void CommitTemporaryFileWithoutReplace()
@@ -579,10 +901,49 @@ namespace CheeseTama.Save
             File.Move(TemporaryFilePath, SaveFilePath);
         }
 
+        private void RecoverPrimaryAfterFailedCommit()
+        {
+            try
+            {
+                if (!File.Exists(SaveFilePath) && File.Exists(BackupFilePath))
+                {
+                    File.Copy(BackupFilePath, SaveFilePath, false);
+                }
+            }
+            catch (IOException)
+            {
+                // The intact backup remains available to LoadOrCreate recovery.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Recovery is best-effort; never replace an existing primary here.
+            }
+        }
+
+        private void TryDeleteTemporaryFileAfterCloudCommit()
+        {
+            try
+            {
+                if (DeleteFileIfPresent(TemporaryFilePath))
+                {
+                    BrowserPersistence.RequestSync();
+                }
+            }
+            catch (IOException)
+            {
+                // A valid primary or backup remains authoritative.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Best-effort cleanup must not change the cloud apply result.
+            }
+        }
+
         private void RestorePrimaryFromJson(string json)
         {
             WriteTextDurably(TemporaryFilePath, json);
             File.Move(TemporaryFilePath, SaveFilePath);
+            BrowserPersistence.RequestSync();
         }
 
         private static void WriteTextDurably(string filePath, string contents)
@@ -591,7 +952,11 @@ namespace CheeseTama.Save
             using var writer = new StreamWriter(stream, new UTF8Encoding(false), 1024, true);
             writer.Write(contents);
             writer.Flush();
+#if UNITY_WEBGL && !UNITY_EDITOR
+            stream.Flush();
+#else
             stream.Flush(true);
+#endif
         }
 
         private static int QuarantineFile(string filePath)
@@ -618,7 +983,10 @@ namespace CheeseTama.Save
         {
             try
             {
-                DeleteFileIfPresent(TemporaryFilePath);
+                if (DeleteFileIfPresent(TemporaryFilePath))
+                {
+                    BrowserPersistence.RequestSync();
+                }
             }
             catch (IOException)
             {

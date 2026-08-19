@@ -15,6 +15,9 @@ namespace CheeseTama.Gameplay.Stats
         public readonly int healthDelta;
         public readonly int overfullnessDelta;
         public readonly bool overfullnessRecovered;
+        public readonly bool bodyChillRecovered;
+        public readonly bool fermentedAftertasteRecovered;
+        public readonly bool sleepRhythmRecovered;
 
         public TimeProgressionResult(
             bool applied,
@@ -47,6 +50,35 @@ namespace CheeseTama.Gameplay.Stats
             int healthDelta,
             int overfullnessDelta,
             bool overfullnessRecovered)
+            : this(
+                applied,
+                hours,
+                hungerDelta,
+                moodDelta,
+                cleanlinessDelta,
+                sleepinessDelta,
+                healthDelta,
+                overfullnessDelta,
+                overfullnessRecovered,
+                false,
+                false,
+                false)
+        {
+        }
+
+        public TimeProgressionResult(
+            bool applied,
+            int hours,
+            int hungerDelta,
+            int moodDelta,
+            int cleanlinessDelta,
+            int sleepinessDelta,
+            int healthDelta,
+            int overfullnessDelta,
+            bool overfullnessRecovered,
+            bool bodyChillRecovered,
+            bool fermentedAftertasteRecovered,
+            bool sleepRhythmRecovered)
         {
             this.applied = applied;
             this.hours = hours;
@@ -57,6 +89,9 @@ namespace CheeseTama.Gameplay.Stats
             this.healthDelta = healthDelta;
             this.overfullnessDelta = overfullnessDelta;
             this.overfullnessRecovered = overfullnessRecovered;
+            this.bodyChillRecovered = bodyChillRecovered;
+            this.fermentedAftertasteRecovered = fermentedAftertasteRecovered;
+            this.sleepRhythmRecovered = sleepRhythmRecovered;
         }
 
         public static TimeProgressionResult None()
@@ -77,7 +112,23 @@ namespace CheeseTama.Gameplay.Stats
                 : overfullnessRecovered
                     ? ", 과포만 회복"
                     : $", 과포만 {overfullnessDelta}";
-            return $"{prefix} {hours}시간이 지났습니다. 포만감 {hungerDelta}, 기분 {moodDelta}, 청결 {cleanlinessDelta}, 졸림 +{sleepinessDelta}{healthText}{overfullnessText}.";
+            var aftereffectText = string.Empty;
+            if (bodyChillRecovered)
+            {
+                aftereffectText += ", 몸 떨림 회복";
+            }
+
+            if (fermentedAftertasteRecovered)
+            {
+                aftereffectText += ", 발효 뒷맛 회복";
+            }
+
+            if (sleepRhythmRecovered)
+            {
+                aftereffectText += ", 수면 리듬 회복";
+            }
+
+            return $"{prefix} {hours}시간이 지났습니다. 포만감 {hungerDelta}, 기분 {moodDelta}, 청결 {cleanlinessDelta}, 졸림 +{sleepinessDelta}{healthText}{overfullnessText}{aftereffectText}.";
         }
     }
 
@@ -141,7 +192,10 @@ namespace CheeseTama.Gameplay.Stats
                 sleepinessDelta,
                 healthDelta,
                 feedingStatus.OverfullnessDelta,
-                feedingStatus.overfullnessRecovered);
+                feedingStatus.overfullnessRecovered,
+                feedingStatus.bodyChillRecovered,
+                feedingStatus.fermentedAftertasteRecovered,
+                feedingStatus.sleepRhythmDisruptionRecovered);
         }
     }
 }

@@ -41,6 +41,7 @@ namespace CheeseTama.UI
             InputBindingsPanelController.OverlayObjectName,
             "Milk Blending Overlay",
             NpcVisitCardController.OverlayObjectName,
+            JourneyHubPanelController.OverlayObjectName,
             SleepSchedulePanelController.OverlayObjectName,
             StarLegacyPanelController.OverlayObjectName,
             "Bond Status Overlay",

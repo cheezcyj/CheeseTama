@@ -452,13 +452,14 @@ namespace CheeseTama.Tests
         }
 
         [Test]
-        public void ProceduralAudioCreatesOneMusicAndOneEffectSource()
+        public void AudioCreatesOneMusicAndOneEffectSource()
         {
             var audioObject = new GameObject("Audio Controller Test");
             try
             {
                 var controller = audioObject.AddComponent<CheeseTamaAudioController>();
                 InvokePrivate(controller, "Awake");
+                controller.ReloadAudioAssets();
 
                 Assert.That(audioObject.GetComponents<AudioSource>(), Has.Length.EqualTo(2));
                 Assert.That(controller.MusicSource, Is.Not.Null);
@@ -467,14 +468,9 @@ namespace CheeseTama.Tests
                 Assert.That(controller.MusicSource.spatialBlend, Is.EqualTo(0f));
                 Assert.That(controller.EffectSource, Is.Not.Null);
                 Assert.That(controller.EffectSource.loop, Is.False);
-
-                var samples = new float[Math.Min(512, controller.MusicSource.clip.samples)];
-                Assert.That(controller.MusicSource.clip.GetData(samples, 0), Is.True);
-                foreach (var sample in samples)
-                {
-                    Assert.That(float.IsNaN(sample) || float.IsInfinity(sample), Is.False);
-                    Assert.That(sample, Is.InRange(-1f, 1f));
-                }
+                Assert.That(controller.MusicSource.clip.samples, Is.GreaterThan(0));
+                Assert.That(controller.MusicSource.clip.frequency, Is.GreaterThan(0));
+                Assert.That(controller.UsingAuthoredAudioAssets, Is.True);
             }
             finally
             {

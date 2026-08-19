@@ -16,6 +16,12 @@ namespace CheeseTama.Gameplay.Stats
         public int affection;
         public int milkSatisfaction;
         public int overfullness;
+        public int bodyChillIntensity;
+        public int bodyChillHoursRemaining;
+        public int fermentedAftertasteIntensity;
+        public int fermentedAftertasteHoursRemaining;
+        public int sleepRhythmDisruptionIntensity;
+        public int sleepRhythmDisruptionHoursRemaining;
 
         public static StatBlock CreateDefault()
         {
@@ -29,7 +35,13 @@ namespace CheeseTama.Gameplay.Stats
                 maturation = 0,
                 affection = 10,
                 milkSatisfaction = 50,
-                overfullness = 0
+                overfullness = 0,
+                bodyChillIntensity = 0,
+                bodyChillHoursRemaining = 0,
+                fermentedAftertasteIntensity = 0,
+                fermentedAftertasteHoursRemaining = 0,
+                sleepRhythmDisruptionIntensity = 0,
+                sleepRhythmDisruptionHoursRemaining = 0
             };
         }
 
@@ -56,7 +68,31 @@ namespace CheeseTama.Gameplay.Stats
             maturation = Mathf.Clamp(maturation, 0, 100);
             affection = Mathf.Clamp(affection, 0, 100);
             milkSatisfaction = Mathf.Clamp(milkSatisfaction, 0, 100);
+            ClampFeedingStatuses();
+        }
+
+        public void ClampFeedingStatuses()
+        {
             overfullness = Mathf.Clamp(overfullness, 0, 100);
+            bodyChillIntensity = Mathf.Clamp(bodyChillIntensity, 0, 100);
+            bodyChillHoursRemaining = Mathf.Clamp(bodyChillHoursRemaining, 0, 12);
+            fermentedAftertasteIntensity = Mathf.Clamp(fermentedAftertasteIntensity, 0, 100);
+            fermentedAftertasteHoursRemaining = Mathf.Clamp(fermentedAftertasteHoursRemaining, 0, 12);
+            sleepRhythmDisruptionIntensity = Mathf.Clamp(sleepRhythmDisruptionIntensity, 0, 100);
+            sleepRhythmDisruptionHoursRemaining = Mathf.Clamp(sleepRhythmDisruptionHoursRemaining, 0, 12);
+
+            NormalizeAftereffect(ref bodyChillIntensity, ref bodyChillHoursRemaining);
+            NormalizeAftereffect(ref fermentedAftertasteIntensity, ref fermentedAftertasteHoursRemaining);
+            NormalizeAftereffect(ref sleepRhythmDisruptionIntensity, ref sleepRhythmDisruptionHoursRemaining);
+        }
+
+        private static void NormalizeAftereffect(ref int intensity, ref int hoursRemaining)
+        {
+            if (intensity <= 0 || hoursRemaining <= 0)
+            {
+                intensity = 0;
+                hoursRemaining = 0;
+            }
         }
     }
 }

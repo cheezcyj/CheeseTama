@@ -101,16 +101,18 @@ namespace CheeseTama.Save
     [Serializable]
     public sealed class MilkBlendingSaveData
     {
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
         public const int MaximumUsageEntries = 64;
         public const int MaximumDiscoveredResultIds = 64;
         public const int MaximumReceiptKeys = 128;
+        public const int MaximumMasteryResearchRecords = 64;
 
         public int schemaVersion = CurrentSchemaVersion;
         public List<MilkBlendUsageSaveEntry> ingredientUsage =
             new List<MilkBlendUsageSaveEntry>();
         public List<string> discoveredResultIds = new List<string>();
         public List<string> appliedReceiptKeys = new List<string>();
+        public List<string> masteryResearchRecordIds = new List<string>();
 
         public bool EnsureRuntimeDefaults()
         {
@@ -143,6 +145,10 @@ namespace CheeseTama.Save
                 ref appliedReceiptKeys,
                 MaximumReceiptKeys,
                 keepNewest: true);
+            changed |= NormalizeIds(
+                ref masteryResearchRecordIds,
+                MaximumMasteryResearchRecords,
+                keepNewest: false);
             return changed;
         }
 
@@ -156,6 +162,41 @@ namespace CheeseTama.Save
         {
             EnsureRuntimeDefaults();
             return ContainsOrdinal(appliedReceiptKeys, receiptKey);
+        }
+
+        public bool HasMasteryResearchRecord(string recordId)
+        {
+            EnsureRuntimeDefaults();
+            return ContainsOrdinal(masteryResearchRecordIds, recordId);
+        }
+
+        public bool CanAddMasteryResearchRecords(IEnumerable<string> recordIds)
+        {
+            EnsureRuntimeDefaults();
+            if (recordIds == null)
+            {
+                return true;
+            }
+
+            var newRecordIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var recordId in recordIds)
+            {
+                var normalizedId = NormalizeId(recordId);
+                if (string.IsNullOrEmpty(normalizedId)
+                    || ContainsOrdinal(masteryResearchRecordIds, normalizedId))
+                {
+                    continue;
+                }
+
+                newRecordIds.Add(normalizedId);
+                if (masteryResearchRecordIds.Count + newRecordIds.Count
+                    > MaximumMasteryResearchRecords)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public int GetBlendCount(string ingredientId, string resultSnackId)
@@ -277,6 +318,21 @@ namespace CheeseTama.Save
                     appliedReceiptKeys.Count - MaximumReceiptKeys);
             }
 
+            return true;
+        }
+
+        public bool AddMasteryResearchRecord(string recordId)
+        {
+            EnsureRuntimeDefaults();
+            var normalizedId = NormalizeId(recordId);
+            if (string.IsNullOrEmpty(normalizedId)
+                || HasMasteryResearchRecord(normalizedId)
+                || masteryResearchRecordIds.Count >= MaximumMasteryResearchRecords)
+            {
+                return false;
+            }
+
+            masteryResearchRecordIds.Add(normalizedId);
             return true;
         }
 

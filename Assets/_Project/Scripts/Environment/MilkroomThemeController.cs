@@ -9,6 +9,9 @@ namespace CheeseTama.Environment
         public const string EveningThemeId = "milkroom_evening";
         public const string NightThemeId = "milkroom_night";
         public const string RainyThemeId = "milkroom_rainy";
+        public const string StarlightThemeId = "milkroom_starlight";
+        public const string WinterThemeId = "milkroom_winter";
+        public const string VintageThemeId = "milkroom_vintage";
 
         internal const float RoomWallValueScale = 1f;
         internal const float RoomFloorValueScale = 0.55f / 0.5f;
@@ -203,7 +206,7 @@ namespace CheeseTama.Environment
                 return palette.Celestial;
             }
 
-            if (objectName.Contains("Cloud") || objectName.Contains("Rain"))
+            if (objectName.Contains("Cloud") || objectName.Contains("Rain") || objectName.Contains("Snow"))
             {
                 return palette.Weather;
             }
@@ -248,7 +251,7 @@ namespace CheeseTama.Environment
                 return palette.Wood;
             }
 
-            if (objectName.Contains("Star") || objectName.Contains("Sparkle"))
+            if (objectName.Contains("Star") || objectName.Contains("Sparkle") || objectName.Contains("Dust"))
             {
                 return palette.Celestial;
             }
@@ -276,15 +279,20 @@ namespace CheeseTama.Environment
             var showNight = themeId == NightThemeId;
             var showRain = themeId == RainyThemeId;
             var showEvening = themeId == EveningThemeId;
+            var showStarlight = themeId == StarlightThemeId;
+            var showWinter = themeId == WinterThemeId;
+            var showVintage = themeId == VintageThemeId;
 
             foreach (Transform child in themeVfxRoot)
             {
                 var childName = child.name;
                 var active =
                     childName.Contains("Rain") && showRain ||
-                    childName.Contains("Night") && showNight ||
-                    childName.Contains("Star") && showNight ||
-                    childName.Contains("Evening") && showEvening;
+                    childName.Contains("Night") && (showNight || showStarlight) ||
+                    childName.Contains("Starlight") && showStarlight ||
+                    childName.Contains("Evening") && showEvening ||
+                    childName.Contains("Winter") && showWinter ||
+                    childName.Contains("Vintage") && showVintage;
 
                 child.gameObject.SetActive(active);
             }
@@ -292,13 +300,7 @@ namespace CheeseTama.Environment
 
         private static string NormalizeThemeId(string themeId)
         {
-            return themeId switch
-            {
-                EveningThemeId => EveningThemeId,
-                NightThemeId => NightThemeId,
-                RainyThemeId => RainyThemeId,
-                _ => MorningThemeId
-            };
+            return MilkroomThemeCatalog.Normalize(themeId);
         }
     }
 
@@ -376,6 +378,72 @@ namespace CheeseTama.Environment
         {
             return themeId switch
             {
+                MilkroomThemeController.StarlightThemeId => new MilkroomThemePalette(
+                    new Color(0.26f, 0.2f, 0.46f),
+                    new Color(0.72f, 0.52f, 1f),
+                    new Color(0.18f, 0.15f, 0.3f),
+                    new Color(0.1f, 0.08f, 0.18f),
+                    new Color(0.5f, 0.42f, 0.72f),
+                    new Color(0.72f, 0.62f, 0.92f),
+                    new Color(0.03f, 0.05f, 0.2f),
+                    new Color(0.86f, 0.78f, 1f),
+                    new Color(0.58f, 0.62f, 0.88f),
+                    new Color(0.5f, 0.42f, 0.7f),
+                    new Color(0.68f, 0.78f, 0.94f),
+                    new Color(0.46f, 0.62f, 0.96f),
+                    new Color(0.24f, 0.38f, 0.36f),
+                    new Color(0.88f, 0.66f, 0.28f),
+                    new Color(0.58f, 0.34f, 0.12f),
+                    new Color(0.34f, 0.22f, 0.28f),
+                    new Color(0.08f, 0.1f, 0.22f),
+                    new Color(0.66f, 0.68f, 0.82f),
+                    new Color(0.16f, 0.1f, 0.18f),
+                    new Color(0.24f, 0.2f, 0.46f),
+                    new Color(0.11f, 0.09f, 0.25f)),
+                MilkroomThemeController.WinterThemeId => new MilkroomThemePalette(
+                    new Color(0.72f, 0.8f, 0.88f),
+                    new Color(1f, 0.78f, 0.38f),
+                    new Color(0.38f, 0.45f, 0.52f),
+                    new Color(0.24f, 0.31f, 0.38f),
+                    new Color(0.8f, 0.84f, 0.86f),
+                    new Color(0.56f, 0.68f, 0.78f),
+                    new Color(0.46f, 0.68f, 0.86f),
+                    new Color(1f, 0.9f, 0.62f),
+                    new Color(0.9f, 0.95f, 1f),
+                    new Color(0.86f, 0.9f, 0.94f),
+                    new Color(0.82f, 0.93f, 0.98f),
+                    new Color(0.4f, 0.67f, 0.9f),
+                    new Color(0.26f, 0.48f, 0.38f),
+                    new Color(1f, 0.7f, 0.22f),
+                    new Color(0.78f, 0.42f, 0.08f),
+                    new Color(0.48f, 0.32f, 0.24f),
+                    new Color(0.1f, 0.2f, 0.2f),
+                    new Color(0.9f, 0.92f, 0.9f),
+                    new Color(0.2f, 0.16f, 0.14f),
+                    new Color(0.54f, 0.64f, 0.72f),
+                    new Color(0.68f, 0.76f, 0.84f)),
+                MilkroomThemeController.VintageThemeId => new MilkroomThemePalette(
+                    new Color(0.52f, 0.38f, 0.25f),
+                    new Color(0.86f, 0.6f, 0.28f),
+                    new Color(0.29f, 0.2f, 0.14f),
+                    new Color(0.18f, 0.12f, 0.08f),
+                    new Color(0.58f, 0.44f, 0.3f),
+                    new Color(0.72f, 0.56f, 0.36f),
+                    new Color(0.26f, 0.2f, 0.2f),
+                    new Color(0.86f, 0.7f, 0.38f),
+                    new Color(0.58f, 0.48f, 0.38f),
+                    new Color(0.62f, 0.5f, 0.38f),
+                    new Color(0.7f, 0.72f, 0.66f),
+                    new Color(0.38f, 0.54f, 0.62f),
+                    new Color(0.3f, 0.42f, 0.28f),
+                    new Color(0.9f, 0.62f, 0.2f),
+                    new Color(0.68f, 0.36f, 0.08f),
+                    new Color(0.42f, 0.25f, 0.14f),
+                    new Color(0.12f, 0.18f, 0.14f),
+                    new Color(0.7f, 0.64f, 0.5f),
+                    new Color(0.22f, 0.14f, 0.08f),
+                    new Color(0.44f, 0.34f, 0.24f),
+                    new Color(0.34f, 0.28f, 0.22f)),
                 MilkroomThemeController.EveningThemeId => new MilkroomThemePalette(
                     new Color(0.72f, 0.48f, 0.32f),
                     new Color(1f, 0.57f, 0.24f),

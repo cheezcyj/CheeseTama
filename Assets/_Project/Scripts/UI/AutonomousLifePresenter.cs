@@ -435,7 +435,8 @@ namespace CheeseTama.UI
             var horizontalDelta = tweenTo - tweenFrom;
             horizontalDelta.y = 0f;
             var distance = horizontalDelta.magnitude;
-            if (distance * distance <= PositionEpsilonSquared)
+            if (AccessibilityRuntime.ReducedMotion
+                || distance * distance <= PositionEpsilonSquared)
             {
                 characterRoot.position = tweenTo;
                 completeImmediately?.Invoke();

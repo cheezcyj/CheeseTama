@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using CheeseTama.Collections;
 using CheeseTama.Data;
+using CheeseTama.Environment;
 using CheeseTama.Gameplay;
+using CheeseTama.Gameplay.Autonomy;
 using CheeseTama.Gameplay.Care;
 using CheeseTama.Gameplay.Decorations;
 using CheeseTama.Gameplay.Growth;
@@ -16,17 +19,44 @@ using CheeseTama.Gameplay.Journey;
 using CheeseTama.Gameplay.Deliveries;
 using CheeseTama.Gameplay.Memories;
 using CheeseTama.Gameplay.HiddenRecipes;
+using CheeseTama.Gameplay.Guidance;
+using CheeseTama.Gameplay.Records;
+using CheeseTama.Gameplay.Reset;
 using CheeseTama.Collections.HiddenCareers;
 using CheeseTama.Gameplay.Bond;
 using CheeseTama.Gameplay.Stats;
 using CheeseTama.Gameplay.Sleep;
+using CheeseTama.Gameplay.Weekly;
 using CheeseTama.Save;
+using CheeseTama.Platform;
 using CheeseTama.Utilities;
 using CheeseTama.UI;
 using UnityEngine;
 
 namespace CheeseTama.Core
 {
+    public sealed class CloudSaveApplyResult
+    {
+        private CloudSaveApplyResult(bool succeeded, string message)
+        {
+            Succeeded = succeeded;
+            Message = message ?? string.Empty;
+        }
+
+        public bool Succeeded { get; }
+        public string Message { get; }
+
+        public static CloudSaveApplyResult Success(string message)
+        {
+            return new CloudSaveApplyResult(true, message);
+        }
+
+        public static CloudSaveApplyResult Failure(string message)
+        {
+            return new CloudSaveApplyResult(false, message);
+        }
+    }
+
     public sealed class GameManager : MonoBehaviour
     {
         private const string DailyRoutineCompleteEventId = "daily_routine_complete";
@@ -42,6 +72,8 @@ namespace CheeseTama.Core
         private const int CareEventGlobalCooldownMinutes = 5;
         private const int CareEventPerIdCooldownMinutes = 30;
 
+        public const string CloudSaveApplyConfirmationPhrase = "USE CLOUD";
+
         public const int DailyRoutineMilkCoinReward = 20;
         public const int DailyRoutineMilkDropReward = 5;
         public const int DailyRoutineCollectionFragmentReward = 1;
@@ -56,6 +88,8 @@ namespace CheeseTama.Core
         private readonly MilkGrowthSystem milkGrowthSystem = new MilkGrowthSystem();
         private readonly EvolutionSystem evolutionSystem = new EvolutionSystem();
         private readonly RandomEventSystem randomEventSystem = new RandomEventSystem();
+        private readonly SeasonalCareEventSystem seasonalCareEventSystem =
+            new SeasonalCareEventSystem();
         private readonly CareEventChoiceSystem careEventChoiceSystem = new CareEventChoiceSystem();
         private readonly MemoryJournalSystem memoryJournalSystem = new MemoryJournalSystem();
         private readonly FantasyPowderHiddenRecipeSystem fantasyPowderSystem =
@@ -68,8 +102,24 @@ namespace CheeseTama.Core
             new HiddenCareerCardSystem();
         private readonly BondReactionSystem bondReactionSystem = new BondReactionSystem();
         private readonly NpcVisitSystem npcVisitSystem = new NpcVisitSystem();
+        private readonly NpcRelationshipQuestSystem npcRelationshipQuestSystem =
+            new NpcRelationshipQuestSystem();
+        private readonly NpcRelationshipEpisodeSystem npcRelationshipEpisodeSystem =
+            new NpcRelationshipEpisodeSystem();
         private readonly MilkBlendingSystem milkBlendingSystem = new MilkBlendingSystem();
+        private readonly MilkroomThemeUnlockSystem milkroomThemeUnlockSystem =
+            new MilkroomThemeUnlockSystem();
         private readonly SleepScheduleSystem sleepScheduleSystem = new SleepScheduleSystem();
+        private readonly LateLevelGrowthSystem lateLevelGrowthSystem = new LateLevelGrowthSystem();
+        private readonly WeeklyCareJourneySystem weeklyCareJourneySystem =
+            new WeeklyCareJourneySystem();
+        private readonly DecorationWorkshopSystem decorationWorkshopSystem =
+            new DecorationWorkshopSystem();
+        private readonly CollectionSetAlbumSystem collectionSetAlbumSystem =
+            new CollectionSetAlbumSystem();
+        private readonly LifeRecordsSystem lifeRecordsSystem = new LifeRecordsSystem();
+        private readonly CloudSaveSyncCoordinator cloudSaveSyncCoordinator =
+            new CloudSaveSyncCoordinator();
         private bool presenceSessionStarted;
         private bool applicationPaused;
         private bool applicationHasFocus = true;
@@ -80,6 +130,7 @@ namespace CheeseTama.Core
         private CareEventResult pendingCareEvent;
         private EvolutionMilestoneData pendingEvolutionMilestone;
         private MilkGrowthMilestoneRewardResult lastMilkGrowthMilestoneReward = MilkGrowthMilestoneRewardResult.None;
+        private CloudApplyGuard pendingCloudApplyGuard;
 
         public static GameManager Instance { get; private set; }
         public event Action SaveDataReplaced;
@@ -99,8 +150,10 @@ namespace CheeseTama.Core
         public event Action StarLegacyChanged;
         public event Action HiddenCareerCardChanged;
         public event Action<NpcVisitOffer> NpcVisitAvailable;
+        public event Action<NpcRelationshipEpisodeChoiceResult> NpcRelationshipEpisodeCompleted;
         public event Action<MilkBlendResult> MilkBlendingChanged;
         public event Action SleepScheduleChanged;
+        public event Action JourneyHubChanged;
 
         public DataRegistry DataRegistry => dataRegistry;
         public CheeseTamaSaveData CurrentSave { get; private set; }
@@ -119,6 +172,11 @@ namespace CheeseTama.Core
             && !CurrentSave.starRoute.unlockAcknowledged;
         public SaveRecoveryReport LastSaveRecoveryReport => saveManager?.LastRecoveryReport
             ?? SaveRecoveryReport.NoRecovery;
+
+        public LifeRecordsSnapshot GetLifeRecordsSnapshot()
+        {
+            return lifeRecordsSystem.BuildSnapshot(CurrentSave);
+        }
 
         public bool TryGetPendingNpcVisit(out NpcVisitOffer offer)
         {
@@ -218,9 +276,490 @@ namespace CheeseTama.Core
                 MemoryJournalChanged?.Invoke();
             }
 
+            TryActivateRelationshipQuestForVisit(result);
             RefreshDerivedCollectionRecords();
             SaveGame();
+            JourneyHubChanged?.Invoke();
             return true;
+        }
+
+        public NpcRelationshipSnapshot GetNpcRelationshipSnapshot(string npcId)
+        {
+            if (CurrentSave == null)
+            {
+                return default;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            return npcRelationshipQuestSystem.ObserveRelationship(
+                CurrentSave.npcVisits,
+                npcId);
+        }
+
+        public NpcQuestWindowSnapshot GetActiveNpcRelationshipQuest()
+        {
+            return GetActiveNpcRelationshipQuest(DateTimeOffset.Now);
+        }
+
+        public NpcQuestWindowSnapshot GetActiveNpcRelationshipQuest(DateTimeOffset now)
+        {
+            if (CurrentSave == null)
+            {
+                return default;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var wasTerminallyExpired = CurrentSave.npcRelationshipQuests.activeQuest
+                ?.terminalExpired ?? false;
+            var snapshot = npcRelationshipQuestSystem.ObserveActive(
+                CurrentSave.npcRelationshipQuests,
+                now);
+            if (!wasTerminallyExpired
+                && (CurrentSave.npcRelationshipQuests.activeQuest?.terminalExpired ?? false))
+            {
+                SaveGame();
+            }
+
+            return snapshot;
+        }
+
+        public NpcQuestDeliveryResult TryDeliverNpcRelationshipQuest(
+            string claimReceiptId)
+        {
+            return TryDeliverNpcRelationshipQuest(DateTimeOffset.Now, claimReceiptId);
+        }
+
+        public NpcQuestDeliveryResult TryDeliverNpcRelationshipQuest(
+            DateTimeOffset now,
+            string claimReceiptId)
+        {
+            if (CurrentSave == null)
+            {
+                return new NpcQuestDeliveryResult(
+                    NpcQuestDeliveryStatus.MissingState,
+                    null,
+                    claimReceiptId,
+                    false,
+                    0,
+                    0,
+                    NpcRelationshipTier.NewFace,
+                    NpcRelationshipTier.NewFace);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var wasTerminallyExpired = CurrentSave.npcRelationshipQuests.activeQuest
+                ?.terminalExpired ?? false;
+            var result = npcRelationshipQuestSystem.TryDeliver(
+                CurrentSave.npcRelationshipQuests,
+                CurrentSave.npcVisits,
+                CurrentSave.economy,
+                CurrentSave.snackInventory,
+                now,
+                claimReceiptId);
+            if (!result.Applied)
+            {
+                if (!wasTerminallyExpired
+                    && (CurrentSave.npcRelationshipQuests.activeQuest?.terminalExpired ?? false))
+                {
+                    SaveGame();
+                    JourneyHubChanged?.Invoke();
+                }
+
+                return result;
+            }
+
+            AddUniqueRecord(
+                CurrentSave.collections.events,
+                $"npc_quest_{result.Quest?.Id ?? "completed"}");
+            RefreshDerivedCollectionRecords();
+            SaveGame();
+            JourneyHubChanged?.Invoke();
+            return result;
+        }
+
+        public NpcRelationshipEpisodeSnapshot GetNpcRelationshipEpisodeSnapshot(string npcId)
+        {
+            if (CurrentSave == null)
+            {
+                return npcRelationshipEpisodeSystem.BuildNextEpisodeSnapshot(
+                    null,
+                    null,
+                    npcId);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            return npcRelationshipEpisodeSystem.BuildNextEpisodeSnapshot(
+                CurrentSave.npcRelationshipEpisodes,
+                CurrentSave.npcVisits,
+                npcId);
+        }
+
+        public IReadOnlyList<NpcRelationshipEpisodeSnapshot> GetNpcRelationshipEpisodeSnapshots()
+        {
+            if (CurrentSave == null)
+            {
+                return npcRelationshipEpisodeSystem.BuildNextEpisodeSnapshots(null, null);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            return npcRelationshipEpisodeSystem.BuildNextEpisodeSnapshots(
+                CurrentSave.npcRelationshipEpisodes,
+                CurrentSave.npcVisits);
+        }
+
+        public NpcRelationshipEpisodeChoiceResult TryApplyNpcRelationshipEpisodeChoice(
+            string episodeId,
+            string choiceId,
+            string receiptId)
+        {
+            return TryApplyNpcRelationshipEpisodeChoice(
+                DateTimeOffset.Now,
+                episodeId,
+                choiceId,
+                receiptId);
+        }
+
+        public NpcRelationshipEpisodeChoiceResult TryApplyNpcRelationshipEpisodeChoice(
+            DateTimeOffset completedAt,
+            string episodeId,
+            string choiceId,
+            string receiptId)
+        {
+            if (CurrentSave == null)
+            {
+                return new NpcRelationshipEpisodeChoiceResult(
+                    NpcRelationshipEpisodeChoiceStatus.MissingState,
+                    null,
+                    null,
+                    receiptId,
+                    0,
+                    0,
+                    default);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var result = npcRelationshipEpisodeSystem.TryApplyChoice(
+                CurrentSave.npcRelationshipEpisodes,
+                CurrentSave.npcVisits,
+                CurrentTama,
+                episodeId,
+                choiceId,
+                receiptId,
+                completedAt);
+            if (!result.Applied)
+            {
+                return result;
+            }
+
+            var memoryRecorded = memoryJournalSystem.TryRecord(
+                CurrentSave.memoryJournal,
+                new MemoryJournalDraft(
+                    MemoryJournalKind.Story,
+                    result.MemorySourceId,
+                    result.ReceiptId,
+                    result.MemoryDetailId,
+                    completedAt,
+                    CurrentTama.name,
+                    CurrentTama.form,
+                    result.MemoryTitle,
+                    result.MemoryDetail,
+                    true),
+                out _);
+            AddUniqueRecord(
+                CurrentSave.collections.events,
+                $"npc_episode_{result.CompletionId}");
+            SaveGame();
+
+            if (memoryRecorded)
+            {
+                MemoryJournalChanged?.Invoke();
+            }
+
+            JourneyHubChanged?.Invoke();
+            NpcRelationshipEpisodeCompleted?.Invoke(result);
+            return result;
+        }
+
+        private void TryActivateRelationshipQuestForVisit(
+            NpcVisitResolutionResult visitResult)
+        {
+            if (CurrentSave == null || visitResult == null)
+            {
+                return;
+            }
+
+            var relationship = npcRelationshipQuestSystem.ObserveRelationship(
+                CurrentSave.npcVisits,
+                visitResult.NpcId);
+            var eligible = npcRelationshipQuestSystem.GetEligibleQuests(
+                visitResult.NpcId,
+                relationship.Affinity);
+            if (eligible == null || eligible.Count == 0)
+            {
+                return;
+            }
+
+            var startIndex = Math.Max(0, relationship.Visits - 1) % eligible.Count;
+            for (var offset = 0; offset < eligible.Count; offset += 1)
+            {
+                var quest = eligible[(startIndex + offset) % eligible.Count];
+                var offerId = $"npc_quest_offer_{visitResult.OccurrenceId}_{quest.Id}";
+                var activated = npcRelationshipQuestSystem.TryActivate(
+                    CurrentSave.npcRelationshipQuests,
+                    CurrentSave.npcVisits,
+                    visitResult.NpcId,
+                    quest.Id,
+                    offerId,
+                    DateTimeOffset.Now);
+                if (activated.Applied
+                    || activated.Status == NpcQuestActivationStatus.AlreadyActive)
+                {
+                    return;
+                }
+            }
+        }
+
+        public NextActionGoalBoardSnapshot GetNextActionGoalBoardSnapshot()
+        {
+            if (CurrentSave == null || CurrentTama == null)
+            {
+                return NextActionGoalBoardSystem.BuildLateLevel(0, 0, 0, 0, 0);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var gate = lateLevelGrowthSystem.EvaluateGate(
+                CurrentTama,
+                CurrentSave.milkGrowth);
+            return NextActionGoalBoardSystem.BuildLateLevel(
+                CurrentTama.level,
+                CurrentSave.lateLevelGrowth?.progressUnits ?? 0,
+                CurrentTama.stats?.affection ?? 0,
+                gate.QualifyingMilkTypeCount,
+                gate.StableStatusCount);
+        }
+
+        public RandomEventJournalSnapshot GetRandomEventJournalSnapshot()
+        {
+            return GetRandomEventJournalSnapshot(DateTimeOffset.Now);
+        }
+
+        public RandomEventJournalSnapshot GetRandomEventJournalSnapshot(DateTimeOffset now)
+        {
+            return RandomEventJournalSystem.Build(CurrentSave?.randomEvents, now);
+        }
+
+        public AutonomousLifeDiscoveryCollectionSnapshot GetAutonomousLifeDiscoverySnapshot()
+        {
+            return AutonomousLifeDiscoveryCatalog.CreateSnapshot(CurrentSave?.autonomousLife);
+        }
+
+        public WeeklyCareJourneySnapshot GetWeeklyCareJourneySnapshot()
+        {
+            return GetWeeklyCareJourneySnapshot(DateTimeOffset.Now);
+        }
+
+        public WeeklyCareJourneySnapshot GetWeeklyCareJourneySnapshot(DateTimeOffset now)
+        {
+            if (CurrentSave == null)
+            {
+                return weeklyCareJourneySystem.BuildSnapshot(null, now);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var week = weeklyCareJourneySystem.ReconcileWeek(
+                CurrentSave.weeklyCareJourney,
+                now);
+            if (week.StateChanged)
+            {
+                SaveGame();
+                JourneyHubChanged?.Invoke();
+            }
+
+            return weeklyCareJourneySystem.BuildSnapshot(
+                CurrentSave.weeklyCareJourney,
+                now);
+        }
+
+        public WeeklyCareClaimResult TryClaimWeeklyCareJourneyReward(
+            string claimReceiptId)
+        {
+            return TryClaimWeeklyCareJourneyReward(DateTimeOffset.Now, claimReceiptId);
+        }
+
+        public WeeklyCareClaimResult TryClaimWeeklyCareJourneyReward(
+            DateTimeOffset now,
+            string claimReceiptId)
+        {
+            if (CurrentSave == null)
+            {
+                return new WeeklyCareClaimResult(
+                    WeeklyCareClaimStatus.MissingState,
+                    WeeklyCareJourneySystem.GetWeekKey(now),
+                    claimReceiptId,
+                    default);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var result = weeklyCareJourneySystem.TryClaimReward(
+                CurrentSave.weeklyCareJourney,
+                CurrentSave.economy,
+                now,
+                claimReceiptId);
+            if (result.Applied)
+            {
+                AddUniqueRecord(
+                    CurrentSave.collections.events,
+                    $"weekly_care_{result.WeekKey}");
+                RefreshDerivedCollectionRecords();
+                SaveGame();
+                JourneyHubChanged?.Invoke();
+            }
+
+            return result;
+        }
+
+        public DecorationWorkshopQuote GetDecorationWorkshopQuote(string variantId)
+        {
+            var wallet = GetDecorationWorkshopWalletSnapshot();
+            return decorationWorkshopSystem.BuildQuote(
+                CurrentSave?.decorationWorkshop,
+                wallet,
+                variantId);
+        }
+
+        public DecorationWorkshopCraftResult TryCraftDecorationWorkshopVariant(
+            string variantId,
+            string receiptKey)
+        {
+            var wallet = GetDecorationWorkshopWalletSnapshot();
+            var result = decorationWorkshopSystem.TryCraft(
+                CurrentSave?.decorationWorkshop,
+                wallet,
+                variantId,
+                receiptKey);
+            if (!result.Applied || CurrentSave?.economy == null)
+            {
+                return result;
+            }
+
+            CurrentSave.economy.milkCoins = result.WalletAfter.Coins;
+            CurrentSave.economy.milkDrops = result.WalletAfter.MilkDrops;
+            CurrentSave.economy.collectionFragments = result.WalletAfter.CollectionFragments;
+            SaveGame();
+            DecorationChanged?.Invoke();
+            JourneyHubChanged?.Invoke();
+            return result;
+        }
+
+        public DecorationWorkshopSelectionResult TrySelectDecorationWorkshopVariant(
+            DecorationSlot slot,
+            string variantId)
+        {
+            var result = decorationWorkshopSystem.TrySelect(
+                CurrentSave?.decorationWorkshop,
+                slot,
+                variantId);
+            if (!result.Changed)
+            {
+                return result;
+            }
+
+            SaveGame();
+            DecorationChanged?.Invoke();
+            JourneyHubChanged?.Invoke();
+            return result;
+        }
+
+        public DecorationWorkshopRenderSnapshot GetDecorationWorkshopRenderSnapshot()
+        {
+            return decorationWorkshopSystem.BuildRenderSnapshot(
+                CurrentSave?.decorationWorkshop);
+        }
+
+        public CollectionSetAlbumPublicSnapshot GetCollectionSetAlbumSnapshot()
+        {
+            if (CurrentSave == null)
+            {
+                return collectionSetAlbumSystem.BuildPublicProgressSnapshot(null, null);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            if (collectionSetAlbumSystem.RecalculateProgress(
+                    CurrentSave.collectionSetAlbum,
+                    CurrentSave.collections) > 0)
+            {
+                SaveGame();
+                JourneyHubChanged?.Invoke();
+            }
+
+            return collectionSetAlbumSystem.BuildPublicProgressSnapshot(
+                CurrentSave.collectionSetAlbum,
+                CurrentSave.collections);
+        }
+
+        public CollectionSetAlbumClaimResult TryClaimCollectionSetAlbumReward(
+            string setId,
+            string receiptKey)
+        {
+            if (CurrentSave == null)
+            {
+                return new CollectionSetAlbumClaimResult(
+                    CollectionSetAlbumClaimStatus.MissingState,
+                    setId,
+                    receiptKey,
+                    default);
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var snapshot = collectionSetAlbumSystem.BuildPublicProgressSnapshot(
+                CurrentSave.collectionSetAlbum,
+                CurrentSave.collections);
+            var progress = snapshot.Find(setId);
+            if (progress?.CanClaimReward == true
+                && !CanAddCollectionSetReward(CurrentSave.economy, progress.Reward))
+            {
+                return new CollectionSetAlbumClaimResult(
+                    CollectionSetAlbumClaimStatus.TrackingCapacityFull,
+                    setId,
+                    receiptKey,
+                    default);
+            }
+
+            var result = collectionSetAlbumSystem.TryClaimReward(
+                CurrentSave.collectionSetAlbum,
+                CurrentSave.collections,
+                setId,
+                receiptKey);
+            if (!result.Applied)
+            {
+                return result;
+            }
+
+            CurrentSave.economy.milkCoins += result.Reward.Coins;
+            CurrentSave.economy.milkDrops += result.Reward.MilkDrops;
+            CurrentSave.economy.collectionFragments += result.Reward.CollectionFragments;
+            SaveGame();
+            JourneyHubChanged?.Invoke();
+            return result;
+        }
+
+        private DecorationWorkshopWalletSnapshot GetDecorationWorkshopWalletSnapshot()
+        {
+            var economy = CurrentSave?.economy;
+            return new DecorationWorkshopWalletSnapshot(
+                economy?.milkCoins ?? 0,
+                economy?.milkDrops ?? 0,
+                economy?.collectionFragments ?? 0);
+        }
+
+        private static bool CanAddCollectionSetReward(
+            EconomySaveData economy,
+            CollectionSetAlbumReward reward)
+        {
+            return economy != null
+                && (long)economy.milkCoins + reward.Coins <= int.MaxValue
+                && (long)economy.milkDrops + reward.MilkDrops <= int.MaxValue
+                && (long)economy.collectionFragments + reward.CollectionFragments <= int.MaxValue;
         }
 
         public MilkBlendingPanelSnapshot GetMilkBlendingSnapshot()
@@ -334,6 +873,21 @@ namespace CheeseTama.Core
             string receiptKey,
             DateTimeOffset blendedAt)
         {
+            return TryBlendMilk(
+                milkId,
+                ingredientId,
+                receiptKey,
+                blendedAt,
+                UnityEngine.Random.value);
+        }
+
+        public MilkBlendResult TryBlendMilk(
+            string milkId,
+            string ingredientId,
+            string receiptKey,
+            DateTimeOffset blendedAt,
+            double specialResultRoll)
+        {
             var result = milkBlendingSystem.TryBlend(
                 CurrentSave?.milkBlending,
                 CurrentTama,
@@ -343,7 +897,8 @@ namespace CheeseTama.Core
                 ingredientId,
                 IsMilkUnlocked,
                 receiptKey,
-                blendedAt);
+                blendedAt,
+                specialResultRoll);
             if (result == null || !result.applied || CurrentSave == null)
             {
                 return result;
@@ -352,6 +907,35 @@ namespace CheeseTama.Core
             RegisterCareAction("blend");
             RegisterDailyCareAction("blend");
             AddUniqueRecord(CurrentSave.collections.events, $"milk_blend_{result.resultSnackId}");
+            var masteryRecordIds = result.newMasteryResearchRecordIds;
+            for (var index = 0; index < masteryRecordIds.Count; index += 1)
+            {
+                var researchRecord = MilkBlendingCatalog.FindMasteryResearchRecord(
+                    masteryRecordIds[index]);
+                if (researchRecord == null)
+                {
+                    continue;
+                }
+
+                AddUniqueRecord(CurrentSave.collections.events, researchRecord.recordId);
+                if (memoryJournalSystem.TryRecord(
+                        CurrentSave.memoryJournal,
+                        new MemoryJournalDraft(
+                            MemoryJournalKind.Story,
+                            researchRecord.recordId,
+                            result.receiptKey,
+                            result.ingredientId,
+                            blendedAt,
+                            CurrentTama.name,
+                            CurrentTama.form,
+                            researchRecord.title,
+                            researchRecord.detail),
+                        out _))
+                {
+                    MemoryJournalChanged?.Invoke();
+                }
+            }
+
             if (result.firstDiscovery
                 && memoryJournalSystem.TryRecord(
                     CurrentSave.memoryJournal,
@@ -529,6 +1113,11 @@ namespace CheeseTama.Core
             return hiddenCareerCardSystem.GetVisibleUnlockedCards(CurrentSave?.collections);
         }
 
+        public HiddenCareerBenefitSet GetHiddenCareerBenefits()
+        {
+            return hiddenCareerCardSystem.GetBenefitSet(CurrentSave?.collections);
+        }
+
         public BondProfileSnapshot GetBondProfile()
         {
             return bondReactionSystem.Observe(CurrentSave);
@@ -605,9 +1194,11 @@ namespace CheeseTama.Core
             }
 
             CurrentSave.EnsureRuntimeDefaults();
+            var careerBenefits = GetHiddenCareerBenefits();
             return fantasyPowderSystem.BuildSnapshot(
                 CurrentSave.unlocks,
-                CurrentSave.fantasyPowder);
+                CurrentSave.fantasyPowder,
+                careerBenefits.RecipeHintProgress);
         }
 
         public FantasyPowderAttemptResult TryAttemptFantasyPowderRecipe(string recipeId)
@@ -625,6 +1216,7 @@ namespace CheeseTama.Core
             }
 
             CurrentSave.EnsureRuntimeDefaults();
+            var careerBenefits = GetHiddenCareerBenefits();
             var result = fantasyPowderSystem.TryAttempt(
                 CurrentSave.unlocks,
                 CurrentSave.fantasyPowder,
@@ -632,7 +1224,8 @@ namespace CheeseTama.Core
                 CurrentSave.economy,
                 recipeId,
                 Guid.NewGuid().ToString("N"),
-                UnityEngine.Random.value);
+                UnityEngine.Random.value,
+                careerBenefits.RareByproductWeightPercent);
             if (!result.applied)
             {
                 return result;
@@ -913,6 +1506,47 @@ namespace CheeseTama.Core
             return result;
         }
 
+        public MilkroomThemeUnlockResult TryUnlockMilkroomTheme(string themeId)
+        {
+            var result = milkroomThemeUnlockSystem.TryUnlock(CurrentSave, themeId);
+            if (!result.Succeeded || CurrentSave == null)
+            {
+                return result;
+            }
+
+            CurrentSave.milkroomThemeId = result.ThemeId;
+            SaveGame();
+            DecorationChanged?.Invoke();
+            return result;
+        }
+
+        public bool TrySelectMilkroomTheme(string themeId)
+        {
+            if (CurrentSave == null)
+            {
+                return false;
+            }
+
+            CurrentSave.EnsureRuntimeDefaults();
+            var themeDefinition = MilkroomThemeCatalog.Find(themeId);
+            if (themeDefinition == null)
+            {
+                return false;
+            }
+
+            var normalizedThemeId = themeDefinition.Id;
+            if (!milkroomThemeUnlockSystem.IsVisible(CurrentSave, normalizedThemeId)
+                || !milkroomThemeUnlockSystem.IsOwned(CurrentSave, normalizedThemeId))
+            {
+                return false;
+            }
+
+            CurrentSave.milkroomThemeId = normalizedThemeId;
+            SaveGame();
+            DecorationChanged?.Invoke();
+            return true;
+        }
+
         private void ApplyDecorationSnapshot(DecorationShopSnapshot snapshot)
         {
             if (CurrentSave == null || snapshot == null)
@@ -989,6 +1623,7 @@ namespace CheeseTama.Core
             pendingEvolutionMilestone = null;
             lastMilkGrowthMilestoneReward = MilkGrowthMilestoneRewardResult.None;
             CurrentSave = saveManager.LoadOrCreate();
+            CurrentSave?.EnsureRuntimeDefaults();
             var durableStarRouteChanged = ReconcileDurableStarRouteUnlock();
             RestorePendingCareEventFromSave();
             var setupOutcomeChanged = ApplyNewGameSetupOutcomeIfNeeded();
@@ -996,6 +1631,24 @@ namespace CheeseTama.Core
             var now = DateTimeOffset.Now;
             var dailyCareChanged = EnsureDailyCareDate();
             var sessionDateChanged = EnsureMilkroomSessionDate();
+            var journeyStateChanged = npcRelationshipQuestSystem.NormalizeState(
+                    CurrentSave?.npcRelationshipQuests)
+                | npcRelationshipQuestSystem.NormalizeRelationships(CurrentSave?.npcVisits)
+                | decorationWorkshopSystem.NormalizeState(CurrentSave?.decorationWorkshop);
+            var activeQuestWasExpired = CurrentSave?.npcRelationshipQuests?.activeQuest
+                ?.terminalExpired ?? false;
+            npcRelationshipQuestSystem.ObserveActive(
+                CurrentSave?.npcRelationshipQuests,
+                now);
+            journeyStateChanged |= !activeQuestWasExpired
+                && (CurrentSave?.npcRelationshipQuests?.activeQuest?.terminalExpired ?? false);
+            journeyStateChanged |= weeklyCareJourneySystem.ReconcileWeek(
+                    CurrentSave?.weeklyCareJourney,
+                    now)
+                .StateChanged;
+            journeyStateChanged |= collectionSetAlbumSystem.RecalculateProgress(
+                    CurrentSave?.collectionSetAlbum,
+                    CurrentSave?.collections) > 0;
             presenceSessionStarted = false;
             LastTimeProgression = ApplyOfflineProgressAndPrepareSummary(now);
             if (LastTimeProgression.applied
@@ -1003,7 +1656,8 @@ namespace CheeseTama.Core
                 || sessionDateChanged
                 || setupOutcomeChanged
                 || fantasyStarterChanged
-                || durableStarRouteChanged)
+                || durableStarRouteChanged
+                || journeyStateChanged)
             {
                 saveManager.Save(CurrentSave);
             }
@@ -1046,13 +1700,7 @@ namespace CheeseTama.Core
 
         private void ResetGameInternal(bool notifySaveDataReplaced)
         {
-            pendingReturnSummary = null;
-            pendingGrowthMilestone = null;
-            pendingCareEvent = CareEventResult.None();
-            pendingEvolutionMilestone = null;
-            applicationPaused = false;
-            applicationHasFocus = true;
-            applicationSuspended = false;
+            ResetTransientRuntimeState();
             if (saveManager == null)
             {
                 CurrentSave = SaveManager.CreateDefaultSave();
@@ -1072,6 +1720,21 @@ namespace CheeseTama.Core
             {
                 SaveDataReplaced?.Invoke();
             }
+        }
+
+        private void ResetTransientRuntimeState()
+        {
+            pendingReturnSummary = null;
+            pendingGrowthMilestone = null;
+            pendingCareEvent = CareEventResult.None();
+            pendingEvolutionMilestone = null;
+            lastMilkGrowthMilestoneReward = MilkGrowthMilestoneRewardResult.None;
+            applicationPaused = false;
+            applicationHasFocus = true;
+            applicationSuspended = false;
+            LastTimeProgression = TimeProgressionResult.None();
+            presenceSessionStarted = false;
+            pendingCloudApplyGuard = null;
         }
 
         public bool TryGetPendingReturnSummary(out ReturnSummaryData summary)
@@ -1159,7 +1822,10 @@ namespace CheeseTama.Core
             var existingReceipt = FindCareEventChoiceReceipt(occurrenceId);
             if (existingReceipt != null)
             {
-                result = BuildChoiceResultFromReceipt(existingReceipt, CareEventChoiceResolutionStatus.AlreadyApplied);
+                result = BuildChoiceResultFromReceipt(
+                    existingReceipt,
+                    CareEventChoiceResolutionStatus.AlreadyApplied,
+                    GetHiddenCareerBenefits().NegativeEffectMitigationPercent);
                 pendingCareEvent = CareEventResult.None();
                 CurrentSave.randomEvents.pendingEvent.Clear();
                 SaveGame();
@@ -1170,7 +1836,8 @@ namespace CheeseTama.Core
                 pendingCareEvent,
                 choiceId,
                 CurrentTama,
-                CurrentSave.economy);
+                CurrentSave.economy,
+                GetHiddenCareerBenefits().NegativeEffectMitigationPercent);
             if (!result.applied)
             {
                 return false;
@@ -1209,22 +1876,327 @@ namespace CheeseTama.Core
 
         public void ResetProgress()
         {
-            GameSettingsSaveData preservedSettings = null;
-            if (CurrentSave != null)
+            TryResetProgress(
+                ProgressResetMode.CareProgressOnly,
+                ProgressResetPolicy.CareProgressConfirmationPhrase);
+        }
+
+        public ProgressResetPreview GetProgressResetPreview(ProgressResetMode mode)
+        {
+            return ProgressResetPolicy.BuildPreview(mode);
+        }
+
+        public ProgressResetResult TryResetProgress(
+            ProgressResetMode mode,
+            string confirmation)
+        {
+            var preview = GetProgressResetPreview(mode);
+            if (!preview.IsSupported)
             {
-                CurrentSave.EnsureRuntimeDefaults();
-                preservedSettings = CurrentSave.settings;
+                return ProgressResetResult.CreateFailure(
+                    ProgressResetResultStatus.UnsupportedMode,
+                    preview,
+                    "지원하지 않는 초기화 방식입니다.");
             }
 
-            ResetGameInternal(false);
-
-            if (CurrentSave != null && preservedSettings != null)
+            if (CurrentSave == null || saveManager == null)
             {
-                CurrentSave.settings = preservedSettings;
-                SaveGame();
+                return ProgressResetResult.CreateFailure(
+                    ProgressResetResultStatus.MissingState,
+                    preview,
+                    "초기화할 로컬 저장 데이터를 불러오지 못했습니다.");
             }
 
+            if (!ProgressResetPolicy.MatchesConfirmation(preview, confirmation))
+            {
+                return ProgressResetResult.CreateFailure(
+                    ProgressResetResultStatus.ConfirmationMismatch,
+                    preview,
+                    "확인 문구가 일치하지 않아 아무 데이터도 변경하지 않았습니다.");
+            }
+
+            CheeseTamaSaveData replacement;
+            try
+            {
+                replacement = mode == ProgressResetMode.CareProgressOnly
+                    ? BuildCareProgressResetSave(CurrentSave)
+                    : SaveManager.CreateDefaultSave();
+            }
+            catch (ArgumentException)
+            {
+                replacement = null;
+            }
+
+            if (replacement == null)
+            {
+                return ProgressResetResult.CreateFailure(
+                    ProgressResetResultStatus.MissingState,
+                    preview,
+                    "현재 저장 데이터를 안전하게 복제하지 못해 초기화를 중단했습니다.");
+            }
+
+            try
+            {
+                // Persist the independent replacement before swapping the live object.
+                // A failed write therefore cannot partially mutate CurrentSave.
+                saveManager.Save(replacement);
+            }
+            catch (IOException)
+            {
+                return CreateResetPersistenceFailure(preview);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return CreateResetPersistenceFailure(preview);
+            }
+            catch (ArgumentException)
+            {
+                return CreateResetPersistenceFailure(preview);
+            }
+            catch (NotSupportedException)
+            {
+                return CreateResetPersistenceFailure(preview);
+            }
+
+            var recoveryArtifactsPurged = mode != ProgressResetMode.FullLocalData
+                || saveManager.TryPurgeRecoveryArtifacts();
+            CurrentSave = replacement;
+            ResetTransientRuntimeState();
             SaveDataReplaced?.Invoke();
+            return ProgressResetResult.CreateApplied(
+                preview,
+                true,
+                mode == ProgressResetMode.CareProgressOnly
+                    ? "현재 치즈타마의 육성 진행만 새로 시작했습니다."
+                    : recoveryArtifactsPurged
+                        ? "로컬 저장 데이터와 이전 복구본을 기본 상태로 초기화했습니다."
+                        : "로컬 저장은 초기화했지만 이전 복구 파일 일부를 삭제하지 못했습니다.");
+        }
+
+        public CloudSyncResult SynchronizeCloudSave(ICloudSaveProvider provider = null)
+        {
+            if (CurrentSave == null || saveManager == null)
+            {
+                pendingCloudApplyGuard = null;
+                return new CloudSyncResult(
+                    CloudSyncAction.InvalidLocal,
+                    null,
+                    null,
+                    "Local save is unavailable; cloud data was not touched.");
+            }
+
+            try
+            {
+                // Persist the comparison snapshot without changing its logical recency.
+                // Download/conflict results remain advisory until explicit confirmation.
+                saveManager.SaveWithoutAdvancingTimestamp(CurrentSave);
+            }
+            catch (IOException)
+            {
+                pendingCloudApplyGuard = null;
+                return CreateCloudLocalPersistenceFailure();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                pendingCloudApplyGuard = null;
+                return CreateCloudLocalPersistenceFailure();
+            }
+            catch (ArgumentException)
+            {
+                pendingCloudApplyGuard = null;
+                return CreateCloudLocalPersistenceFailure();
+            }
+            catch (NotSupportedException)
+            {
+                pendingCloudApplyGuard = null;
+                return CreateCloudLocalPersistenceFailure();
+            }
+
+            var local = BuildCurrentCloudPayload();
+            var result = cloudSaveSyncCoordinator.Synchronize(
+                local,
+                provider ?? SteamCloudProviderFactory.CreateDefault());
+            pendingCloudApplyGuard = result.Remote != null
+                && (result.Action == CloudSyncAction.DownloadedRemote
+                    || result.Action == CloudSyncAction.ConflictNeedsResolution)
+                ? new CloudApplyGuard(local, result.Remote, result.Action)
+                : null;
+            return result;
+        }
+
+        public CloudSaveApplyResult TryApplyCloudSave(
+            CloudSyncResult result,
+            string confirmation)
+        {
+            if (saveManager == null || CurrentSave == null)
+            {
+                return CloudSaveApplyResult.Failure(
+                    "로컬 저장을 불러오지 못해 클라우드 저장을 적용하지 않았습니다.");
+            }
+
+            if (result.Action != CloudSyncAction.DownloadedRemote
+                && result.Action != CloudSyncAction.ConflictNeedsResolution)
+            {
+                return CloudSaveApplyResult.Failure(
+                    "적용 가능한 클라우드 비교 결과가 아닙니다.");
+            }
+
+            if (!string.Equals(
+                    confirmation?.Trim(),
+                    CloudSaveApplyConfirmationPhrase,
+                    StringComparison.Ordinal))
+            {
+                return CloudSaveApplyResult.Failure(
+                    $"클라우드 저장을 쓰려면 {CloudSaveApplyConfirmationPhrase}를 정확히 입력하세요.");
+            }
+
+            if (result.Remote == null
+                || !result.Remote.IsValid()
+                || !string.Equals(
+                    result.Remote.slotId,
+                    CloudSaveSlotRules.PrimarySlotId,
+                    StringComparison.Ordinal))
+            {
+                return CloudSaveApplyResult.Failure(
+                    "클라우드 저장 데이터가 유효하지 않아 로컬 저장을 유지했습니다.");
+            }
+
+            var currentLocal = BuildCurrentCloudPayload();
+            if (pendingCloudApplyGuard == null
+                || !pendingCloudApplyGuard.Matches(
+                    currentLocal,
+                    result.Remote,
+                    result.Action))
+            {
+                pendingCloudApplyGuard = null;
+                return CloudSaveApplyResult.Failure(
+                    "동기화 이후 로컬 저장이 변경되었습니다. 다시 동기화한 뒤 선택하세요.");
+            }
+
+            if (!saveManager.TryReplaceFromCloudPayload(result.Remote, out _))
+            {
+                return CloudSaveApplyResult.Failure(
+                    "클라우드 저장을 안전하게 기록하지 못해 기존 로컬 저장을 유지했습니다.");
+            }
+
+            pendingCloudApplyGuard = null;
+            ResetTransientRuntimeState();
+            LoadOrCreateGame();
+            return CurrentSave != null
+                ? CloudSaveApplyResult.Success("선택한 클라우드 저장을 적용했습니다.")
+                : CloudSaveApplyResult.Failure(
+                    "클라우드 저장을 기록했지만 다시 불러오지 못했습니다.");
+        }
+
+        private CloudSavePayload BuildCurrentCloudPayload()
+        {
+            if (CurrentSave == null)
+            {
+                return null;
+            }
+
+            var modifiedAt = DateTimeOffset.TryParse(
+                CurrentTama?.lastSavedAtIso,
+                out var parsedModifiedAt)
+                ? parsedModifiedAt
+                : DateTimeOffset.UnixEpoch;
+            return CloudSavePayload.Create(
+                CloudSaveSlotRules.PrimarySlotId,
+                JsonUtility.ToJson(CurrentSave, true),
+                Math.Max(0L, modifiedAt.UtcDateTime.Ticks),
+                modifiedAt);
+        }
+
+        private static CheeseTamaSaveData BuildCareProgressResetSave(
+            CheeseTamaSaveData current)
+        {
+            if (current == null)
+            {
+                return null;
+            }
+
+            var replacement = JsonUtility.FromJson<CheeseTamaSaveData>(
+                JsonUtility.ToJson(current));
+            if (replacement == null)
+            {
+                return null;
+            }
+
+            replacement.EnsureRuntimeDefaults();
+            var defaults = SaveManager.CreateDefaultSave();
+
+            replacement.cheeseTama = defaults.cheeseTama;
+            replacement.milkGrowth = defaults.milkGrowth;
+            replacement.careHistory = defaults.careHistory;
+            replacement.growthMilestone = defaults.growthMilestone;
+            replacement.evolutionMilestone = defaults.evolutionMilestone;
+            replacement.lateLevelGrowth = defaults.lateLevelGrowth;
+
+            // Preserve durable histories and receipts while discarding only active work.
+            replacement.randomEvents.pendingEvent.Clear();
+            replacement.sleepSchedule.ClearActiveSession();
+            replacement.npcRelationshipQuests.activeQuest.Clear();
+            replacement.EnsureRuntimeDefaults();
+            return replacement;
+        }
+
+        private static ProgressResetResult CreateResetPersistenceFailure(
+            ProgressResetPreview preview)
+        {
+            return ProgressResetResult.CreateFailure(
+                ProgressResetResultStatus.PersistenceFailed,
+                preview,
+                "저장 파일을 안전하게 갱신하지 못해 초기화를 적용하지 않았습니다.");
+        }
+
+        private static CloudSyncResult CreateCloudLocalPersistenceFailure()
+        {
+            return new CloudSyncResult(
+                CloudSyncAction.InvalidLocal,
+                null,
+                null,
+                "Local save could not be persisted; cloud data was not touched.");
+        }
+
+        private sealed class CloudApplyGuard
+        {
+            private readonly string localHash;
+            private readonly long localRevision;
+            private readonly long localModifiedUtcTicks;
+            private readonly string remoteHash;
+            private readonly long remoteRevision;
+            private readonly long remoteModifiedUtcTicks;
+            private readonly CloudSyncAction action;
+
+            public CloudApplyGuard(
+                CloudSavePayload local,
+                CloudSavePayload remote,
+                CloudSyncAction action)
+            {
+                localHash = local?.contentHash ?? string.Empty;
+                localRevision = local?.revision ?? -1L;
+                localModifiedUtcTicks = local?.modifiedUtcTicks ?? -1L;
+                remoteHash = remote?.contentHash ?? string.Empty;
+                remoteRevision = remote?.revision ?? -1L;
+                remoteModifiedUtcTicks = remote?.modifiedUtcTicks ?? -1L;
+                this.action = action;
+            }
+
+            public bool Matches(
+                CloudSavePayload local,
+                CloudSavePayload remote,
+                CloudSyncAction requestedAction)
+            {
+                return local != null
+                    && remote != null
+                    && action == requestedAction
+                    && string.Equals(localHash, local.contentHash, StringComparison.OrdinalIgnoreCase)
+                    && localRevision == local.revision
+                    && localModifiedUtcTicks == local.modifiedUtcTicks
+                    && string.Equals(remoteHash, remote.contentHash, StringComparison.OrdinalIgnoreCase)
+                    && remoteRevision == remote.revision
+                    && remoteModifiedUtcTicks == remote.modifiedUtcTicks;
+            }
         }
 
         public void SaveGame()
@@ -1711,7 +2683,15 @@ namespace CheeseTama.Core
             var added = AddUniqueRecord(CurrentSave.collections.events, eventId);
             if (added)
             {
+                var now = DateTimeOffset.Now;
+                weeklyCareJourneySystem.RecordEvent(
+                    CurrentSave.weeklyCareJourney,
+                    WeeklyCareEventIds.Discovery,
+                    1,
+                    now,
+                    $"weekly_discovery_{CurrentSave.collections.events.Count}_{eventId}");
                 SaveGame();
+                JourneyHubChanged?.Invoke();
             }
 
             return added;
@@ -2043,10 +3023,11 @@ namespace CheeseTama.Core
 
             CurrentSave.EnsureRuntimeDefaults();
             var safeAmount = Math.Max(1, amount);
+            var now = DateTimeOffset.Now;
             var history = CurrentSave.careHistory;
             history.totalCareActions += 1;
             history.lastCareActionId = actionId;
-            history.lastCareActionAtIso = DateTimeOffset.Now.ToString("O");
+            history.lastCareActionAtIso = now.ToString("O");
 
             switch (actionId)
             {
@@ -2111,7 +3092,7 @@ namespace CheeseTama.Core
             if (FirstDayJourneySystem.TryRecordCareAction(
                     CurrentSave.firstDayJourney,
                     actionId,
-                    DateTimeOffset.Now))
+                    now))
             {
                 FirstDayJourneyChanged?.Invoke();
             }
@@ -2119,12 +3100,27 @@ namespace CheeseTama.Core
             if (memoryJournalSystem.TryRecordFirstDailyCare(
                     CurrentSave.memoryJournal,
                     actionId,
-                    DateTimeOffset.Now,
+                    now,
                     CurrentTama.name,
                     CurrentTama.form,
                     out _))
             {
                 MemoryJournalChanged?.Invoke();
+            }
+
+            var weeklyEventId = ResolveWeeklyCareEventId(actionId);
+            if (!string.IsNullOrEmpty(weeklyEventId))
+            {
+                var weeklyResult = weeklyCareJourneySystem.RecordEvent(
+                    CurrentSave.weeklyCareJourney,
+                    weeklyEventId,
+                    safeAmount,
+                    now,
+                    $"weekly_care_{history.totalCareActions}_{actionId}");
+                if (weeklyResult.Applied)
+                {
+                    JourneyHubChanged?.Invoke();
+                }
             }
 
 
@@ -2139,6 +3135,23 @@ namespace CheeseTama.Core
             }
 
             CareActionRegistered?.Invoke(actionId);
+        }
+
+        private static string ResolveWeeklyCareEventId(string actionId)
+        {
+            return actionId switch
+            {
+                "feed_milk" or "feed_warm_milk" or "feed_cold_milk"
+                    or "feed_nutty_milk" or "feed_rich_milk"
+                    or "feed_fermented_milk" or "feed_coffee_milk"
+                    or "feed_star_milk" or "feed_snack" => WeeklyCareEventIds.Feed,
+                "cook" => WeeklyCareEventIds.Cook,
+                "blend" => WeeklyCareEventIds.Blend,
+                "play" or "pet" => WeeklyCareEventIds.Play,
+                "clean" => WeeklyCareEventIds.Clean,
+                "rest" => WeeklyCareEventIds.Rest,
+                _ => string.Empty
+            };
         }
 
         public bool RegisterDailyCareAction(string actionId)
@@ -2323,6 +3336,21 @@ namespace CheeseTama.Core
                 changed |= AddUniqueRecord(CurrentSave.collections.events, "overfull");
             }
 
+            if (CurrentTama?.stats != null && CurrentTama.stats.bodyChillIntensity > 0)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.events, "body_chill");
+            }
+
+            if (CurrentTama?.stats != null && CurrentTama.stats.fermentedAftertasteIntensity > 0)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.events, "fermented_aftertaste");
+            }
+
+            if (CurrentTama?.stats != null && CurrentTama.stats.sleepRhythmDisruptionIntensity > 0)
+            {
+                changed |= AddUniqueRecord(CurrentSave.collections.events, "sleep_rhythm_disruption");
+            }
+
             if (CurrentSave.unlocks.starMilkUnlocked)
             {
                 changed |= AddUniqueRecord(CurrentSave.collections.milk, MilkCatalog.StarMilkId);
@@ -2436,7 +3464,20 @@ namespace CheeseTama.Core
                 return CareEventResult.None();
             }
 
-            var candidate = randomEventSystem.RollCareEvent(CurrentTama, force);
+            var randomEventWeightPercent = GetHiddenCareerBenefits().RandomEventWeightPercent;
+            var candidate = randomEventSystem.RollCareEvent(
+                CurrentTama,
+                force,
+                randomEventWeightPercent);
+            if (!candidate.occurred && !force)
+            {
+                candidate = seasonalCareEventSystem.Roll(
+                    now,
+                    UnityEngine.Random.value,
+                    UnityEngine.Random.value,
+                    false,
+                    randomEventWeightPercent);
+            }
             if (!candidate.occurred)
             {
                 return candidate;
@@ -2892,7 +3933,8 @@ namespace CheeseTama.Core
 
         private static CareEventChoiceResult BuildChoiceResultFromReceipt(
             CareEventChoiceReceiptSaveEntry receipt,
-            CareEventChoiceResolutionStatus status)
+            CareEventChoiceResolutionStatus status,
+            int negativeEffectMitigationPercent)
         {
             if (receipt != null
                 && RandomEventSystem.TryGetDefinition(receipt.eventId, out var definition)
@@ -2905,7 +3947,9 @@ namespace CheeseTama.Core
                     receipt.choiceId,
                     choice.resultTitle,
                     choice.resultMessage,
-                    choice.effect);
+                    CareEventChoiceSystem.ApplyNegativeEffectMitigation(
+                        choice.effect,
+                        negativeEffectMitigationPercent));
             }
 
             return new CareEventChoiceResult(
@@ -2984,6 +4028,8 @@ namespace CheeseTama.Core
             careActions.ConfigureLateLevelGrowth(
                 CurrentSave?.lateLevelGrowth,
                 CurrentSave?.milkGrowth);
+            careActions.ConfigureRecoveryEffectPercent(
+                GetHiddenCareerBenefits().RecoveryEffectPercent);
             return careActions;
         }
 

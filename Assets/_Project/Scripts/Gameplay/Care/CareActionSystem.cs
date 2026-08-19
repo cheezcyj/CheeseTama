@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CheeseTama.Gameplay.Growth;
 using CheeseTama.Gameplay.Feeding;
@@ -15,6 +16,7 @@ namespace CheeseTama.Gameplay.Care
         private readonly FeedingStatusSystem feedingStatusSystem = new FeedingStatusSystem();
         private LateLevelGrowthSaveData lateLevelGrowth;
         private IList<MilkGrowthSaveEntry> milkGrowth;
+        private int recoveryEffectPercent;
 
         public FeedingStatusResult LastFeedingStatusResult { get; private set; }
         public LateLevelGrowthResult LastLateLevelGrowthResult => levelSystem.LastLateLevelResult;
@@ -27,9 +29,19 @@ namespace CheeseTama.Gameplay.Care
             milkGrowth = growthEntries;
         }
 
+        public void ConfigureRecoveryEffectPercent(int percent)
+        {
+            recoveryEffectPercent = Math.Max(0, Math.Min(100, percent));
+        }
+
         public CareActionResult FeedMilk(CheeseTamaModel tama)
         {
             return FeedMilk(tama, MilkCatalog.BasicMilk);
+        }
+
+        public CareActionResult FeedMilk(CheeseTamaModel tama, DateTimeOffset localTime)
+        {
+            return FeedMilk(tama, MilkCatalog.BasicMilk, localTime);
         }
 
         public CareActionResult FeedStarMilk(CheeseTamaModel tama)
@@ -37,7 +49,28 @@ namespace CheeseTama.Gameplay.Care
             return FeedMilk(tama, MilkCatalog.StarMilk);
         }
 
+        public CareActionResult FeedStarMilk(CheeseTamaModel tama, DateTimeOffset localTime)
+        {
+            return FeedMilk(tama, MilkCatalog.StarMilk, localTime);
+        }
+
         public CareActionResult FeedMilk(CheeseTamaModel tama, MilkDefinition milk)
+        {
+            return FeedMilkInternal(tama, milk, null);
+        }
+
+        public CareActionResult FeedMilk(
+            CheeseTamaModel tama,
+            MilkDefinition milk,
+            DateTimeOffset localTime)
+        {
+            return FeedMilkInternal(tama, milk, localTime);
+        }
+
+        private CareActionResult FeedMilkInternal(
+            CheeseTamaModel tama,
+            MilkDefinition milk,
+            DateTimeOffset? localTime)
         {
             LastFeedingStatusResult = FeedingStatusResult.None(tama?.stats?.overfullness ?? 0);
             if (tama == null)
@@ -56,11 +89,18 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.mood += milk.mood;
             tama.stats.cleanliness += milk.cleanliness;
             tama.stats.sleepiness += milk.sleepiness;
-            tama.stats.health += milk.health;
+            tama.stats.health += ApplyRecoveryBonus(milk.health);
             tama.stats.maturation += milk.maturation;
             tama.stats.affection += milk.affection;
             tama.stats.milkSatisfaction += milk.milkSatisfaction;
-            var feedingStatus = feedingStatusSystem.ApplyMilk(tama, milk.id, hungerBefore, milk.hunger);
+            var feedingStatus = localTime.HasValue
+                ? feedingStatusSystem.ApplyMilk(
+                    tama,
+                    milk.id,
+                    hungerBefore,
+                    milk.hunger,
+                    localTime.Value)
+                : feedingStatusSystem.ApplyMilk(tama, milk.id, hungerBefore, milk.hunger);
             LastFeedingStatusResult = feedingStatus;
             tama.stats.ClampAll();
 
@@ -99,6 +139,22 @@ namespace CheeseTama.Gameplay.Care
 
         public CareActionResult FeedSnack(CheeseTamaModel tama, SnackDefinition snack)
         {
+            return FeedSnackInternal(tama, snack, null);
+        }
+
+        public CareActionResult FeedSnack(
+            CheeseTamaModel tama,
+            SnackDefinition snack,
+            DateTimeOffset localTime)
+        {
+            return FeedSnackInternal(tama, snack, localTime);
+        }
+
+        private CareActionResult FeedSnackInternal(
+            CheeseTamaModel tama,
+            SnackDefinition snack,
+            DateTimeOffset? localTime)
+        {
             LastFeedingStatusResult = FeedingStatusResult.None(tama?.stats?.overfullness ?? 0);
             if (tama == null)
             {
@@ -116,11 +172,19 @@ namespace CheeseTama.Gameplay.Care
             tama.stats.mood += snack.mood;
             tama.stats.cleanliness += snack.cleanliness;
             tama.stats.sleepiness += snack.sleepiness;
-            tama.stats.health += snack.health;
+            tama.stats.health += ApplyRecoveryBonus(snack.health);
             tama.stats.affection += snack.affection;
             tama.stats.maturation += snack.maturation;
             tama.stats.milkSatisfaction += snack.milkSatisfaction;
-            var feedingStatus = feedingStatusSystem.ApplySnack(tama, hungerBefore, snack.hunger);
+            var feedingStatus = localTime.HasValue
+                ? feedingStatusSystem.ApplySnack(
+                    tama,
+                    snack.id,
+                    snack.growthMilkId,
+                    hungerBefore,
+                    snack.hunger,
+                    localTime.Value)
+                : ApplyIdentifiedSnackWithoutNightEffects(tama, snack, hungerBefore);
             LastFeedingStatusResult = feedingStatus;
             tama.stats.ClampAll();
 
@@ -165,12 +229,18 @@ namespace CheeseTama.Gameplay.Care
                 return MissingTama();
             }
 
+            tama.EnsureRuntimeDefaults();
             tama.stats.cleanliness += 25;
             tama.stats.mood += 1;
-            tama.stats.health += 2;
+            tama.stats.health += ApplyRecoveryBonus(2);
+            var feedingStatus = feedingStatusSystem.RecoverByClean(tama);
+            LastFeedingStatusResult = feedingStatus;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 4, "밀크룸이 깨끗해졌습니다.");
+            return AddCareProgress(
+                tama,
+                4,
+                CombineMessages(feedingStatus.message, "밀크룸이 깨끗해졌습니다."));
         }
 
         public CareActionResult Rest(CheeseTamaModel tama)
@@ -181,13 +251,19 @@ namespace CheeseTama.Gameplay.Care
                 return MissingTama();
             }
 
+            tama.EnsureRuntimeDefaults();
             tama.stats.hunger -= 2;
             tama.stats.sleepiness -= 20;
-            tama.stats.health += 4;
+            tama.stats.health += ApplyRecoveryBonus(4);
             tama.stats.mood += 2;
+            var feedingStatus = feedingStatusSystem.RecoverByRest(tama);
+            LastFeedingStatusResult = feedingStatus;
             tama.stats.ClampAll();
 
-            return AddCareProgress(tama, 3, "치즈타마가 따뜻한 빛 아래에서 쉬었습니다.");
+            return AddCareProgress(
+                tama,
+                3,
+                CombineMessages(feedingStatus.message, "치즈타마가 따뜻한 빛 아래에서 쉬었습니다."));
         }
 
         public CareActionResult Pet(CheeseTamaModel tama)
@@ -254,6 +330,32 @@ namespace CheeseTama.Gameplay.Care
         private static CareActionResult MissingTama()
         {
             return new CareActionResult(false, false, "치즈타마 데이터를 불러오지 못했습니다.");
+        }
+
+        private FeedingStatusResult ApplyIdentifiedSnackWithoutNightEffects(
+            CheeseTamaModel tama,
+            SnackDefinition snack,
+            int hungerBefore)
+        {
+            return feedingStatusSystem.ApplySnack(
+                tama,
+                snack.id,
+                snack.growthMilkId,
+                hungerBefore,
+                snack.hunger,
+                new DateTimeOffset(2000, 1, 1, 12, 0, 0, TimeSpan.Zero));
+        }
+
+        private int ApplyRecoveryBonus(int amount)
+        {
+            if (amount <= 0 || recoveryEffectPercent <= 0)
+            {
+                return amount;
+            }
+
+            var bonus = ((long)amount * recoveryEffectPercent + 99L) / 100L;
+            var result = (long)amount + bonus;
+            return result >= int.MaxValue ? int.MaxValue : (int)result;
         }
 
         private static string CombineMessages(string primary, string secondary)

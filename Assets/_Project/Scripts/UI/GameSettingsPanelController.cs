@@ -1,6 +1,7 @@
 using CheeseTama.Core;
 using CheeseTama.Save;
 using CheeseTama.Audio;
+using CheeseTama.Environment;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,12 +23,16 @@ namespace CheeseTama.UI
         [SerializeField] private Button frameRate30Button;
         [SerializeField] private Button frameRate60Button;
         [SerializeField] private Button frameRate120Button;
+        [SerializeField] private Button qualityLowButton;
+        [SerializeField] private Button qualityBalancedButton;
+        [SerializeField] private Button qualityHighButton;
         [SerializeField] private Button resetSettingsButton;
         [SerializeField] private Text masterVolumeValueText;
         [SerializeField] private Text musicVolumeValueText;
         [SerializeField] private Text effectVolumeValueText;
         [SerializeField] private Text uiScaleValueText;
         [SerializeField] private Text frameRateValueText;
+        [SerializeField] private Text qualityValueText;
         [SerializeField] private Text statusText;
 
         private bool isRefreshing;
@@ -92,6 +97,57 @@ namespace CheeseTama.UI
             Text frameRateValue,
             Text settingsStatus)
         {
+            Configure(
+                masterVolume,
+                musicVolume,
+                effectVolume,
+                mute,
+                fullScreen,
+                uiScale90,
+                uiScale100,
+                uiScale110,
+                frameRate30,
+                frameRate60,
+                frameRate120,
+                null,
+                null,
+                null,
+                careTip,
+                resetSettings,
+                masterVolumeValue,
+                musicVolumeValue,
+                effectVolumeValue,
+                uiScaleValue,
+                frameRateValue,
+                null,
+                settingsStatus);
+        }
+
+        public void Configure(
+            Slider masterVolume,
+            Slider musicVolume,
+            Slider effectVolume,
+            Toggle mute,
+            Toggle fullScreen,
+            Button uiScale90,
+            Button uiScale100,
+            Button uiScale110,
+            Button frameRate30,
+            Button frameRate60,
+            Button frameRate120,
+            Button qualityLow,
+            Button qualityBalanced,
+            Button qualityHigh,
+            Toggle careTip,
+            Button resetSettings,
+            Text masterVolumeValue,
+            Text musicVolumeValue,
+            Text effectVolumeValue,
+            Text uiScaleValue,
+            Text frameRateValue,
+            Text qualityValue,
+            Text settingsStatus)
+        {
             masterVolumeSlider = masterVolume;
             musicVolumeSlider = musicVolume;
             effectVolumeSlider = effectVolume;
@@ -103,6 +159,9 @@ namespace CheeseTama.UI
             frameRate30Button = frameRate30;
             frameRate60Button = frameRate60;
             frameRate120Button = frameRate120;
+            qualityLowButton = qualityLow;
+            qualityBalancedButton = qualityBalanced;
+            qualityHighButton = qualityHigh;
             careTipToggle = careTip;
             resetSettingsButton = resetSettings;
             masterVolumeValueText = masterVolumeValue;
@@ -110,6 +169,7 @@ namespace CheeseTama.UI
             effectVolumeValueText = effectVolumeValue;
             uiScaleValueText = uiScaleValue;
             frameRateValueText = frameRateValue;
+            qualityValueText = qualityValue;
             statusText = settingsStatus;
 
             BindControls();
@@ -166,6 +226,9 @@ namespace CheeseTama.UI
             BindFrameRateButton(frameRate30Button, 30);
             BindFrameRateButton(frameRate60Button, 60);
             BindFrameRateButton(frameRate120Button, 120);
+            BindQualityButton(qualityLowButton, GraphicsQualityPreset.Low);
+            BindQualityButton(qualityBalancedButton, GraphicsQualityPreset.Balanced);
+            BindQualityButton(qualityHighButton, GraphicsQualityPreset.High);
 
             if (resetSettingsButton != null)
             {
@@ -194,6 +257,17 @@ namespace CheeseTama.UI
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => SetFrameRate(frameRate));
+        }
+
+        private void BindQualityButton(Button button, GraphicsQualityPreset preset)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => SetGraphicsQuality(preset));
         }
 
         public void RefreshFromSave(bool applySettings)
@@ -316,6 +390,11 @@ namespace CheeseTama.UI
 
             var settings = GetSettings(StarterSceneBuilder.EnsureCoreSystems());
             settings.fullScreen = value;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Keep the browser request inside the toggle callback so it retains the
+            // user gesture required by browser fullscreen policies.
+            Screen.fullScreen = value;
+#endif
             ApplyAndSave(settings, value ? "전체화면으로 전환했습니다." : "창모드로 전환했습니다.");
         }
 
@@ -336,6 +415,18 @@ namespace CheeseTama.UI
             var settings = GetSettings(StarterSceneBuilder.EnsureCoreSystems());
             settings.targetFrameRate = frameRate;
             ApplyAndSave(settings, "화면 설정을 저장했습니다.");
+        }
+
+        private void SetGraphicsQuality(GraphicsQualityPreset preset)
+        {
+            if (isRefreshing)
+            {
+                return;
+            }
+
+            var settings = GetSettings(StarterSceneBuilder.EnsureCoreSystems());
+            settings.graphicsQualityPreset = (int)GraphicsQualityCatalog.Normalize((int)preset);
+            ApplyAndSave(settings, "그래픽 품질을 저장했습니다.");
         }
 
         private void ResetSettings()
@@ -367,18 +458,28 @@ namespace CheeseTama.UI
             CheeseTamaAudioController.Instance?.ApplyVolumeSettings(settings);
             ApplyScreenMode(settings.fullScreen);
             Application.targetFrameRate = settings.targetFrameRate;
+            GraphicsQualityRuntime.Apply(
+                GraphicsQualityCatalog.Normalize(settings.graphicsQualityPreset));
             ApplyUiScale(settings.uiScale);
             ApplyCareTipVisibility(settings.showCareTips);
+            var canvas = GetComponentInParent<Canvas>();
+            AccessibilityRuntime.Apply(canvas != null ? canvas.transform : transform.root, settings);
         }
 
         private static void ApplyScreenMode(bool fullScreen)
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Loading saved settings is not a browser user gesture. Fullscreen is
+            // requested only from SetFullScreen's toggle callback above.
+            return;
+#else
             var width = Screen.width > 0 ? Screen.width : Screen.currentResolution.width;
             var height = Screen.height > 0 ? Screen.height : Screen.currentResolution.height;
             var mode = fullScreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
             Screen.fullScreenMode = mode;
             Screen.SetResolution(width, height, mode);
             Screen.fullScreen = fullScreen;
+#endif
         }
 
         private void ApplyUiScale(float uiScale)
@@ -415,6 +516,8 @@ namespace CheeseTama.UI
             SetText(effectVolumeValueText, $"{Mathf.RoundToInt(settings.effectVolume * 100f)}%");
             SetText(uiScaleValueText, $"{Mathf.RoundToInt(settings.uiScale * 100f)}%");
             SetText(frameRateValueText, $"{settings.targetFrameRate} FPS · {(settings.fullScreen ? "전체" : "창")}");
+            var qualityPreset = GraphicsQualityCatalog.Normalize(settings.graphicsQualityPreset);
+            SetText(qualityValueText, GraphicsQualityCatalog.GetDisplayName(qualityPreset));
             SetText(statusText, message);
 
             SetOptionButtonSelected(uiScale90Button, Mathf.Approximately(settings.uiScale, 0.9f));
@@ -423,6 +526,9 @@ namespace CheeseTama.UI
             SetFrameRateButtonSelected(frameRate30Button, settings.targetFrameRate == 30);
             SetFrameRateButtonSelected(frameRate60Button, settings.targetFrameRate == 60);
             SetFrameRateButtonSelected(frameRate120Button, settings.targetFrameRate == 120);
+            SetOptionButtonSelected(qualityLowButton, qualityPreset == GraphicsQualityPreset.Low);
+            SetOptionButtonSelected(qualityBalancedButton, qualityPreset == GraphicsQualityPreset.Balanced);
+            SetOptionButtonSelected(qualityHighButton, qualityPreset == GraphicsQualityPreset.High);
         }
 
         private static void SetFrameRateButtonSelected(Button button, bool selected)

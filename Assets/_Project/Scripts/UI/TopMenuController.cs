@@ -203,6 +203,11 @@ namespace CheeseTama.UI
             SceneManager.LoadScene(SceneNames.Collection);
         }
 
+        public void OpenCollection()
+        {
+            OpenCollectionPage();
+        }
+
         private void OpenDecorate()
         {
             CloseAll();
@@ -215,7 +220,7 @@ namespace CheeseTama.UI
             SetActive(settingsModal, true);
         }
 
-        private void CloseAll()
+        public void CloseAll()
         {
             SetActive(collectionOverlay, false);
             SetActive(decorateOverlay, false);

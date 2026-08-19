@@ -24,6 +24,7 @@ namespace CheeseTama.Gameplay.Decorations
         private GameObject windowVisual;
         private GameObject shelfVisual;
         private GameObject bedsideVisual;
+        private string appliedWorkshopSignature = string.Empty;
 
         public void Configure(Renderer wall, Renderer floor, Transform accent)
         {
@@ -73,6 +74,17 @@ namespace CheeseTama.Gameplay.Decorations
             var snapshot = manager != null
                 ? manager.GetDecorationShopSnapshot()
                 : DecorationShopSnapshot.CreateDefault();
+            var workshop = manager?.GetDecorationWorkshopRenderSnapshot();
+            var workshopSignature = BuildWorkshopSignature(workshop);
+            if (!string.Equals(
+                    appliedWorkshopSignature,
+                    workshopSignature,
+                    System.StringComparison.Ordinal))
+            {
+                ResetGeneratedSlotVisuals();
+                appliedWorkshopSignature = workshopSignature;
+            }
+
             if (snapshot.equippedWallId == DecorationCatalog.CreamWallId)
             {
                 themeController ??= GetComponent<MilkroomThemeController>()
@@ -107,6 +119,143 @@ namespace CheeseTama.Gameplay.Decorations
                 snapshot.equippedBedsideId, DecorationCatalog.StarPlushId,
                 PrimitiveType.Sphere, new Vector3(0.34f, 0.28f, 0.22f),
                 new Color(0.95f, 0.72f, 0.2f), new Color(0.92f, 0.92f, 0.84f));
+            ApplyWorkshopSnapshot(workshop);
+        }
+
+        private void ResetGeneratedSlotVisuals()
+        {
+            DestroyUnityObject(accentVisual);
+            DestroyUnityObject(windowVisual);
+            DestroyUnityObject(shelfVisual);
+            DestroyUnityObject(bedsideVisual);
+            accentVisual = null;
+            windowVisual = null;
+            shelfVisual = null;
+            bedsideVisual = null;
+            appliedAccentId = string.Empty;
+            appliedWindowId = string.Empty;
+            appliedShelfId = string.Empty;
+            appliedBedsideId = string.Empty;
+        }
+
+        private void ApplyWorkshopSnapshot(DecorationWorkshopRenderSnapshot snapshot)
+        {
+            ApplyWorkshopTint(wallRenderer, snapshot?.Find(DecorationSlot.Wall));
+            ApplyWorkshopTint(floorRenderer, snapshot?.Find(DecorationSlot.Floor));
+            ApplyWorkshopTint(accentVisual, snapshot?.Find(DecorationSlot.Accent));
+            ApplyWorkshopSlotTint(
+                windowVisual,
+                "Window_Model",
+                snapshot?.Find(DecorationSlot.Window));
+            ApplyWorkshopSlotTint(
+                shelfVisual,
+                "MilkShelf_Model",
+                snapshot?.Find(DecorationSlot.Shelf));
+            ApplyWorkshopTint(bedsideVisual, snapshot?.Find(DecorationSlot.Bedside));
+        }
+
+        private void ApplyWorkshopSlotTint(
+            GameObject generatedVisual,
+            string authoredVisualName,
+            DecorationWorkshopRenderEntry entry)
+        {
+            var authoredVisual = transform.Find(authoredVisualName)?.gameObject;
+            if (generatedVisual != null)
+            {
+                ClearColorOverrides(authoredVisual);
+                ApplyWorkshopTint(generatedVisual, entry);
+                return;
+            }
+
+            if (TryParseTint(entry, out var tint))
+            {
+                ApplyColor(authoredVisual, tint);
+            }
+            else
+            {
+                ClearColorOverrides(authoredVisual);
+            }
+        }
+
+        private void ApplyWorkshopTint(Renderer renderer, DecorationWorkshopRenderEntry entry)
+        {
+            if (renderer != null && TryParseTint(entry, out var tint))
+            {
+                ApplyColor(renderer, tint);
+            }
+        }
+
+        private void ApplyWorkshopTint(GameObject root, DecorationWorkshopRenderEntry entry)
+        {
+            if (root == null || !TryParseTint(entry, out var tint))
+            {
+                return;
+            }
+
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (var index = 0; index < renderers.Length; index += 1)
+            {
+                ApplyColor(renderers[index], tint);
+            }
+        }
+
+        private void ApplyColor(GameObject root, Color color)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (var index = 0; index < renderers.Length; index += 1)
+            {
+                ApplyColor(renderers[index], color);
+            }
+        }
+
+        private static void ClearColorOverrides(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            for (var index = 0; index < renderers.Length; index += 1)
+            {
+                ClearColorOverride(renderers[index]);
+            }
+        }
+
+        private static bool TryParseTint(
+            DecorationWorkshopRenderEntry entry,
+            out Color tint)
+        {
+            tint = Color.white;
+            return entry != null
+                && entry.HasVariant
+                && ColorUtility.TryParseHtmlString("#" + entry.TintHex, out tint);
+        }
+
+        private static string BuildWorkshopSignature(DecorationWorkshopRenderSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return string.Empty;
+            }
+
+            var signature = new System.Text.StringBuilder();
+            foreach (DecorationSlot slot in System.Enum.GetValues(typeof(DecorationSlot)))
+            {
+                if (signature.Length > 0)
+                {
+                    signature.Append('|');
+                }
+
+                signature.Append(snapshot.Find(slot)?.VariantId ?? string.Empty);
+            }
+
+            return signature.ToString();
         }
 
         private void RebuildWindowSlot(string itemId)

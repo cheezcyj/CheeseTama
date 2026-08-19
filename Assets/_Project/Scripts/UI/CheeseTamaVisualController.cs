@@ -1,6 +1,8 @@
+using CheeseTama.Core;
 using CheeseTama.Data;
 using CheeseTama.Gameplay;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Milk;
 using CheeseTama.Utilities;
 using UnityEngine;
 
@@ -18,7 +20,9 @@ namespace CheeseTama.UI
         LevelUp,
         Hatch,
         Event,
-        Pet
+        Pet,
+        MilkBlend,
+        RareDiscovery
     }
 
     // Displays the stage-specific CheeseTama 3D mesh and provides lightweight
@@ -97,6 +101,10 @@ namespace CheeseTama.UI
         private Transform sparkleRoot;
         private Transform cookSteamRoot;
         private Transform petHeartRoot;
+        private Transform milkBlendRoot;
+        private Transform milkBlendSpoon;
+
+        private GameManager boundManager;
 
         private CheeseTamaExpression forcedExpression = CheeseTamaExpression.Idle;
         private float forcedExpressionUntil;
@@ -111,6 +119,21 @@ namespace CheeseTama.UI
             EnsureConditionIndicator();
             RefreshConditionIndicator(true);
             CaptureRestingPosition();
+        }
+
+        private void OnEnable()
+        {
+            BindManager(GameManager.Instance);
+        }
+
+        private void Start()
+        {
+            BindManager(GameManager.Instance);
+        }
+
+        private void OnDisable()
+        {
+            BindManager(null);
         }
 
         private void EnsureModel()
@@ -245,6 +268,19 @@ namespace CheeseTama.UI
             {
                 HideActionProps();
 
+                if (AccessibilityRuntime.ReducedMotion)
+                {
+                    transform.localScale = baseScale;
+                    transform.localPosition = restingLocalPosition;
+                    if (modelInstance != null)
+                    {
+                        modelInstance.localRotation = Quaternion.Euler(0f, modelYawDegrees, 0f);
+                    }
+
+                    ApplyFlash(0f);
+                    return;
+                }
+
                 var time = Time.realtimeSinceStartup + idleSeed;
                 var breath = Mathf.Sin(time * 1.7f) * 0.02f;
                 var targetScale = new Vector3(
@@ -278,6 +314,13 @@ namespace CheeseTama.UI
             var pitch = 0f;
 
             ApplyActionMotion(normalized, arc, settle, ref hop, ref side, ref punch, ref roll, ref pitch);
+
+            var motionScale = AccessibilityRuntime.MotionScale;
+            hop *= motionScale;
+            side *= motionScale;
+            punch *= motionScale;
+            roll *= motionScale;
+            pitch *= motionScale;
 
             transform.localPosition = restingLocalPosition + Vector3.up * hop + Vector3.right * side;
             transform.localScale = new Vector3(
@@ -336,7 +379,34 @@ namespace CheeseTama.UI
         }
 
         public bool IsReacting => isReacting;
+        public CheeseTamaVisualAction ActiveAction => activeAction;
         public Transform ModelInstance => modelInstance;
+
+        public void BindManager(GameManager manager)
+        {
+            if (boundManager == manager)
+            {
+                return;
+            }
+
+            if (boundManager != null)
+            {
+                boundManager.MilkBlendingChanged -= HandleMilkBlendingChanged;
+            }
+
+            boundManager = manager;
+            if (boundManager != null)
+            {
+                boundManager.MilkBlendingChanged += HandleMilkBlendingChanged;
+            }
+        }
+
+        public void ReactMilkBlend(bool rareResult = false)
+        {
+            ReactAction(rareResult
+                ? CheeseTamaVisualAction.RareDiscovery
+                : CheeseTamaVisualAction.MilkBlend);
+        }
 
         internal void SetRestingWorldPosition(Vector3 worldPosition)
         {
@@ -354,6 +424,10 @@ namespace CheeseTama.UI
             activeAction = celebrate ? CheeseTamaVisualAction.Hatch : action;
             reactionStartedAt = Time.realtimeSinceStartup;
             ConfigureReactionProfile(activeAction, celebrate);
+            if (AccessibilityRuntime.ReducedMotion)
+            {
+                reactionDuration = Mathf.Min(reactionDuration, 0.12f);
+            }
             ForceExpression(GetActionExpression(activeAction), reactionDuration + ExpressionHoldPadding);
             isReacting = true;
             UpdateActionProps(0f, 0f, 1f);
@@ -377,11 +451,25 @@ namespace CheeseTama.UI
             reactionDuration = EventReactionDuration;
             reactionHopHeight = EventReactionHopHeight;
             reactionPunch = EventReactionPunch;
+            if (AccessibilityRuntime.ReducedMotion)
+            {
+                reactionDuration = 0.12f;
+            }
             flashColor = GetEventColor(eventId);
             flashStrength = 0.4f;
             ForceExpression(GetEventExpression(eventId), reactionDuration + ExpressionHoldPadding);
             isReacting = true;
             UpdateActionProps(0f, 0f, 1f);
+        }
+
+        private void HandleMilkBlendingChanged(MilkBlendResult result)
+        {
+            if (result == null || !result.applied)
+            {
+                return;
+            }
+
+            ReactMilkBlend(result.specialResult);
         }
 
         private void ConfigureReactionProfile(CheeseTamaVisualAction action, bool celebrate)
@@ -447,6 +535,20 @@ namespace CheeseTama.UI
                     flashColor = new Color(1f, 0.64f, 0.72f);
                     flashStrength = 0.26f;
                     break;
+                case CheeseTamaVisualAction.MilkBlend:
+                    reactionDuration = 1.18f;
+                    reactionHopHeight = 0.17f;
+                    reactionPunch = 0.09f;
+                    flashColor = new Color(0.72f, 0.94f, 1f);
+                    flashStrength = 0.28f;
+                    break;
+                case CheeseTamaVisualAction.RareDiscovery:
+                    reactionDuration = 1.42f;
+                    reactionHopHeight = 0.36f;
+                    reactionPunch = 0.17f;
+                    flashColor = new Color(1f, 0.82f, 0.28f);
+                    flashStrength = 0.52f;
+                    break;
                 default:
                     reactionDuration = CareReactionDuration;
                     reactionHopHeight = CareReactionHopHeight;
@@ -508,6 +610,19 @@ namespace CheeseTama.UI
                     side = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.035f * settle;
                     roll = Mathf.Sin(normalized * Mathf.PI * 4f) * 6.5f * settle;
                     punch *= 0.9f;
+                    break;
+                case CheeseTamaVisualAction.MilkBlend:
+                    hop *= 0.72f;
+                    side = Mathf.Sin(normalized * Mathf.PI * 4f) * 0.045f * settle;
+                    pitch = -5f * arc;
+                    roll = Mathf.Sin(normalized * Mathf.PI * 4f) * 4.8f * settle;
+                    break;
+                case CheeseTamaVisualAction.RareDiscovery:
+                    hop += Mathf.Abs(Mathf.Sin(normalized * Mathf.PI * 3f)) * 0.08f * settle;
+                    side = Mathf.Sin(normalized * Mathf.PI * 2f) * 0.065f * settle;
+                    pitch = -4f * arc;
+                    roll = Mathf.Sin(normalized * Mathf.PI * 4f) * 10f * settle;
+                    punch *= 1.15f;
                     break;
                 case CheeseTamaVisualAction.LevelUp:
                 case CheeseTamaVisualAction.Hatch:
@@ -684,6 +799,14 @@ namespace CheeseTama.UI
             }
 
             var position = ResolveConditionIndicatorPosition();
+            if (AccessibilityRuntime.ReducedMotion)
+            {
+                conditionRoot.localPosition = position;
+                conditionRoot.localRotation = Quaternion.identity;
+                conditionRoot.localScale = Vector3.one;
+                return;
+            }
+
             position.y += Mathf.Sin((Time.realtimeSinceStartup + idleSeed) * 2.2f) * 0.025f;
             conditionRoot.localPosition = position;
             conditionRoot.localRotation = Quaternion.identity;
@@ -809,12 +932,73 @@ namespace CheeseTama.UI
                 Vector3.one,
                 Quaternion.Euler(0f, 180f, 0f));
 
+            milkBlendRoot = EnsureChild(propRoot, "Milk Blend Action Prop");
+            EnsurePrimitive(
+                milkBlendRoot,
+                "Blend Bowl",
+                PrimitiveType.Cylinder,
+                new Color(0.48f, 0.8f, 0.94f),
+                ToonMaterialProfile.EnvironmentGlass);
+            EnsurePrimitive(
+                milkBlendRoot,
+                "Blend Bowl Rim",
+                PrimitiveType.Cylinder,
+                new Color(0.82f, 0.95f, 1f),
+                ToonMaterialProfile.CharacterHighlight);
+            EnsurePrimitive(
+                milkBlendRoot,
+                "Blend Milk",
+                PrimitiveType.Cylinder,
+                new Color(1f, 0.97f, 0.76f),
+                ToonMaterialProfile.EnvironmentGlow);
+            milkBlendSpoon = EnsurePrimitive(
+                milkBlendRoot,
+                "Blend Spoon",
+                PrimitiveType.Capsule,
+                new Color(0.92f, 0.94f, 0.96f),
+                ToonMaterialProfile.CharacterHighlight);
+            EnsurePrimitive(
+                milkBlendRoot,
+                "Blend Ingredient",
+                PrimitiveType.Sphere,
+                new Color(1f, 0.66f, 0.28f),
+                ToonMaterialProfile.EnvironmentGlow);
+            SetPart(
+                milkBlendRoot.Find("Blend Bowl"),
+                Vector3.zero,
+                new Vector3(0.17f, 0.055f, 0.12f),
+                Quaternion.identity);
+            SetPart(
+                milkBlendRoot.Find("Blend Bowl Rim"),
+                new Vector3(0f, 0.06f, 0f),
+                new Vector3(0.19f, 0.012f, 0.135f),
+                Quaternion.identity);
+            SetPart(
+                milkBlendRoot.Find("Blend Milk"),
+                new Vector3(0f, 0.072f, 0f),
+                new Vector3(0.155f, 0.009f, 0.105f),
+                Quaternion.identity);
+            SetPart(
+                milkBlendSpoon,
+                new Vector3(0.1f, 0.17f, -0.01f),
+                new Vector3(0.018f, 0.14f, 0.018f),
+                Quaternion.Euler(0f, 0f, -24f));
+            SetPart(
+                milkBlendRoot.Find("Blend Ingredient"),
+                new Vector3(-0.08f, 0.11f, -0.01f),
+                new Vector3(0.032f, 0.032f, 0.022f),
+                Quaternion.identity);
+
             HideActionProps();
         }
 
         private void UpdateActionProps(float normalized, float arc, float settle)
         {
             HideActionProps();
+            if (AccessibilityRuntime.ReducedMotion)
+            {
+                return;
+            }
 
             switch (activeAction)
             {
@@ -880,6 +1064,44 @@ namespace CheeseTama.UI
                         Vector3.one * (0.85f + arc * 0.28f),
                         Quaternion.identity);
                     break;
+                case CheeseTamaVisualAction.MilkBlend:
+                    SetActive(milkBlendRoot, true);
+                    SetPart(
+                        milkBlendRoot,
+                        new Vector3(-0.42f, -0.25f + arc * 0.045f, PropZ),
+                        Vector3.one * (0.9f + arc * 0.12f),
+                        Quaternion.Euler(0f, 0f, Mathf.Sin(normalized * Mathf.PI * 4f) * 3f));
+                    SetPart(
+                        milkBlendSpoon,
+                        new Vector3(
+                            0.09f + Mathf.Sin(normalized * Mathf.PI * 6f) * 0.035f,
+                            0.17f,
+                            -0.01f),
+                        new Vector3(0.018f, 0.14f, 0.018f),
+                        Quaternion.Euler(0f, 0f, -24f + Mathf.Sin(normalized * Mathf.PI * 6f) * 18f));
+                    break;
+                case CheeseTamaVisualAction.RareDiscovery:
+                    SetActive(milkBlendRoot, true);
+                    SetPart(
+                        milkBlendRoot,
+                        new Vector3(-0.38f, -0.24f + arc * 0.09f, PropZ),
+                        Vector3.one * (0.94f + arc * 0.2f),
+                        Quaternion.Euler(0f, 0f, Mathf.Sin(normalized * Mathf.PI * 4f) * 5f));
+                    SetPart(
+                        milkBlendSpoon,
+                        new Vector3(
+                            0.09f + Mathf.Sin(normalized * Mathf.PI * 8f) * 0.045f,
+                            0.17f + arc * 0.03f,
+                            -0.01f),
+                        new Vector3(0.018f, 0.14f, 0.018f),
+                        Quaternion.Euler(0f, 0f, -24f + normalized * 180f));
+                    SetActive(sparkleRoot, true);
+                    SetPart(
+                        sparkleRoot,
+                        new Vector3(0.18f, 0.58f + arc * 0.2f, PropZ),
+                        Vector3.one * (1f + arc * 0.55f),
+                        Quaternion.Euler(0f, 0f, normalized * 240f));
+                    break;
                 case CheeseTamaVisualAction.LevelUp:
                 case CheeseTamaVisualAction.Hatch:
                 case CheeseTamaVisualAction.Event:
@@ -903,6 +1125,7 @@ namespace CheeseTama.UI
             SetActive(sparkleRoot, false);
             SetActive(cookSteamRoot, false);
             SetActive(petHeartRoot, false);
+            SetActive(milkBlendRoot, false);
         }
 
         private CheeseTamaExpression ResolveExpression()
@@ -1365,6 +1588,8 @@ namespace CheeseTama.UI
                 CheeseTamaVisualAction.Hatch => CheeseTamaExpression.Sparkle,
                 CheeseTamaVisualAction.Event => CheeseTamaExpression.Sparkle,
                 CheeseTamaVisualAction.Pet => CheeseTamaExpression.Happy,
+                CheeseTamaVisualAction.MilkBlend => CheeseTamaExpression.Sparkle,
+                CheeseTamaVisualAction.RareDiscovery => CheeseTamaExpression.Sparkle,
                 _ => CheeseTamaExpression.Happy
             };
         }
@@ -1381,6 +1606,10 @@ namespace CheeseTama.UI
                 "milk_drop_catch" => CheeseTamaExpression.Sparkle,
                 "cheese_snack_fed" => CheeseTamaExpression.Full,
                 "crumbly_snack" => CheeseTamaExpression.Upset,
+                "season_spring_blossom_milk" => CheeseTamaExpression.Happy,
+                "season_summer_milk_breeze" => CheeseTamaExpression.Surprised,
+                "season_autumn_aging_aroma" => CheeseTamaExpression.Full,
+                "season_winter_milk_star" => CheeseTamaExpression.Sparkle,
                 _ => CheeseTamaExpression.Sparkle
             };
         }
@@ -1416,6 +1645,10 @@ namespace CheeseTama.UI
                 "milk_drop_catch" => new Color(0.74f, 0.92f, 1f),
                 "cheese_snack_fed" => new Color(1f, 0.86f, 0.46f),
                 "crumbly_snack" => new Color(0.95f, 0.64f, 0.42f),
+                "season_spring_blossom_milk" => new Color(1f, 0.72f, 0.82f),
+                "season_summer_milk_breeze" => new Color(0.48f, 0.9f, 1f),
+                "season_autumn_aging_aroma" => new Color(1f, 0.58f, 0.25f),
+                "season_winter_milk_star" => new Color(0.68f, 0.82f, 1f),
                 _ => new Color(0.72f, 0.98f, 0.86f)
             };
         }

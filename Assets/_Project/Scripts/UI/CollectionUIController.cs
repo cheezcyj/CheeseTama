@@ -1,7 +1,11 @@
+using System;
 using CheeseTama.Collections;
+using CheeseTama.Collections.HiddenCareers;
 using CheeseTama.Core;
 using CheeseTama.Data;
+using CheeseTama.Gameplay.Events;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Input;
 using CheeseTama.Gameplay.Milk;
 using CheeseTama.Save;
 using System.Collections.Generic;
@@ -189,20 +193,33 @@ namespace CheeseTama.UI
                 RefreshRewardNotificationBadges(null);
                 RefreshCardLayout(null);
                 ShowTab(activeTab);
+                ApplyCurrentAccessibility();
                 return;
             }
 
             saveData.EnsureRuntimeDefaults();
+            var careerBenefits = new HiddenCareerCardSystem().GetBenefitSet(
+                saveData.collections);
             fragmentRewardCapacityAvailable = saveData.economy.collectionFragments < int.MaxValue;
             RefreshCategoryClaimAllFragmentButtons(saveData);
             RefreshRewardNotificationBadges(saveData.collections, fragmentRewardCapacityAvailable);
-            SetText(milkText, FormatRecordList("우유 기록", saveData.collections.milk, FormatKnownRecordName));
-            SetText(evolutionText, FormatRecordList("진화 기록", saveData.collections.evolution, FormatKnownRecordName));
-            SetText(eventText, FormatRecordList("이벤트 기록", saveData.collections.events, FormatKnownRecordName));
-            SetText(hiddenText, FormatHiddenRecordList(saveData.collections.hiddenUnlockedOnly));
+            SetText(milkText, FormatRecordList("우유 기록", saveData.collections.milk, FormatKnownRecordName, careerBenefits));
+            SetText(evolutionText, FormatRecordList("진화 기록", saveData.collections.evolution, FormatKnownRecordName, careerBenefits));
+            SetText(eventText, FormatRecordList("이벤트 기록", saveData.collections.events, FormatKnownRecordName, careerBenefits));
+            SetText(hiddenText, FormatHiddenRecordList(saveData.collections.hiddenUnlockedOnly, careerBenefits));
             SetText(messageText, "발견한 기록만 표시됩니다. 밀크룸에서 돌봄을 이어가면 새 기록이 추가됩니다.");
             RefreshCardLayout(saveData);
             ShowTab(activeTab);
+            AccessibilityRuntime.Apply(transform, saveData.settings);
+        }
+
+        private void ApplyCurrentAccessibility()
+        {
+            var labels = transform.GetComponentsInChildren<Text>(true);
+            for (var index = 0; index < labels.Length; index += 1)
+            {
+                AccessibilityRuntime.ApplyCurrent(labels[index]);
+            }
         }
 
         public HiddenCollectionDefinition[] GetVisibleHiddenCards(
@@ -222,7 +239,8 @@ namespace CheeseTama.UI
         private static string FormatRecordList(
             string title,
             System.Collections.Generic.List<string> records,
-            System.Func<string, string> formatter)
+            System.Func<string, string> formatter,
+            HiddenCareerBenefitSet careerBenefits = default)
         {
             if (records == null || records.Count == 0)
             {
@@ -235,13 +253,19 @@ namespace CheeseTama.UI
             for (var i = 0; i < records.Count; i++)
             {
                 var label = formatter != null ? formatter(records[i]) : records[i];
-                AppendRecordItem(builder, i + 1, label);
+                AppendRecordItem(
+                    builder,
+                    i + 1,
+                    label,
+                    careerBenefits.BuildCollectionInterpretation(records[i]));
             }
 
             return builder.ToString();
         }
 
-        private static string FormatHiddenRecordList(System.Collections.Generic.List<HiddenCollectionSaveEntry> records)
+        private static string FormatHiddenRecordList(
+            System.Collections.Generic.List<HiddenCollectionSaveEntry> records,
+            HiddenCareerBenefitSet careerBenefits = default)
         {
             if (records == null || records.Count == 0)
             {
@@ -264,7 +288,10 @@ namespace CheeseTama.UI
                     builder,
                     i + 1,
                     FormatHiddenRecordName(entry.id),
-                    $"획득일 {FormatIso(entry.acquiredAtIso)}");
+                    AppendDetail(
+                        $"획득일 {FormatIso(entry.acquiredAtIso)}",
+                        careerBenefits.BuildCollectionInterpretation(entry.id),
+                        careerBenefits.BuildDeepLoreSignal(entry.id)));
             }
 
             return builder.ToString();
@@ -298,25 +325,32 @@ namespace CheeseTama.UI
             }
 
             var collections = saveData.collections;
+            var careerBenefits = new HiddenCareerCardSystem().GetBenefitSet(collections);
             var milkCards = CreateRecordCards(
                 collections,
                 CollectionRecordCategory.Milk,
                 collections.milk,
                 FormatKnownRecordName,
-                FormatKnownRecordDetail);
+                FormatKnownRecordDetail,
+                careerBenefits);
             var evolutionCards = CreateRecordCards(
                 collections,
                 CollectionRecordCategory.Evolution,
                 collections.evolution,
                 FormatKnownRecordName,
-                FormatKnownRecordDetail);
+                FormatKnownRecordDetail,
+                careerBenefits);
             var eventCards = CreateRecordCards(
                 collections,
                 CollectionRecordCategory.Event,
                 collections.events,
                 FormatKnownRecordName,
-                FormatKnownRecordDetail);
-            var hiddenCards = CreateHiddenRecordCards(collections, collections.hiddenUnlockedOnly);
+                FormatKnownRecordDetail,
+                careerBenefits);
+            var hiddenCards = CreateHiddenRecordCards(
+                collections,
+                collections.hiddenUnlockedOnly,
+                careerBenefits);
             milkCardCount = milkCards.Count;
             evolutionCardCount = evolutionCards.Count;
             eventCardCount = eventCards.Count;
@@ -403,7 +437,8 @@ namespace CheeseTama.UI
             CollectionRecordCategory rewardCategory,
             IList<string> records,
             System.Func<string, string> titleFormatter,
-            System.Func<string, string> detailFormatter)
+            System.Func<string, string> detailFormatter,
+            HiddenCareerBenefitSet careerBenefits = default)
         {
             var cards = new List<CollectionCardData>();
             if (records == null)
@@ -423,10 +458,15 @@ namespace CheeseTama.UI
                         : null;
                 }
 
+                var detail = detailFormatter != null
+                    ? detailFormatter(id)
+                    : string.Empty;
                 cards.Add(new CollectionCardData(
                     FormatRecordCategory(id),
                     titleFormatter != null ? titleFormatter(id) : id,
-                    detailFormatter != null ? detailFormatter(id) : string.Empty,
+                    AppendDetail(
+                        detail,
+                        careerBenefits.BuildCollectionInterpretation(id)),
                     thumbnail,
                     rewardCategory,
                     id,
@@ -438,7 +478,8 @@ namespace CheeseTama.UI
 
         private List<CollectionCardData> CreateHiddenRecordCards(
             CollectionSaveData collections,
-            IList<HiddenCollectionSaveEntry> records)
+            IList<HiddenCollectionSaveEntry> records,
+            HiddenCareerBenefitSet careerBenefits = default)
         {
             var cards = new List<CollectionCardData>();
             if (records == null)
@@ -458,7 +499,10 @@ namespace CheeseTama.UI
                 cards.Add(new CollectionCardData(
                     "특별",
                     FormatHiddenRecordName(entry.id),
-                    $"획득일 {FormatIso(entry.acquiredAtIso)}",
+                    AppendDetail(
+                        $"획득일 {FormatIso(entry.acquiredAtIso)}",
+                        careerBenefits.BuildCollectionInterpretation(entry.id),
+                        careerBenefits.BuildDeepLoreSignal(entry.id)),
                     null,
                     CollectionRecordCategory.Hidden,
                     entry.id,
@@ -492,20 +536,52 @@ namespace CheeseTama.UI
             }
             else
             {
+                var cardHeight = CalculateCardHeight(cards);
                 for (var i = 0; i < cards.Count; i++)
                 {
                     var column = i % 2;
                     var row = i / 2;
                     var x = column * (CardWidth + CardGap);
-                    var y = -CardTopOffset - (row * (CardHeight + CardRowGap));
-                    CreateCard(root, i + 1, cards[i], x, y, CardWidth, CardHeight);
+                    var y = -CardTopOffset - (row * (cardHeight + CardRowGap));
+                    CreateCard(root, i + 1, cards[i], x, y, CardWidth, cardHeight);
                 }
 
                 var rows = Mathf.CeilToInt(cards.Count / 2f);
-                totalHeight += rows * CardHeight + Mathf.Max(0, rows - 1) * CardRowGap;
+                totalHeight += rows * cardHeight + Mathf.Max(0, rows - 1) * CardRowGap;
             }
 
             ConfigureCardRootRect(root, totalHeight + 26f);
+        }
+
+        private static float CalculateCardHeight(IList<CollectionCardData> cards)
+        {
+            var maximumAdditionalLines = 0;
+            if (cards != null)
+            {
+                for (var index = 0; index < cards.Count; index += 1)
+                {
+                    var detail = cards[index].detail;
+                    if (string.IsNullOrEmpty(detail))
+                    {
+                        continue;
+                    }
+
+                    var additionalLines = 0;
+                    for (var characterIndex = 0; characterIndex < detail.Length; characterIndex += 1)
+                    {
+                        if (detail[characterIndex] == '\n')
+                        {
+                            additionalLines += 1;
+                        }
+                    }
+
+                    maximumAdditionalLines = Mathf.Max(
+                        maximumAdditionalLines,
+                        additionalLines);
+                }
+            }
+
+            return CardHeight + (maximumAdditionalLines * 34f);
         }
 
         private static void ClearChildren(RectTransform root)
@@ -547,7 +623,7 @@ namespace CheeseTama.UI
             image.color = index > 0
                 ? new Color(1f, 0.96f, 0.82f, 0.92f)
                 : new Color(1f, 0.92f, 0.68f, 0.78f);
-            image.raycastTarget = false;
+            image.raycastTarget = index > 0;
 
             var outline = cardObject.AddComponent<Outline>();
             outline.effectColor = new Color(0.66f, 0.45f, 0.2f, 0.22f);
@@ -595,6 +671,27 @@ namespace CheeseTama.UI
             {
                 CreateFragmentRewardButton(rect, data, width);
             }
+
+            if (index > 0)
+            {
+                var detailsTarget = cardObject.AddComponent<ItemDetailsInputTarget>();
+                detailsTarget.Configure(_ => ShowCardDetails(data));
+            }
+        }
+
+        private void ShowCardDetails(CollectionCardData data)
+        {
+            if (messageText == null)
+            {
+                return;
+            }
+
+            var category = string.IsNullOrWhiteSpace(data.category) ? "기록" : data.category;
+            var title = string.IsNullOrWhiteSpace(data.title) ? "알 수 없음" : data.title;
+            var detail = string.IsNullOrWhiteSpace(data.detail) ? "발견한 기록입니다." : data.detail;
+            AccessibilityRuntime.SetTextAndApply(
+                messageText,
+                $"{category} · {title}\n{detail}");
         }
 
         private void CreateFragmentRewardButton(
@@ -1050,7 +1147,7 @@ namespace CheeseTama.UI
             textObject.AddComponent<RectTransform>();
             var label = textObject.AddComponent<Text>();
             label.text = text;
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = KoreanUiFontRuntime.GetDefaultFont();
             label.fontSize = fontSize;
             label.alignment = alignment;
             label.supportRichText = true;
@@ -1111,8 +1208,47 @@ namespace CheeseTama.UI
             }
         }
 
+        private static string AppendDetail(string primary, params string[] additions)
+        {
+            var builder = new StringBuilder(primary ?? string.Empty);
+            if (additions == null)
+            {
+                return builder.ToString();
+            }
+
+            for (var index = 0; index < additions.Length; index += 1)
+            {
+                if (string.IsNullOrWhiteSpace(additions[index]))
+                {
+                    continue;
+                }
+
+                if (builder.Length > 0)
+                {
+                    builder.AppendLine();
+                }
+
+                builder.Append(additions[index]);
+            }
+
+            return builder.ToString();
+        }
+
         private static string FormatKnownRecordName(string id)
         {
+            var masteryRecord = MilkBlendingCatalog.FindMasteryResearchRecord(id);
+            if (masteryRecord != null)
+            {
+                return masteryRecord.title;
+            }
+
+            var seasonalRecord = SeasonalCareEventCatalog.Find(id);
+            if (seasonalRecord != null)
+            {
+                return seasonalRecord.CollectionTitle;
+            }
+
+            id = NormalizeKnownRecordId(id);
             if (CheeseTamaGrowthStageCatalog.TryGetByRecordId(id, out var growthStage))
             {
                 return growthStage.DisplayName;
@@ -1313,6 +1449,21 @@ namespace CheeseTama.UI
                 return "배가 너무 부른 날";
             }
 
+            if (id == "body_chill")
+            {
+                return "몸이 떨린 밤";
+            }
+
+            if (id == "fermented_aftertaste")
+            {
+                return "발효 뒷맛이 남은 날";
+            }
+
+            if (id == "sleep_rhythm_disruption")
+            {
+                return "수면 리듬이 흐트러진 밤";
+            }
+
             if (id == "recipe_warm_milk_soup")
             {
                 return "따뜻한 우유 수프";
@@ -1346,6 +1497,11 @@ namespace CheeseTama.UI
             if (id == "recipe_coffee_milk_jelly")
             {
                 return "커피우유 젤리";
+            }
+
+            if (id == "recipe_cream_soup")
+            {
+                return "크림 수프";
             }
 
             if (id == "recipe_star_cream")
@@ -1398,6 +1554,17 @@ namespace CheeseTama.UI
 
         private static string FormatRecordCategory(string id)
         {
+            if (MilkBlendingCatalog.FindMasteryResearchRecord(id) != null)
+            {
+                return "연구";
+            }
+
+            if (SeasonalCareEventCatalog.Find(id) != null)
+            {
+                return "계절";
+            }
+
+            id = NormalizeKnownRecordId(id);
             if (CheeseTamaGrowthStageCatalog.TryGetByRecordId(id, out _))
             {
                 return "성장";
@@ -1455,6 +1622,20 @@ namespace CheeseTama.UI
 
         private static string FormatKnownRecordDetail(string id)
         {
+            var masteryRecord = MilkBlendingCatalog.FindMasteryResearchRecord(id);
+            if (masteryRecord != null)
+            {
+                return masteryRecord.detail;
+            }
+
+            var seasonalRecord = SeasonalCareEventCatalog.Find(id);
+            if (seasonalRecord != null)
+            {
+                return seasonalRecord.CollectionDetail;
+            }
+
+            var milkBlendRecord = IsMilkBlendRecordId(id);
+            id = NormalizeKnownRecordId(id);
             if (CheeseTamaGrowthStageCatalog.TryGetByRecordId(id, out var growthStage))
             {
                 return growthStage.Description;
@@ -1494,7 +1675,9 @@ namespace CheeseTama.UI
 
             if (id.StartsWith("recipe_"))
             {
-                return "요리 패널에서 만든 레시피 기록입니다.";
+                return milkBlendRecord
+                    ? "우유 블렌딩에서 발견한 음식 기록입니다."
+                    : "요리 패널에서 만든 레시피 기록입니다.";
             }
 
             if (id.StartsWith("session_") || id.StartsWith("daily_presence_") || id.StartsWith("wait_"))
@@ -1527,6 +1710,21 @@ namespace CheeseTama.UI
                 return "먹이를 너무 많이 먹었을 때 생기며, 시간 경과나 가벼운 놀이로 회복하는 상태입니다.";
             }
 
+            if (id == "body_chill")
+            {
+                return "밤에 차가운 우유를 먹어 생기며, 따뜻한 우유·휴식·시간 경과로 회복합니다.";
+            }
+
+            if (id == "fermented_aftertaste")
+            {
+                return "발효 우유나 요거트 계열을 먹어 생기며, 청소와 시간 경과로 옅어집니다.";
+            }
+
+            if (id == "sleep_rhythm_disruption")
+            {
+                return "밤에 커피우유를 먹어 생기며, 휴식과 시간 경과로 회복합니다.";
+            }
+
             if (id.Contains("play") || id.Contains("pet") || id.Contains("clean") || id.Contains("rest"))
             {
                 return "직접 돌봄 행동을 반복해 등록된 기록입니다.";
@@ -1535,8 +1733,31 @@ namespace CheeseTama.UI
             return "밀크룸 돌봄 중 발견한 짧은 순간입니다.";
         }
 
+        private static string NormalizeKnownRecordId(string id)
+        {
+            const string MilkBlendRecordPrefix = "milk_blend_";
+            if (IsMilkBlendRecordId(id))
+            {
+                return id.Substring(MilkBlendRecordPrefix.Length);
+            }
+
+            return id;
+        }
+
+        private static bool IsMilkBlendRecordId(string id)
+        {
+            return !string.IsNullOrWhiteSpace(id)
+                && id.StartsWith("milk_blend_", StringComparison.Ordinal);
+        }
+
         private static string FormatHiddenRecordName(string id)
         {
+            var hiddenCareer = HiddenCareerCardCatalog.Find(id);
+            if (hiddenCareer != null)
+            {
+                return hiddenCareer.DisplayName;
+            }
+
             if (id == "first_soft_hatch")
             {
                 return "첫 말랑 부화";

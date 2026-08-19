@@ -19,7 +19,9 @@ namespace CheeseTama.Gameplay.Milk
         MissingCatalogResult = 9,
         InsufficientCurrency = 10,
         RewardCapacityFull = 11,
-        TrackingCapacityFull = 12
+        TrackingCapacityFull = 12,
+        InvalidRoll = 13,
+        MasteryRewardCapacityFull = 14
     }
 
     public sealed class MilkBlendUsageView
@@ -48,6 +50,7 @@ namespace CheeseTama.Gameplay.Milk
     {
         private readonly HashSet<string> unlockedMilkIds;
         private readonly HashSet<string> discoveredResultIds;
+        private readonly HashSet<string> masteryResearchRecordIds;
         private readonly MilkBlendUsageView[] usageEntries;
 
         public MilkBlendingPanelSnapshot(
@@ -56,13 +59,15 @@ namespace CheeseTama.Gameplay.Milk
             int collectionFragments,
             IEnumerable<string> unlockedMilks,
             IEnumerable<string> discoveredResults,
-            IEnumerable<MilkBlendUsageView> usages)
+            IEnumerable<MilkBlendUsageView> usages,
+            IEnumerable<string> masteryResearchRecords = null)
         {
             this.milkCoins = Math.Max(0, milkCoins);
             this.milkDrops = Math.Max(0, milkDrops);
             this.collectionFragments = Math.Max(0, collectionFragments);
             unlockedMilkIds = NormalizeIds(unlockedMilks);
             discoveredResultIds = NormalizeIds(discoveredResults);
+            masteryResearchRecordIds = NormalizeIds(masteryResearchRecords);
             usageEntries = NormalizeUsages(usages);
         }
 
@@ -134,6 +139,66 @@ namespace CheeseTama.Gameplay.Milk
             }
 
             return total;
+        }
+
+        public int GetMasteryStage(string ingredientId)
+        {
+            return MilkBlendingCatalog.GetMasteryStage(
+                GetIngredientBlendCount(ingredientId));
+        }
+
+        public int GetMasteryResearchRecordCount(string ingredientId)
+        {
+            var ingredient = MilkBlendingCatalog.FindIngredient(ingredientId);
+            if (ingredient == null)
+            {
+                return 0;
+            }
+
+            var count = 0;
+            for (var index = 0;
+                index < MilkBlendingCatalog.AllMasteryMilestones.Length;
+                index += 1)
+            {
+                var milestone = MilkBlendingCatalog.AllMasteryMilestones[index];
+                var recordId = MilkBlendingCatalog.BuildMasteryResearchRecordId(
+                    ingredient.id,
+                    milestone.stage);
+                if (Contains(masteryResearchRecordIds, recordId))
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
+        public MilkBlendMasteryResearchRecord GetLatestMasteryResearchRecord(
+            string ingredientId)
+        {
+            var ingredient = MilkBlendingCatalog.FindIngredient(ingredientId);
+            if (ingredient == null)
+            {
+                return null;
+            }
+
+            for (var index = MilkBlendingCatalog.AllMasteryMilestones.Length - 1;
+                index >= 0;
+                index -= 1)
+            {
+                var milestone = MilkBlendingCatalog.AllMasteryMilestones[index];
+                var recordId = MilkBlendingCatalog.BuildMasteryResearchRecordId(
+                    ingredient.id,
+                    milestone.stage);
+                if (Contains(masteryResearchRecordIds, recordId))
+                {
+                    return MilkBlendingCatalog.CreateMasteryResearchRecord(
+                        ingredient,
+                        milestone);
+                }
+            }
+
+            return null;
         }
 
         public bool CanAfford(MilkBlendRecipeDefinition recipe)
@@ -212,6 +277,72 @@ namespace CheeseTama.Gameplay.Milk
         }
     }
 
+    public sealed class MilkBlendMasteryRewardResult
+    {
+        public static readonly MilkBlendMasteryRewardResult None =
+            new MilkBlendMasteryRewardResult(
+                string.Empty,
+                0,
+                0,
+                0,
+                0,
+                Array.Empty<string>(),
+                string.Empty);
+
+        public MilkBlendMasteryRewardResult(
+            string ingredientId,
+            int reachedStage,
+            int milkCoins,
+            int milkDrops,
+            int collectionFragments,
+            IReadOnlyList<string> researchRecordIds,
+            string message)
+        {
+            this.ingredientId = Normalize(ingredientId);
+            this.reachedStage = Math.Max(0, reachedStage);
+            this.milkCoins = Math.Max(0, milkCoins);
+            this.milkDrops = Math.Max(0, milkDrops);
+            this.collectionFragments = Math.Max(0, collectionFragments);
+            this.researchRecordIds = CopyIds(researchRecordIds);
+            this.message = Normalize(message);
+        }
+
+        public string ingredientId { get; }
+        public int reachedStage { get; }
+        public int milkCoins { get; }
+        public int milkDrops { get; }
+        public int collectionFragments { get; }
+        public IReadOnlyList<string> researchRecordIds { get; }
+        public string message { get; }
+        public bool granted => researchRecordIds.Count > 0;
+
+        private static IReadOnlyList<string> CopyIds(IReadOnlyList<string> values)
+        {
+            if (values == null || values.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            var copied = new List<string>(values.Count);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < values.Count; index += 1)
+            {
+                var normalized = Normalize(values[index]);
+                if (!string.IsNullOrEmpty(normalized) && seen.Add(normalized))
+                {
+                    copied.Add(normalized);
+                }
+            }
+
+            return copied.ToArray();
+        }
+
+        private static string Normalize(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+    }
+
     public sealed class MilkBlendResult
     {
         public MilkBlendResult(
@@ -227,7 +358,9 @@ namespace CheeseTama.Gameplay.Milk
             int milkCoinCost,
             int milkDropCost,
             int collectionFragmentCost,
-            string preferredIngredientId)
+            string preferredIngredientId,
+            bool specialResult = false,
+            MilkBlendMasteryRewardResult masteryReward = null)
         {
             this.status = status;
             applied = status == MilkBlendStatus.Applied;
@@ -246,6 +379,10 @@ namespace CheeseTama.Gameplay.Milk
             this.preferredIngredientId = applied
                 ? Normalize(preferredIngredientId)
                 : string.Empty;
+            this.specialResult = applied && specialResult;
+            this.masteryReward = applied
+                ? masteryReward ?? MilkBlendMasteryRewardResult.None
+                : MilkBlendMasteryRewardResult.None;
         }
 
         public MilkBlendStatus status { get; }
@@ -263,6 +400,10 @@ namespace CheeseTama.Gameplay.Milk
         public int milkDropCost { get; }
         public int collectionFragmentCost { get; }
         public string preferredIngredientId { get; }
+        public bool specialResult { get; }
+        public MilkBlendMasteryRewardResult masteryReward { get; }
+        public IReadOnlyList<string> newMasteryResearchRecordIds =>
+            masteryReward.researchRecordIds;
 
         private static string Normalize(string value)
         {
@@ -312,7 +453,8 @@ namespace CheeseTama.Gameplay.Milk
                 economy?.collectionFragments ?? 0,
                 unlockedMilkIds,
                 state?.discoveredResultIds,
-                usages);
+                usages,
+                state?.masteryResearchRecordIds);
         }
 
         public MilkBlendResult TryBlend(
@@ -325,6 +467,31 @@ namespace CheeseTama.Gameplay.Milk
             Func<string, bool> isMilkUnlocked,
             string receiptKey,
             DateTimeOffset blendedAt)
+        {
+            return TryBlend(
+                state,
+                tama,
+                economy,
+                snackInventory,
+                milkId,
+                ingredientId,
+                isMilkUnlocked,
+                receiptKey,
+                blendedAt,
+                1d);
+        }
+
+        public MilkBlendResult TryBlend(
+            MilkBlendingSaveData state,
+            CheeseTamaModel tama,
+            EconomySaveData economy,
+            IList<SnackInventorySaveEntry> snackInventory,
+            string milkId,
+            string ingredientId,
+            Func<string, bool> isMilkUnlocked,
+            string receiptKey,
+            DateTimeOffset blendedAt,
+            double specialResultRoll)
         {
             var normalizedMilkId = Normalize(milkId);
             var normalizedIngredientId = Normalize(ingredientId);
@@ -396,8 +563,12 @@ namespace CheeseTama.Gameplay.Milk
                     ingredient.id);
             }
 
-            var resultSnack = recipe.ResultSnack;
-            if (resultSnack == null)
+            var regularResultSnack = recipe.ResultSnack;
+            var specialResultSnack = recipe.HasSpecialResult
+                ? recipe.SpecialResultSnack
+                : null;
+            if (regularResultSnack == null
+                || (recipe.HasSpecialResult && specialResultSnack == null))
             {
                 return Failure(
                     MilkBlendStatus.MissingCatalogResult,
@@ -405,6 +576,20 @@ namespace CheeseTama.Gameplay.Milk
                     milk.id,
                     ingredient.id);
             }
+
+            if (!IsValidRoll(specialResultRoll))
+            {
+                return Failure(
+                    MilkBlendStatus.InvalidRoll,
+                    normalizedReceiptKey,
+                    milk.id,
+                    ingredient.id);
+            }
+
+            var specialResult = recipe.IsSpecialResultRoll(specialResultRoll);
+            var resultSnack = specialResult
+                ? specialResultSnack
+                : regularResultSnack;
 
             if (tama == null || economy == null || snackInventory == null)
             {
@@ -442,17 +627,53 @@ namespace CheeseTama.Gameplay.Milk
                     ingredient.id);
             }
 
+            var projectedIngredientBlendCount = SaturatingAdd(
+                state.GetIngredientBlendCount(ingredient.id),
+                1);
+            var masteryReward = BuildPendingMasteryReward(
+                state,
+                ingredient,
+                projectedIngredientBlendCount);
+            if (!state.CanAddMasteryResearchRecords(masteryReward.researchRecordIds))
+            {
+                return Failure(
+                    MilkBlendStatus.TrackingCapacityFull,
+                    normalizedReceiptKey,
+                    milk.id,
+                    ingredient.id);
+            }
+
+            if (!CanGrantMasteryRewardAfterSpend(economy, recipe, masteryReward))
+            {
+                return Failure(
+                    MilkBlendStatus.MasteryRewardCapacityFull,
+                    normalizedReceiptKey,
+                    milk.id,
+                    ingredient.id);
+            }
+
             // Validation is complete. From here onward every mutation belongs to this receipt.
             var firstDiscovery = !state.HasDiscovered(resultSnack.id);
             SpendCurrency(economy, recipe);
             var grantedQuantity = AddSnack(snackInventory, resultSnack.id);
-            var usage = state.RecordBlend(ingredient.id, resultSnack.id, blendedAt);
+            state.RecordBlend(ingredient.id, resultSnack.id, blendedAt);
+            AddMasteryResearchRecords(state, masteryReward.researchRecordIds);
+            GrantMasteryReward(economy, masteryReward);
             state.AddAppliedReceipt(normalizedReceiptKey);
             tama.EnsureRuntimeDefaults();
+            var ingredientBlendCount = state.GetIngredientBlendCount(ingredient.id);
             var preferredIngredientId = ReconcileMostUsedIngredient(state, tama);
-            var message = firstDiscovery
-                ? $"새 조합을 발견했어요! {resultSnack.displayName} 1개를 보관했습니다."
-                : $"{resultSnack.displayName} 1개를 만들었습니다. 이 재료는 {usage?.blendCount ?? 0}회 사용했어요.";
+            var message = specialResult
+                ? firstDiscovery
+                    ? $"특별한 음식 발견! {resultSnack.displayName} 1개를 보관했습니다."
+                    : $"특별한 음식이 완성됐어요! {resultSnack.displayName} 1개를 보관했습니다."
+                : firstDiscovery
+                    ? $"새 조합을 발견했어요! {resultSnack.displayName} 1개를 보관했습니다."
+                    : $"{resultSnack.displayName} 1개를 만들었습니다. 이 재료는 {ingredientBlendCount}회 사용했어요.";
+            if (masteryReward.granted)
+            {
+                message += "\n" + masteryReward.message;
+            }
 
             return new MilkBlendResult(
                 MilkBlendStatus.Applied,
@@ -463,11 +684,13 @@ namespace CheeseTama.Gameplay.Milk
                 message,
                 firstDiscovery,
                 grantedQuantity,
-                usage?.blendCount ?? 0,
+                ingredientBlendCount,
                 recipe.coinCost,
                 recipe.dropCost,
                 recipe.fragmentCost,
-                preferredIngredientId);
+                preferredIngredientId,
+                specialResult,
+                masteryReward);
         }
 
         public string ReconcileMostUsedIngredient(
@@ -487,7 +710,7 @@ namespace CheeseTama.Gameplay.Milk
                 var recipe = MilkBlendingCatalog.AllRecipes[index];
                 maximumCount = Math.Max(
                     maximumCount,
-                    state.GetBlendCount(recipe.ingredientId, recipe.resultSnackId));
+                    state.GetIngredientBlendCount(recipe.ingredientId));
             }
 
             if (maximumCount <= 0)
@@ -498,9 +721,7 @@ namespace CheeseTama.Gameplay.Milk
             var currentPreference = Normalize(tama.growthHistory.mostUsedIngredientId);
             var currentRecipe = MilkBlendingCatalog.FindByResult(currentPreference);
             if (currentRecipe != null
-                && state.GetBlendCount(
-                    currentRecipe.ingredientId,
-                    currentRecipe.resultSnackId) == maximumCount)
+                && state.GetIngredientBlendCount(currentRecipe.ingredientId) == maximumCount)
             {
                 return currentPreference;
             }
@@ -508,8 +729,7 @@ namespace CheeseTama.Gameplay.Milk
             for (var index = 0; index < MilkBlendingCatalog.AllRecipes.Length; index += 1)
             {
                 var recipe = MilkBlendingCatalog.AllRecipes[index];
-                if (state.GetBlendCount(recipe.ingredientId, recipe.resultSnackId)
-                    != maximumCount)
+                if (state.GetIngredientBlendCount(recipe.ingredientId) != maximumCount)
                 {
                     continue;
                 }
@@ -570,9 +790,151 @@ namespace CheeseTama.Gameplay.Milk
                     return "간식 보관함이 가득 차 결과를 담을 수 없습니다.";
                 case MilkBlendStatus.TrackingCapacityFull:
                     return "새 조합 기록을 더 저장할 수 없습니다.";
+                case MilkBlendStatus.InvalidRoll:
+                    return "블렌딩 확률 값을 확인할 수 없습니다.";
+                case MilkBlendStatus.MasteryRewardCapacityFull:
+                    return "숙련 보상을 담을 공간이 부족해 블렌딩을 진행하지 않았습니다.";
                 default:
                     return string.Empty;
             }
+        }
+
+        private static MilkBlendMasteryRewardResult BuildPendingMasteryReward(
+            MilkBlendingSaveData state,
+            MilkBlendIngredientDefinition ingredient,
+            int projectedIngredientBlendCount)
+        {
+            if (state == null || ingredient == null)
+            {
+                return MilkBlendMasteryRewardResult.None;
+            }
+
+            var recordIds = new List<string>();
+            var recordTitles = new List<string>();
+            var reachedStage = 0;
+            var milkCoins = 0;
+            var milkDrops = 0;
+            var collectionFragments = 0;
+            for (var index = 0;
+                index < MilkBlendingCatalog.AllMasteryMilestones.Length;
+                index += 1)
+            {
+                var milestone = MilkBlendingCatalog.AllMasteryMilestones[index];
+                if (milestone == null
+                    || projectedIngredientBlendCount < milestone.requiredUseCount)
+                {
+                    continue;
+                }
+
+                var record = MilkBlendingCatalog.CreateMasteryResearchRecord(
+                    ingredient,
+                    milestone);
+                if (record == null || state.HasMasteryResearchRecord(record.recordId))
+                {
+                    continue;
+                }
+
+                recordIds.Add(record.recordId);
+                recordTitles.Add(milestone.title);
+                reachedStage = Math.Max(reachedStage, milestone.stage);
+                milkCoins = SaturatingAdd(milkCoins, milestone.milkCoinReward);
+                milkDrops = SaturatingAdd(milkDrops, milestone.milkDropReward);
+                collectionFragments = SaturatingAdd(
+                    collectionFragments,
+                    milestone.collectionFragmentReward);
+            }
+
+            if (recordIds.Count == 0)
+            {
+                return MilkBlendMasteryRewardResult.None;
+            }
+
+            var rewardParts = new List<string>(3);
+            AddRewardPart(rewardParts, "코인", milkCoins);
+            AddRewardPart(rewardParts, "우유방울", milkDrops);
+            AddRewardPart(rewardParts, "도감조각", collectionFragments);
+            var rewardText = rewardParts.Count > 0
+                ? " · " + string.Join(", ", rewardParts)
+                : string.Empty;
+            var message = $"{ingredient.displayName} 숙련 Lv.{reachedStage}: "
+                + string.Join(" · ", recordTitles)
+                + $" 연구 기록을 열었어요{rewardText}.";
+            return new MilkBlendMasteryRewardResult(
+                ingredient.id,
+                reachedStage,
+                milkCoins,
+                milkDrops,
+                collectionFragments,
+                recordIds,
+                message);
+        }
+
+        private static void AddRewardPart(List<string> parts, string label, int amount)
+        {
+            if (parts != null && amount > 0)
+            {
+                parts.Add($"{label} +{amount}");
+            }
+        }
+
+        private static bool CanGrantMasteryRewardAfterSpend(
+            EconomySaveData economy,
+            MilkBlendRecipeDefinition recipe,
+            MilkBlendMasteryRewardResult reward)
+        {
+            if (economy == null || recipe == null || reward == null)
+            {
+                return false;
+            }
+
+            if (!reward.granted)
+            {
+                return true;
+            }
+
+            return CanAddCurrency(
+                    Math.Max(0, economy.milkCoins) - recipe.coinCost,
+                    reward.milkCoins)
+                && CanAddCurrency(
+                    Math.Max(0, economy.milkDrops) - recipe.dropCost,
+                    reward.milkDrops)
+                && CanAddCurrency(
+                    Math.Max(0, economy.collectionFragments) - recipe.fragmentCost,
+                    reward.collectionFragments);
+        }
+
+        private static bool CanAddCurrency(int current, int amount)
+        {
+            return Math.Max(0, amount) <= int.MaxValue - Math.Max(0, current);
+        }
+
+        private static void AddMasteryResearchRecords(
+            MilkBlendingSaveData state,
+            IReadOnlyList<string> recordIds)
+        {
+            if (state == null || recordIds == null)
+            {
+                return;
+            }
+
+            for (var index = 0; index < recordIds.Count; index += 1)
+            {
+                state.AddMasteryResearchRecord(recordIds[index]);
+            }
+        }
+
+        private static void GrantMasteryReward(
+            EconomySaveData economy,
+            MilkBlendMasteryRewardResult reward)
+        {
+            if (economy == null || reward == null || !reward.granted)
+            {
+                return;
+            }
+
+            economy.milkCoins += reward.milkCoins;
+            economy.milkDrops += reward.milkDrops;
+            economy.collectionFragments += reward.collectionFragments;
         }
 
         private static bool ResolveMilkUnlocked(
@@ -590,6 +952,14 @@ namespace CheeseTama.Gameplay.Milk
             }
 
             return string.Equals(milkId, MilkCatalog.BasicMilkId, StringComparison.Ordinal);
+        }
+
+        private static bool IsValidRoll(double value)
+        {
+            return !double.IsNaN(value)
+                && !double.IsInfinity(value)
+                && value >= 0d
+                && value <= 1d;
         }
 
         private static bool HasEnoughCurrency(
@@ -658,6 +1028,12 @@ namespace CheeseTama.Gameplay.Milk
                 quantity = 1
             });
             return 1;
+        }
+
+        private static int SaturatingAdd(int current, int amount)
+        {
+            var result = (long)Math.Max(0, current) + Math.Max(0, amount);
+            return result > int.MaxValue ? int.MaxValue : (int)result;
         }
 
         private static string Normalize(string value)

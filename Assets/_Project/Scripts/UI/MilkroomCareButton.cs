@@ -327,9 +327,14 @@ namespace CheeseTama.UI
             careActions.ConfigureLateLevelGrowth(
                 manager.CurrentSave?.lateLevelGrowth,
                 manager.CurrentSave?.milkGrowth);
+            careActions.ConfigureRecoveryEffectPercent(
+                manager.GetHiddenCareerBenefits().RecoveryEffectPercent);
             if (milkDefinition != null)
             {
-                return careActions.FeedMilk(manager.CurrentTama, milkDefinition);
+                return careActions.FeedMilk(
+                    manager.CurrentTama,
+                    milkDefinition,
+                    System.DateTimeOffset.Now);
             }
 
             return action switch

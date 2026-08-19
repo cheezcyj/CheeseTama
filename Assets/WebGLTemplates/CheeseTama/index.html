@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#241b21">
+    <meta name="color-scheme" content="dark">
+    <meta name="referrer" content="no-referrer">
+    <meta name="cheesetama-public-base" content="/play/">
+    <title>CheeseTama | 웹게임</title>
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="brand-header" aria-label="CheeseTama 웹게임">
+        <div class="brand-mark" aria-hidden="true">CT</div>
+        <div>
+          <p class="eyebrow">A TINY CHEESE LIFE</p>
+          <h1>CheeseTama</h1>
+        </div>
+        <span id="cheesetama-version" class="version">v{{{ PRODUCT_VERSION }}}</span>
+      </header>
+
+      <section id="cheesetama-stage" class="game-stage" aria-label="CheeseTama 게임 화면">
+        <canvas
+          id="unity-canvas"
+          width={{{ WIDTH }}}
+          height={{{ HEIGHT }}}
+          tabindex="-1"
+          aria-label="CheeseTama 게임 캔버스"
+        ></canvas>
+
+        <section id="cheesetama-start" class="stage-panel start-panel">
+          <div class="cheese-orbit" aria-hidden="true">
+            <span class="cheese-core">●</span>
+          </div>
+          <p class="eyebrow">WEB EDITION</p>
+          <h2>작은 치즈 생명체와<br>오늘을 시작해요</h2>
+          <p class="panel-copy">
+            게임 기록은 현재 주소와 브라우저 저장공간에 보관됩니다.
+            시크릿 모드나 브라우저 데이터 삭제 시 기록이 사라질 수 있습니다.
+          </p>
+          <button id="cheesetama-start-button" class="primary-button" type="button" disabled>
+            시작 준비 중…
+          </button>
+          <p id="cheesetama-browser-note" class="browser-note">
+            최신 데스크톱 Chrome · Edge · Firefox · Safari 권장
+          </p>
+          <p id="cheesetama-compatibility" class="compatibility" role="status"></p>
+        </section>
+
+        <section id="cheesetama-loading" class="stage-panel loading-panel" hidden>
+          <div class="loading-cheese" aria-hidden="true"></div>
+          <h2>치즈타마를 깨우는 중이에요</h2>
+          <div
+            id="cheesetama-progress-track"
+            class="progress-track"
+            role="progressbar"
+            aria-label="게임 불러오기"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div id="cheesetama-progress" class="progress-value"></div>
+          </div>
+          <p id="cheesetama-progress-label" class="progress-label" aria-live="polite">0%</p>
+          <p class="loading-tip">처음 실행할 때는 잠시 시간이 걸릴 수 있어요.</p>
+        </section>
+
+        <section id="cheesetama-error" class="stage-panel error-panel" role="alert" hidden>
+          <div class="error-symbol" aria-hidden="true">!</div>
+          <h2>게임을 불러오지 못했어요</h2>
+          <p id="cheesetama-error-message" class="panel-copy">
+            네트워크 연결을 확인한 뒤 다시 시도해 주세요.
+          </p>
+          <button id="cheesetama-retry" class="primary-button" type="button">다시 시도</button>
+        </section>
+
+        <div id="unity-warning" class="warning-stack" aria-live="polite"></div>
+      </section>
+
+      <footer class="game-footer">
+        <p>저장 데이터는 이 사이트의 <strong>/play/</strong> 주소를 기준으로 구분됩니다.</p>
+        <button id="cheesetama-fullscreen" class="secondary-button" type="button" hidden>
+          전체 화면
+        </button>
+      </footer>
+    </main>
+
+    <noscript>CheeseTama를 실행하려면 브라우저에서 JavaScript를 활성화해 주세요.</noscript>
+
+    <script>
+      "use strict";
+
+      const canvas = document.querySelector("#unity-canvas");
+      const startPanel = document.querySelector("#cheesetama-start");
+      const startButton = document.querySelector("#cheesetama-start-button");
+      const compatibility = document.querySelector("#cheesetama-compatibility");
+      const loadingPanel = document.querySelector("#cheesetama-loading");
+      const progressTrack = document.querySelector("#cheesetama-progress-track");
+      const progressValue = document.querySelector("#cheesetama-progress");
+      const progressLabel = document.querySelector("#cheesetama-progress-label");
+      const errorPanel = document.querySelector("#cheesetama-error");
+      const errorMessage = document.querySelector("#cheesetama-error-message");
+      const retryButton = document.querySelector("#cheesetama-retry");
+      const fullscreenButton = document.querySelector("#cheesetama-fullscreen");
+      const warningStack = document.querySelector("#unity-warning");
+
+      const buildUrl = "Build";
+      const loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+      const config = {
+        autoSyncPersistentDataPath: true,
+        arguments: [],
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+        workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+#endif
+#if USE_WASM
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        showBanner: unityShowBanner,
+      };
+
+      let hasStarted = false;
+      let loaderReady = false;
+
+      function unityShowBanner(message, type) {
+        const banner = document.createElement("p");
+        banner.className = "warning-banner " + (type || "info");
+        banner.textContent = message;
+        warningStack.appendChild(banner);
+        if (type !== "error") {
+          window.setTimeout(() => banner.remove(), 5000);
+        }
+      }
+
+      function detectCompatibility() {
+        const supportsWebAssembly = typeof WebAssembly === "object";
+        const testCanvas = document.createElement("canvas");
+        const supportsWebGl2 = Boolean(testCanvas.getContext("webgl2"));
+        const supportsStorage = typeof indexedDB !== "undefined";
+        const missing = [];
+        if (!supportsWebAssembly) missing.push("WebAssembly");
+        if (!supportsWebGl2) missing.push("WebGL 2");
+        if (!supportsStorage) missing.push("브라우저 저장소");
+
+        if (missing.length > 0) {
+          compatibility.textContent = "이 브라우저에서는 " + missing.join(", ") + " 기능을 확인할 수 없습니다.";
+          compatibility.classList.add("is-warning");
+          return false;
+        }
+
+        compatibility.textContent = "브라우저 실행 환경을 확인했습니다.";
+        return true;
+      }
+
+      function updateProgress(progress) {
+        const percent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+        progressValue.style.width = percent + "%";
+        progressTrack.setAttribute("aria-valuenow", String(percent));
+        progressLabel.textContent = percent + "%";
+      }
+
+      function showError(error) {
+        console.error("CheeseTama WebGL startup failed", error);
+        loadingPanel.hidden = true;
+        startPanel.hidden = true;
+        canvas.classList.remove("is-ready");
+        errorMessage.textContent =
+          "필요한 게임 파일을 불러오지 못했습니다. 네트워크 연결과 브라우저 설정을 확인해 주세요.";
+        errorPanel.hidden = false;
+      }
+
+      function prepareUnityLoader() {
+        const script = document.createElement("script");
+        script.src = loaderUrl;
+        script.async = true;
+        script.onload = () => {
+          loaderReady = true;
+          startButton.disabled = false;
+          startButton.textContent = "게임 시작";
+        };
+        script.onerror = () => showError(new Error("Unity loader request failed"));
+        document.body.appendChild(script);
+      }
+
+      function startGame() {
+        if (hasStarted || !loaderReady) return;
+        hasStarted = true;
+        startButton.disabled = true;
+        startPanel.hidden = true;
+        errorPanel.hidden = true;
+        loadingPanel.hidden = false;
+        updateProgress(0);
+
+        try {
+          createUnityInstance(canvas, config, updateProgress)
+            .then((unityInstance) => {
+              loadingPanel.hidden = true;
+              canvas.classList.add("is-ready");
+              canvas.focus();
+              fullscreenButton.hidden = false;
+              fullscreenButton.addEventListener("click", () => unityInstance.SetFullscreen(1));
+            })
+            .catch(showError);
+        } catch (error) {
+          showError(error);
+        }
+      }
+
+      startButton.addEventListener("click", startGame, { once: true });
+      retryButton.addEventListener("click", () => window.location.reload());
+      detectCompatibility();
+      prepareUnityLoader();
+    </script>
+  </body>
+</html>

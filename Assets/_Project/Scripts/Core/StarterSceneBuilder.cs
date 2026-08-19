@@ -3,10 +3,13 @@ using CheeseTama.Data;
 using CheeseTama.Environment;
 using CheeseTama.Gameplay.Autonomy;
 using CheeseTama.Gameplay.Growth;
+using CheeseTama.Gameplay.Input;
 using CheeseTama.Gameplay.Decorations;
 using CheeseTama.Gameplay.Milk;
 using CheeseTama.Gameplay.MiniGames;
+using CheeseTama.Gameplay.Records;
 using CheeseTama.Gameplay.Snacks;
+using CheeseTama.Platform;
 using CheeseTama.Save;
 using CheeseTama.UI;
 using CheeseTama.Utilities;
@@ -31,6 +34,46 @@ namespace CheeseTama.Core
         private const float TopMenuButtonTop = 14f;
         private const float TopMenuButtonHeight = 54f;
         private const string RecordDetailVerticalGap = "\n<size=3> </size>\n";
+        private static readonly string[] MilkroomPropBlockingSurfaceNames =
+        {
+            NewGameSetupController.OverlayObjectName,
+            "Return Summary Overlay",
+            "Growth Achievement Overlay",
+            "Evolution Achievement Overlay",
+            "Care Event Overlay",
+            CleaningMiniGameController.OverlayObjectName,
+            "Milk Drop Catch Overlay",
+            BouncyJumpMiniGameController.OverlayObjectName,
+            PlayChoicePanelController.OverlayObjectName,
+            GrowthJourneyController.OverlayObjectName,
+            "Decoration Shop Overlay",
+            "CheeseTama Name Dialog",
+            "Settings Modal",
+            "Confirm Reset Dialog",
+            "Collection Overlay",
+            "Decorate Overlay",
+            "Milk Panel",
+            "Cooking Panel",
+            "Snack Panel",
+            "Dev Panel",
+            FirstDayJourneyController.OverlayObjectName,
+            "Cheese Star Delivery Overlay",
+            "Memory Journal Overlay",
+            "Fantasy Powder Overlay",
+            SaveRecoveryNoticeController.OverlayObjectName,
+            CheeseTamaProfileMenuController.OverlayObjectName,
+            InputBindingsPanelController.OverlayObjectName,
+            LifeRecordsPanelController.OverlayObjectName,
+            CloudSavePanelController.OverlayObjectName,
+            "Milk Blending Overlay",
+            NpcVisitCardController.OverlayObjectName,
+            JourneyHubPanelController.OverlayObjectName,
+            SleepSchedulePanelController.OverlayObjectName,
+            StarLegacyPanelController.OverlayObjectName,
+            "Bond Status Overlay",
+            "Hidden Career Card Overlay",
+            "Accessibility Panel"
+        };
         private static readonly Vector2 MilkroomToolPanelPosition = new Vector2(420f, -184f);
         private static readonly Vector2 MilkroomToolPanelSize = new Vector2(680f, 590f);
 
@@ -151,6 +194,7 @@ namespace CheeseTama.Core
                 manager.LoadOrCreateGame();
             }
 
+            EnsureMilkroomBackground();
             ApplySavedMilkroomTheme(manager);
             controller.Bind(manager.CurrentSave);
             controller.ShowMessage("돌봄 준비 완료.");
@@ -172,6 +216,7 @@ namespace CheeseTama.Core
                     visualController,
                     out var settingsLastSavedText);
                 controller.SetLastSavedText(settingsLastSavedText);
+                BuildDecorateOverlay(canvas.transform, out _);
             }
             else
             {
@@ -180,7 +225,7 @@ namespace CheeseTama.Core
 
             Object.FindFirstObjectByType<MilkPanelController>()?.Close();
             Object.FindFirstObjectByType<CookingPanelController>()?.Close();
-            Object.FindFirstObjectByType<SnackPanelController>()?.Close();
+            BuildSnackPanel(canvas.transform, controller, visualController)?.Close();
             EnsureCheeseTamaProfileMenuShell(canvas.transform);
             EnsureMilkroomStatGauges(canvas.transform, controller);
             EnsureCheeseTamaNameDialog(canvas.transform, controller);
@@ -203,6 +248,7 @@ namespace CheeseTama.Core
             EnsureDecorationShop(canvas.transform);
             EnsureDecorationRoomPresenter();
             EnsureMilkroomAtmosphere(canvas.transform, manager.CurrentTama);
+            EnsureMilkroomSeasonalLayer(canvas.transform, manager);
             EnsureCheeseTamaPetInteraction(canvas.transform, controller, visualController);
             EnsureCheeseTamaSpeechBubble(canvas.transform, visualController);
             EnsureAutonomousLife(canvas.transform, visualController);
@@ -212,12 +258,16 @@ namespace CheeseTama.Core
             EnsureMemoryJournal(canvas.transform);
             EnsureFantasyPowderHiddenRecipes(canvas.transform);
             EnsureFirstDayJourney(canvas.transform);
+            EnsureJourneyHub(canvas.transform);
             EnsureCheeseTamaProfileMenu(canvas.transform);
             if (!EnsureInputBindingsPanel(canvas.transform))
             {
                 return false;
             }
+            EnsureMilkroomPropInteractions(canvas.transform);
             EnsureUiButtonSounds(canvas.transform);
+            EnsureAccessibleInputScopes(canvas.transform);
+            AccessibilityRuntime.Apply(canvas.transform, manager.CurrentSave.settings);
             return true;
         }
 
@@ -247,6 +297,8 @@ namespace CheeseTama.Core
             }
 
             EnsureUiButtonSounds(canvas.transform);
+            EnsureAccessibleInputScopes(canvas.transform);
+            AccessibilityRuntime.Apply(canvas.transform, manager.CurrentSave.settings);
 
             return true;
         }
@@ -372,7 +424,7 @@ namespace CheeseTama.Core
 
         public static void BuildBootScene()
         {
-            EnsureCoreSystems();
+            var manager = EnsureCoreSystems();
             EnsureCamera("Boot Camera");
             EnsureEventSystem();
             EnsureCanvas("Boot Canvas");
@@ -381,6 +433,8 @@ namespace CheeseTama.Core
             var canvas = EnsureCanvas("Boot Canvas");
             var startButton = GetOrCreateButton(canvas.transform, "Start Button", "시작", new Vector2(0, 120));
             ConfigureNavigationButton(startButton, SceneNames.Milkroom, false);
+            EnsureAccessibleInputScopes(canvas.transform);
+            AccessibilityRuntime.Apply(canvas.transform, manager.CurrentSave.settings);
         }
 
         public static void BuildMilkroomScene()
@@ -717,6 +771,7 @@ namespace CheeseTama.Core
             EnsureDecorationShop(canvas.transform);
             EnsureDecorationRoomPresenter();
             EnsureMilkroomAtmosphere(canvas.transform, manager.CurrentTama);
+            EnsureMilkroomSeasonalLayer(canvas.transform, manager);
             EnsureCheeseTamaPetInteraction(canvas.transform, controller, visualController);
             EnsureCheeseTamaSpeechBubble(canvas.transform, visualController);
             EnsureAutonomousLife(canvas.transform, visualController);
@@ -726,9 +781,13 @@ namespace CheeseTama.Core
             EnsureMemoryJournal(canvas.transform);
             EnsureFantasyPowderHiddenRecipes(canvas.transform);
             EnsureFirstDayJourney(canvas.transform);
+            EnsureJourneyHub(canvas.transform);
             EnsureCheeseTamaProfileMenu(canvas.transform);
             EnsureInputBindingsPanel(canvas.transform);
+            EnsureMilkroomPropInteractions(canvas.transform);
             EnsureUiButtonSounds(canvas.transform);
+            EnsureAccessibleInputScopes(canvas.transform);
+            AccessibilityRuntime.Apply(canvas.transform, manager.CurrentSave.settings);
             OrganizeMilkroomSceneHierarchy();
         }
 
@@ -797,6 +856,8 @@ namespace CheeseTama.Core
 
             var backButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "밀크룸", new Vector2(0, 36), new Vector2(164, 50));
             ConfigureNavigationButton(backButton, SceneNames.Milkroom, false);
+            EnsureAccessibleInputScopes(canvas.transform);
+            AccessibilityRuntime.Apply(canvas.transform, manager.CurrentSave.settings);
         }
 
         public static void BuildDebugScene()
@@ -872,6 +933,8 @@ namespace CheeseTama.Core
 
             var milkroomButton = GetOrCreateButton(canvas.transform, "Milkroom Button", "밀크룸", new Vector2(350, 36));
             ConfigureNavigationButton(milkroomButton, SceneNames.Milkroom, true);
+            EnsureAccessibleInputScopes(canvas.transform);
+            AccessibilityRuntime.Apply(canvas.transform, manager.CurrentSave.settings);
         }
 
         private static GameObject BuildCollectionOverlay(
@@ -941,7 +1004,7 @@ namespace CheeseTama.Core
 
             var overlayTransform = overlay.transform;
             GetOrCreateText(overlayTransform, "Decorate Overlay Title Text", "꾸미기", 24, TextAnchor.UpperLeft, new Vector2(28, -24), new Vector2(300, 36));
-            var stateText = GetOrCreateText(overlayTransform, "Decorate Overlay State Text", "현재 테마: 따뜻한 아침 밀크룸", 15, TextAnchor.UpperLeft, new Vector2(28, -72), new Vector2(420, 28));
+            var stateText = GetOrCreateText(overlayTransform, "Decorate Overlay State Text", "현재 테마: 따뜻한 아침 밀크룸 · 별방울 0", 15, TextAnchor.UpperLeft, new Vector2(28, -72), new Vector2(540, 28));
             closeButton = GetOrCreateTopLeftButton(overlayTransform, "Close Decorate Button", "닫기", new Vector2(596, -20), new Vector2(116, 40));
 
             var previewPanel = GetOrCreatePanel(overlayTransform, "Decorate Preview Panel", new Vector2(24, -122), new Vector2(692, 432));
@@ -959,13 +1022,17 @@ namespace CheeseTama.Core
             var furnitureText = GetOrCreateText(previewTransform, "Decorate Slot B Value Text", "GLB 소품 재질 유지 / 벽과 바닥 팔레트만 전환", 14, TextAnchor.UpperLeft, new Vector2(142, -188), new Vector2(500, 26));
             GetOrCreateText(previewTransform, "Decorate Slot C Text", "소품", 16, TextAnchor.UpperLeft, new Vector2(22, -244), new Vector2(120, 26));
             var propsText = GetOrCreateText(previewTransform, "Decorate Slot C Value Text", "기본 소품 배치 유지", 14, TextAnchor.UpperLeft, new Vector2(142, -244), new Vector2(500, 26));
-            GetOrCreateText(previewTransform, "Decorate Help Text", "테마를 고르면 방 색감, 조명, 창밖 분위기가 즉시 바뀌고 저장됩니다.", 14, TextAnchor.UpperLeft, new Vector2(22, -350), new Vector2(620, 42));
+            GetOrCreateText(previewTransform, "Decorate Help Text", "별빛 계열 테마는 별우유 루트에서 발견되며, 별방울로 한 번 해금하면 저장됩니다.", 14, TextAnchor.UpperLeft, new Vector2(22, -390), new Vector2(650, 38));
 
             var morningButton = GetOrCreateTopLeftButton(previewTransform, "Morning Theme Button", "아침", new Vector2(22, -292), new Vector2(148, 42));
             var eveningButton = GetOrCreateTopLeftButton(previewTransform, "Evening Theme Button", "오후", new Vector2(184, -292), new Vector2(148, 42));
             var nightButton = GetOrCreateTopLeftButton(previewTransform, "Night Theme Button", "밤", new Vector2(346, -292), new Vector2(148, 42));
             var rainyButton = GetOrCreateTopLeftButton(previewTransform, "Rainy Theme Button", "비", new Vector2(508, -292), new Vector2(148, 42));
             ApplyCollectionTabButtonStyle(morningButton, eveningButton, nightButton, rainyButton);
+            var starlightButton = GetOrCreateTopLeftButton(previewTransform, "Starlight Theme Button", "별빛 · 별방울 3", new Vector2(22, -342), new Vector2(202, 42));
+            var winterButton = GetOrCreateTopLeftButton(previewTransform, "Winter Theme Button", "겨울 · 별방울 2", new Vector2(238, -342), new Vector2(202, 42));
+            var vintageButton = GetOrCreateTopLeftButton(previewTransform, "Vintage Theme Button", "빈티지 · 별방울 4", new Vector2(454, -342), new Vector2(202, 42));
+            ApplyCollectionTabButtonStyle(starlightButton, winterButton, vintageButton);
 
             var decorateController = overlay.GetComponent<DecorateThemePanelController>();
             if (decorateController == null)
@@ -983,7 +1050,10 @@ namespace CheeseTama.Core
                 morningButton,
                 eveningButton,
                 nightButton,
-                rainyButton);
+                rainyButton,
+                starlightButton,
+                winterButton,
+                vintageButton);
 
             overlay.SetActive(false);
             return overlay;
@@ -1254,11 +1324,6 @@ namespace CheeseTama.Core
                 contentHeight,
                 new Color(1f, 0.96f, 0.82f, 0.38f));
 
-            for (var i = 0; i < 12; i++)
-            {
-                RemoveChildIfExists(scrollContent, $"Snack Inventory Row {i}");
-            }
-
             for (var i = 0; i < snacks.Length; i++)
             {
                 var snack = snacks[i];
@@ -1288,6 +1353,11 @@ namespace CheeseTama.Core
                 feedButtons[i] = GetOrCreateTopLeftButton(rowTransform, $"Feed Snack Item Button {i}", "먹이기", new Vector2(442, -66), new Vector2(108, 38));
                 ApplyCareButtonStyle(feedButtons[i]);
                 rowPanel.transform.SetAsLastSibling();
+            }
+
+            for (var i = snacks.Length; i < 12; i++)
+            {
+                RemoveChildIfExists(scrollContent, $"Snack Inventory Row {i}");
             }
 
             var statusText = GetOrCreateText(panelTransform, "Snack Panel Status Text", "요리한 간식이 없습니다. 요리에서 먼저 만들어 주세요.", 15, TextAnchor.UpperLeft, new Vector2(28, -508), new Vector2(430, 28));
@@ -2255,6 +2325,131 @@ namespace CheeseTama.Core
                 canvasTransform.GetComponent<TopMenuController>(),
                 canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
                 canvasTransform.GetComponent<DevPanelController>());
+            overlay.transform.SetAsLastSibling();
+        }
+
+        private static void EnsureLifeRecordsPanel(Transform canvasTransform, Transform journeyCard)
+        {
+            if (canvasTransform == null || journeyCard == null)
+            {
+                return;
+            }
+
+            var open = GetOrCreateTopLeftButton(
+                journeyCard,
+                "Life Records Open Button",
+                "생활 기록",
+                new Vector2(868f, -24f),
+                new Vector2(204f, 52f));
+            ApplyCareButtonStyle(open);
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                LifeRecordsPanelController.OverlayObjectName,
+                new Color(0.055f, 0.045f, 0.035f, 0.84f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Life Records Card",
+                Vector2.zero,
+                new Vector2(1080f, 720f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(1080f, 720f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.87f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Life Records Title Text",
+                "생활 기록 앨범",
+                30,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -24f),
+                new Vector2(720f, 52f));
+            title.fontStyle = FontStyle.Bold;
+
+            var overviewPanel = GetOrCreatePanel(
+                card.transform,
+                "Life Records Overview Panel",
+                new Vector2(48f, -96f),
+                new Vector2(500f, 520f));
+            var overview = GetOrCreateText(
+                overviewPanel.transform,
+                "Life Records Overview Text",
+                string.Empty,
+                18,
+                TextAnchor.UpperLeft,
+                new Vector2(24f, -20f),
+                new Vector2(452f, 480f));
+            overview.supportRichText = true;
+            overview.horizontalOverflow = HorizontalWrapMode.Wrap;
+            overview.verticalOverflow = VerticalWrapMode.Overflow;
+
+            var episodePanel = GetOrCreatePanel(
+                card.transform,
+                "Life Records Episode Panel",
+                new Vector2(572f, -96f),
+                new Vector2(460f, 520f));
+            var position = GetOrCreateText(
+                episodePanel.transform,
+                "Life Records Episode Position Text",
+                "완료 에피소드",
+                17,
+                TextAnchor.MiddleLeft,
+                new Vector2(24f, -20f),
+                new Vector2(412f, 36f));
+            position.fontStyle = FontStyle.Bold;
+            var episode = GetOrCreateText(
+                episodePanel.transform,
+                "Life Records Episode Text",
+                string.Empty,
+                18,
+                TextAnchor.UpperLeft,
+                new Vector2(24f, -72f),
+                new Vector2(412f, 388f));
+            episode.supportRichText = true;
+            episode.horizontalOverflow = HorizontalWrapMode.Wrap;
+            episode.verticalOverflow = VerticalWrapMode.Overflow;
+
+            var previous = GetOrCreateTopLeftButton(
+                card.transform,
+                "Life Records Previous Button",
+                "이전 기록",
+                new Vector2(572f, -640f),
+                new Vector2(150f, 48f));
+            var next = GetOrCreateTopLeftButton(
+                card.transform,
+                "Life Records Next Button",
+                "다음 기록",
+                new Vector2(736f, -640f),
+                new Vector2(150f, 48f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Life Records Close Button",
+                "닫기",
+                new Vector2(900f, -640f),
+                new Vector2(132f, 48f));
+            ApplyCareButtonStyle(previous);
+            ApplyCareButtonStyle(next);
+            ApplyCareButtonStyle(close);
+
+            var controller = canvasTransform.GetComponent<LifeRecordsPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<LifeRecordsPanelController>();
+            controller.Configure(
+                overlay,
+                title,
+                overview,
+                episode,
+                position,
+                previous,
+                next,
+                close,
+                () => GameManager.Instance?.GetLifeRecordsSnapshot() ?? LifeRecordsSnapshot.Empty,
+                null,
+                CreateControlBlockingCallback(canvasTransform));
+            open.onClick.RemoveAllListeners();
+            open.onClick.AddListener(() => controller.Open());
             overlay.transform.SetAsLastSibling();
         }
 
@@ -4158,6 +4353,146 @@ namespace CheeseTama.Core
             overlay.transform.SetAsLastSibling();
         }
 
+        private static void EnsureJourneyHub(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                JourneyHubPanelController.OverlayObjectName,
+                new Color(0.055f, 0.045f, 0.035f, 0.82f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                JourneyHubPanelController.CardObjectName,
+                Vector2.zero,
+                new Vector2(1120f, 760f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(1120f, 760f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(1f, 0.97f, 0.87f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Journey Hub Title Text",
+                "다음 성장 목표",
+                31,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -24f),
+                new Vector2(720f, 52f));
+            title.fontStyle = FontStyle.Bold;
+
+            var tabs = new Button[5];
+            var tabLabels = new[] { "목표", "주간", "관계", "앨범", "공방" };
+            for (var index = 0; index < tabs.Length; index += 1)
+            {
+                tabs[index] = GetOrCreateTopLeftButton(
+                    card.transform,
+                    $"Journey Hub Tab {index}",
+                    tabLabels[index],
+                    new Vector2(48f + index * 200f, -86f),
+                    new Vector2(184f, 48f));
+                ApplyCareButtonStyle(tabs[index]);
+            }
+
+            var bodyPanel = GetOrCreatePanel(
+                card.transform,
+                "Journey Hub Body Panel",
+                new Vector2(48f, -150f),
+                new Vector2(1024f, 464f));
+            if (bodyPanel.TryGetComponent(out Image bodyImage))
+            {
+                bodyImage.color = new Color(1f, 0.99f, 0.94f, 0.96f);
+                bodyImage.raycastTarget = false;
+            }
+
+            var body = GetOrCreateText(
+                bodyPanel.transform,
+                "Journey Hub Body Text",
+                "여정 데이터를 준비하고 있어요.",
+                18,
+                TextAnchor.UpperLeft,
+                new Vector2(24f, -20f),
+                new Vector2(976f, 424f));
+            body.supportRichText = true;
+            body.horizontalOverflow = HorizontalWrapMode.Wrap;
+            body.verticalOverflow = VerticalWrapMode.Overflow;
+            body.lineSpacing = 1.05f;
+
+            var status = GetOrCreateText(
+                card.transform,
+                "Journey Hub Status Text",
+                string.Empty,
+                17,
+                TextAnchor.MiddleLeft,
+                new Vector2(48f, -620f),
+                new Vector2(650f, 46f));
+            status.color = new Color(0.64f, 0.34f, 0.09f);
+            status.fontStyle = FontStyle.Bold;
+
+            var previous = GetOrCreateTopLeftButton(
+                card.transform,
+                "Journey Hub Previous Button",
+                "이전",
+                new Vector2(48f, -676f),
+                new Vector2(128f, 52f));
+            var next = GetOrCreateTopLeftButton(
+                card.transform,
+                "Journey Hub Next Button",
+                "다음",
+                new Vector2(190f, -676f),
+                new Vector2(128f, 52f));
+            var primary = GetOrCreateTopLeftButton(
+                card.transform,
+                "Journey Hub Primary Button",
+                "실행",
+                new Vector2(748f, -676f),
+                new Vector2(150f, 52f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Journey Hub Close Button",
+                "닫기",
+                new Vector2(922f, -676f),
+                new Vector2(150f, 52f));
+            ApplyCareButtonStyle(previous);
+            ApplyCareButtonStyle(next);
+            ApplyCareButtonStyle(primary);
+            ApplyCareButtonStyle(close);
+
+            var open = GetOrMoveUtilityButton(
+                canvasTransform,
+                null,
+                JourneyHubPanelController.OpenButtonObjectName,
+                "여정",
+                new Vector2(112f, -48f),
+                new Vector2(104f, 40f));
+            ApplyCareButtonStyle(open);
+
+            var controller = canvasTransform.GetComponent<JourneyHubPanelController>()
+                ?? canvasTransform.gameObject.AddComponent<JourneyHubPanelController>();
+            controller.Configure(
+                overlay,
+                open,
+                tabs,
+                title,
+                body,
+                status,
+                previous,
+                next,
+                primary,
+                close,
+                GameManager.Instance,
+                canvasTransform.GetComponent<TopMenuController>(),
+                canvasTransform.Find("Bottom Action Bar")?.GetComponent<BottomActionBarController>(),
+                canvasTransform.GetComponent<DevPanelController>());
+            EnsureLifeRecordsPanel(canvasTransform, card.transform);
+            overlay.transform.SetAsLastSibling();
+        }
+
         private static void EnsureFirstDayJourney(Transform canvasTransform)
         {
             if (canvasTransform == null)
@@ -4714,6 +5049,16 @@ namespace CheeseTama.Core
                 EnsureCoreSystems(),
                 visualController,
                 canvasTransform.GetComponent<CheeseTamaDialogueBridge>());
+
+            var toastBridge = canvasTransform.GetComponent<AutonomousLifeDiscoveryToastBridge>();
+            if (toastBridge == null)
+            {
+                toastBridge = canvasTransform.gameObject.AddComponent<AutonomousLifeDiscoveryToastBridge>();
+            }
+
+            toastBridge.Configure(
+                bridge,
+                canvasTransform.GetComponentInChildren<MilkroomUIController>(true));
         }
 
         private static Transform EnsureAutonomousLifeAnchor(
@@ -4741,20 +5086,134 @@ namespace CheeseTama.Core
                 return;
             }
 
-            // Restore the original Milkroom lighting. The atmosphere feature added
-            // a full-screen warm tint and an extra point light on top of the theme
-            // controller, making the room visibly brighter than the authored scene.
             var overlayTransform = canvasTransform.Find("Milkroom Atmosphere Overlay");
-            if (overlayTransform != null)
+            GameObject overlayObject;
+            if (overlayTransform == null)
             {
-                DestroyObjectSafely(overlayTransform.gameObject);
+                overlayObject = new GameObject(
+                    "Milkroom Atmosphere Overlay",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                overlayTransform = overlayObject.transform;
+                overlayTransform.SetParent(canvasTransform, false);
             }
+            else
+            {
+                overlayObject = overlayTransform.gameObject;
+            }
+
+            var rect = overlayObject.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                overlayObject.name = "Milkroom Atmosphere Overlay (Legacy)";
+                DestroyObjectSafely(overlayObject);
+                overlayObject = new GameObject(
+                    "Milkroom Atmosphere Overlay",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                overlayTransform = overlayObject.transform;
+                overlayTransform.SetParent(canvasTransform, false);
+                rect = overlayObject.GetComponent<RectTransform>();
+            }
+
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = Vector2.zero;
+            rect.SetAsFirstSibling();
+
+            var overlay = overlayObject.GetComponent<Image>();
+            if (overlay == null)
+            {
+                overlay = overlayObject.AddComponent<Image>();
+            }
+
+            overlay.raycastTarget = false;
+            var controller = overlayObject.GetComponent<MilkroomAtmosphereLayerController>();
+            if (controller == null)
+            {
+                controller = overlayObject.AddComponent<MilkroomAtmosphereLayerController>();
+            }
+
+            // The authored theme owns all room lights. The atmosphere layer therefore
+            // uses only a subtle, non-interactive tint and never stacks another light.
+            controller.Configure(overlay, null);
+            controller.Bind(tama);
 
             var lightObject = GameObject.Find("Milkroom Atmosphere Light");
             if (lightObject != null)
             {
                 DestroyObjectSafely(lightObject);
             }
+        }
+
+        private static void EnsureMilkroomSeasonalLayer(
+            Transform canvasTransform,
+            GameManager manager)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            const string LayerName = "Milkroom Seasonal Layer";
+            var layerTransform = canvasTransform.Find(LayerName);
+            GameObject layerObject;
+            if (layerTransform == null)
+            {
+                layerObject = new GameObject(
+                    LayerName,
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                layerTransform = layerObject.transform;
+                layerTransform.SetParent(canvasTransform, false);
+            }
+            else
+            {
+                layerObject = layerTransform.gameObject;
+            }
+
+            var rect = layerObject.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                layerObject.name = LayerName + " (Legacy)";
+                DestroyObjectSafely(layerObject);
+                layerObject = new GameObject(
+                    LayerName,
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                layerTransform = layerObject.transform;
+                layerTransform.SetParent(canvasTransform, false);
+                rect = layerObject.GetComponent<RectTransform>();
+            }
+
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = Vector2.zero;
+            var atmosphereLayer = canvasTransform.Find("Milkroom Atmosphere Overlay");
+            rect.SetSiblingIndex(atmosphereLayer != null ? 1 : 0);
+
+            var overlay = layerObject.GetComponent<Image>();
+            if (overlay == null)
+            {
+                overlay = layerObject.AddComponent<Image>();
+            }
+
+            overlay.raycastTarget = false;
+            var controller = layerObject.GetComponent<MilkroomSeasonalLayerController>();
+            if (controller == null)
+            {
+                controller = layerObject.AddComponent<MilkroomSeasonalLayerController>();
+            }
+
+            controller.Configure(overlay, manager);
         }
 
         private static void EnsureCheeseTamaPetInteraction(
@@ -4808,7 +5267,7 @@ namespace CheeseTama.Core
             CheeseTamaVisualController visualController,
             out Text settingsLastSavedText)
         {
-            var settingsModal = GetOrCreateRightPanel(canvasTransform, "Settings Modal", new Vector2(-40, -76), new Vector2(560, 780));
+            var settingsModal = GetOrCreateRightPanel(canvasTransform, "Settings Modal", new Vector2(-40, -76), new Vector2(560, 840));
             if (settingsModal.TryGetComponent(out Image settingsImage))
             {
                 settingsImage.color = new Color(1f, 0.98f, 0.9f, 0.92f);
@@ -4819,17 +5278,41 @@ namespace CheeseTama.Core
             GetOrCreateText(settingsTransform, "Settings Data Title Text", "데이터 관리", 18, TextAnchor.UpperLeft, new Vector2(28, -82), new Vector2(300, 30));
             GetOrCreateText(settingsTransform, "Settings Sound Title Text", "소리", 18, TextAnchor.UpperLeft, new Vector2(28, -276), new Vector2(220, 28));
             GetOrCreateText(settingsTransform, "Settings Display Title Text", "화면", 18, TextAnchor.UpperLeft, new Vector2(28, -472), new Vector2(220, 28));
-            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "조작", 18, TextAnchor.UpperLeft, new Vector2(28, -632), new Vector2(220, 28));
+            GetOrCreateText(settingsTransform, "Settings Controls Title Text", "조작", 18, TextAnchor.UpperLeft, new Vector2(28, -672), new Vector2(220, 28));
 
             var closeSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Close Settings Button", "닫기", new Vector2(424, -20), new Vector2(108, 40));
-            var manualSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Save Button", "저장", new Vector2(28, -170), new Vector2(120, 42));
-            var manualLoadButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Load Button", "불러오기", new Vector2(166, -170), new Vector2(120, 42));
-            var openResetButton = GetOrCreateTopLeftButton(settingsTransform, "Open Reset Button", "초기화", new Vector2(304, -170), new Vector2(120, 42));
+            var manualSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Save Button", "저장", new Vector2(28, -170), new Vector2(76, 42));
+            var manualLoadButton = GetOrCreateTopLeftButton(settingsTransform, "Manual Load Button", "불러오기", new Vector2(112, -170), new Vector2(76, 42));
+            var exportSaveButton = GetOrCreateTopLeftButton(settingsTransform, "Export Save Button", "백업", new Vector2(196, -170), new Vector2(76, 42));
+            var chooseImportFileButton = GetOrCreateTopLeftButton(settingsTransform, "Choose Import File Button", "가져오기", new Vector2(280, -170), new Vector2(76, 42));
+            var openResetButton = GetOrCreateTopLeftButton(settingsTransform, "Open Reset Button", "초기화", new Vector2(364, -170), new Vector2(76, 42));
             ApplyDangerButtonStyle(openResetButton);
-            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", "돌봄 행동 후 자동 저장됩니다. 아래에서 수동 관리할 수 있습니다.", 13, TextAnchor.UpperLeft, new Vector2(28, -116), new Vector2(500, 42));
+            var openCloudButton = GetOrCreateTopLeftButton(settingsTransform, "Open Cloud Save Button", "Steam", new Vector2(448, -170), new Vector2(76, 42));
+            ApplyCareButtonStyle(openCloudButton);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            openCloudButton.onClick.RemoveAllListeners();
+            openCloudButton.gameObject.SetActive(false);
+            var dataStatusMessage = RuntimePlatformCapabilities.BrowserLocalStorageNotice;
+#else
+            var dataStatusMessage = "돌봄 행동 후 자동 저장됩니다. 아래에서 수동 관리할 수 있습니다.";
+#endif
+            var dataStatusText = GetOrCreateText(settingsTransform, "Data Status Text", dataStatusMessage, 13, TextAnchor.UpperLeft, new Vector2(28, -116), new Vector2(500, 48));
             settingsLastSavedText = GetOrCreateText(settingsTransform, "Settings Last Saved Text", "<b>마지막 저장</b>  없음", 14, TextAnchor.UpperLeft, new Vector2(28, -228), new Vector2(500, 26));
             settingsLastSavedText.supportRichText = true;
             settingsLastSavedText.color = new Color(0.34f, 0.22f, 0.1f);
+            var importConfirmationInput = GetOrCreateInputField(
+                settingsTransform,
+                "Import Save Confirmation Input",
+                SaveTransferImportSession.ConfirmationPhrase,
+                new Vector2(28, -216),
+                new Vector2(326, 42));
+            var confirmImportButton = GetOrCreateTopLeftButton(
+                settingsTransform,
+                "Confirm Import Save Button",
+                "저장 덮어쓰기",
+                new Vector2(366, -216),
+                new Vector2(158, 42));
+            ApplyDangerButtonStyle(confirmImportButton);
 
             GetOrCreateText(settingsTransform, "Master Volume Label Text", "전체 볼륨", 14, TextAnchor.MiddleLeft, new Vector2(28, -308), new Vector2(100, 28));
             var masterVolumeSlider = GetOrCreateSettingsSlider(settingsTransform, "Master Volume Slider", new Vector2(132, -312), new Vector2(280, 22), 0f, 1f, false);
@@ -4857,33 +5340,119 @@ namespace CheeseTama.Core
             ApplyCollectionTabButtonStyle(frameRate30Button, frameRate60Button, frameRate120Button);
             var frameRateValueText = GetOrCreateText(settingsTransform, "Frame Rate Value Text", "60 FPS", 14, TextAnchor.MiddleRight, new Vector2(420, -578), new Vector2(90, 28));
 
-            var careTipToggle = GetOrCreateSettingsToggle(settingsTransform, "Care Tip Toggle", "돌봄 팁 표시", new Vector2(28, -664), new Vector2(210, 30));
-            var resetSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Reset Settings Button", "설정 초기화", new Vector2(374, -656), new Vector2(136, 40));
+            GetOrCreateText(settingsTransform, "Graphics Quality Label Text", "그래픽", 14, TextAnchor.MiddleLeft, new Vector2(28, -620), new Vector2(90, 28));
+            var qualityLowButton = GetOrCreateTopLeftButton(settingsTransform, "Graphics Quality Low Button", "저사양", new Vector2(132, -616), new Vector2(80, 34));
+            var qualityBalancedButton = GetOrCreateTopLeftButton(settingsTransform, "Graphics Quality Balanced Button", "균형", new Vector2(226, -616), new Vector2(80, 34));
+            var qualityHighButton = GetOrCreateTopLeftButton(settingsTransform, "Graphics Quality High Button", "고화질", new Vector2(320, -616), new Vector2(80, 34));
+            ApplyCollectionTabButtonStyle(qualityLowButton, qualityBalancedButton, qualityHighButton);
+            var qualityValueText = GetOrCreateText(settingsTransform, "Graphics Quality Value Text", "고화질", 14, TextAnchor.MiddleRight, new Vector2(420, -618), new Vector2(90, 28));
+
+            var careTipToggle = GetOrCreateSettingsToggle(settingsTransform, "Care Tip Toggle", "돌봄 팁 표시", new Vector2(28, -704), new Vector2(210, 30));
+            var accessibilityOpenButton = GetOrCreateTopLeftButton(settingsTransform, "Accessibility Open Button", "접근성", new Vector2(230, -696), new Vector2(126, 40));
+            ApplyCareButtonStyle(accessibilityOpenButton);
+            var resetSettingsButton = GetOrCreateTopLeftButton(settingsTransform, "Reset Settings Button", "설정 초기화", new Vector2(374, -696), new Vector2(136, 40));
             ApplyCareButtonStyle(resetSettingsButton);
-            var settingsStatusText = GetOrCreateText(settingsTransform, "Settings Status Text", "설정을 불러왔습니다.", 13, TextAnchor.MiddleLeft, new Vector2(28, -718), new Vector2(500, 34));
+            var settingsStatusText = GetOrCreateText(settingsTransform, "Settings Status Text", "설정을 불러왔습니다.", 13, TextAnchor.MiddleLeft, new Vector2(28, -758), new Vector2(500, 34));
             settingsStatusText.color = new Color(0.38f, 0.28f, 0.17f);
 
-            var confirmRoot = GetOrCreatePanel(canvasTransform, "Confirm Reset Dialog", new Vector2(640, -300), new Vector2(640, 360));
-            if (confirmRoot.TryGetComponent(out Image confirmImage))
+            var accessibilityPanel = GetOrCreatePanel(
+                settingsTransform,
+                "Accessibility Panel",
+                new Vector2(18, -226),
+                new Vector2(524, 500));
+            if (accessibilityPanel.TryGetComponent(out Image accessibilityPanelImage))
             {
-                confirmImage.color = new Color(1f, 0.98f, 0.9f, 1f);
+                accessibilityPanelImage.color = new Color(1f, 0.97f, 0.84f, 1f);
             }
 
-            var confirmTransform = confirmRoot.transform;
+            var accessibilityTransform = accessibilityPanel.transform;
+            GetOrCreateText(accessibilityTransform, "Accessibility Title Text", "접근성", 22, TextAnchor.UpperLeft, new Vector2(24, -24), new Vector2(260, 34));
+            var accessibilityCloseButton = GetOrCreateTopLeftButton(accessibilityTransform, "Accessibility Close Button", "닫기", new Vector2(392, -18), new Vector2(108, 40));
+            GetOrCreateText(
+                accessibilityTransform,
+                "Accessibility Help Text",
+                "글자 크기와 화면 대비를 높이고, 캐릭터와 카드의 큰 움직임을 줄일 수 있습니다.",
+                14,
+                TextAnchor.UpperLeft,
+                new Vector2(24, -78),
+                new Vector2(476, 54));
+            GetOrCreateText(accessibilityTransform, "Accessibility Text Scale Label", "글자 크기", 16, TextAnchor.MiddleLeft, new Vector2(24, -154), new Vector2(110, 34));
+            var accessibilityText100Button = GetOrCreateTopLeftButton(accessibilityTransform, "Accessibility Text 100 Button", "100", new Vector2(142, -154), new Vector2(82, 36));
+            var accessibilityText125Button = GetOrCreateTopLeftButton(accessibilityTransform, "Accessibility Text 125 Button", "125", new Vector2(236, -154), new Vector2(82, 36));
+            var accessibilityText140Button = GetOrCreateTopLeftButton(accessibilityTransform, "Accessibility Text 140 Button", "140", new Vector2(330, -154), new Vector2(82, 36));
+            ApplyCollectionTabButtonStyle(accessibilityText100Button, accessibilityText125Button, accessibilityText140Button);
+            var accessibilityTextScaleValue = GetOrCreateText(accessibilityTransform, "Accessibility Text Scale Value", "100%", 14, TextAnchor.MiddleRight, new Vector2(420, -154), new Vector2(80, 34));
+            var highContrastToggle = GetOrCreateSettingsToggle(accessibilityTransform, "High Contrast Toggle", "고대비 표시", new Vector2(24, -222), new Vector2(260, 34));
+            var reduceMotionToggle = GetOrCreateSettingsToggle(accessibilityTransform, "Reduce Motion Toggle", "애니메이션 감소", new Vector2(24, -278), new Vector2(280, 34));
+            GetOrCreateText(
+                accessibilityTransform,
+                "Reduce Motion Help Text",
+                "숨쉬기·흔들림·점프 동작은 줄이되 결과와 상태 표시는 그대로 유지합니다.",
+                13,
+                TextAnchor.UpperLeft,
+                new Vector2(52, -322),
+                new Vector2(440, 48));
+            var accessibilityStatusText = GetOrCreateText(
+                accessibilityTransform,
+                "Accessibility Status Text",
+                "접근성 설정을 불러왔습니다.",
+                13,
+                TextAnchor.MiddleLeft,
+                new Vector2(24, -424),
+                new Vector2(476, 36));
+            accessibilityStatusText.color = new Color(0.34f, 0.22f, 0.1f);
+
+            var confirmRoot = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                "Confirm Reset Dialog",
+                new Color(0.055f, 0.045f, 0.035f, 0.84f));
+            var confirmCard = GetOrCreatePanel(
+                confirmRoot.transform,
+                "Confirm Reset Card",
+                Vector2.zero,
+                new Vector2(700, 540));
+            ConfigureCenteredRect(confirmCard.GetComponent<RectTransform>(), new Vector2(700, 540));
+            if (confirmCard.TryGetComponent(out Image confirmImage))
+            {
+                confirmImage.color = new Color(1f, 0.98f, 0.9f, 1f);
+                confirmImage.raycastTarget = true;
+            }
+
+            MoveDirectChildIfExists(confirmRoot.transform, confirmCard.transform, "Confirm Reset Title Text");
+            MoveDirectChildIfExists(confirmRoot.transform, confirmCard.transform, "Confirm Reset Message Text");
+            MoveDirectChildIfExists(confirmRoot.transform, confirmCard.transform, "Reset Input Label Text");
+            MoveDirectChildIfExists(confirmRoot.transform, confirmCard.transform, "Reset Input Field");
+            MoveDirectChildIfExists(confirmRoot.transform, confirmCard.transform, "Confirm Reset Button");
+            MoveDirectChildIfExists(confirmRoot.transform, confirmCard.transform, "Cancel Reset Button");
+            var confirmTransform = confirmCard.transform;
             GetOrCreateText(confirmTransform, "Confirm Reset Title Text", "데이터 초기화", 22, TextAnchor.UpperLeft, new Vector2(24, -24), new Vector2(300, 34));
             var confirmMessageText = GetOrCreateText(
                 confirmTransform,
                 "Confirm Reset Message Text",
-                "로컬 CheeseTama 진행도를 모두 지우려면 RESET을 입력하세요.",
+                "초기화 범위를 선택해 주세요.",
                 15,
                 TextAnchor.UpperLeft,
-                new Vector2(24, -82),
-                new Vector2(580, 70));
-            GetOrCreateText(confirmTransform, "Reset Input Label Text", "RESET을 입력하면 버튼이 활성화됩니다.", 14, TextAnchor.UpperLeft, new Vector2(24, -152), new Vector2(420, 24));
-            var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "RESET", new Vector2(24, -184), new Vector2(360, 52));
-            var confirmResetButton = GetOrCreateTopLeftButton(confirmTransform, "Confirm Reset Button", "초기화", new Vector2(344, -284), new Vector2(120, 42));
+                new Vector2(24, -72),
+                new Vector2(652, 188));
+            var careProgressResetButton = GetOrCreateTopLeftButton(
+                confirmTransform,
+                "Care Progress Reset Mode Button",
+                "육성만 새로 시작",
+                new Vector2(24, -278),
+                new Vector2(226, 44));
+            var fullLocalResetButton = GetOrCreateTopLeftButton(
+                confirmTransform,
+                "Full Local Reset Mode Button",
+                "전체 초기화",
+                new Vector2(264, -278),
+                new Vector2(176, 44));
+            ApplyCareButtonStyle(careProgressResetButton);
+            ApplyDangerButtonStyle(fullLocalResetButton);
+            GetOrCreateText(confirmTransform, "Reset Input Label Text", "화면에 표시된 확인 문구를 정확히 입력하세요.", 14, TextAnchor.UpperLeft, new Vector2(24, -338), new Vector2(500, 24));
+            var resetInput = GetOrCreateInputField(confirmTransform, "Reset Input Field", "RESET TAMA", new Vector2(24, -368), new Vector2(360, 52));
+            var confirmResetButton = GetOrCreateTopLeftButton(confirmTransform, "Confirm Reset Button", "초기화", new Vector2(404, -464), new Vector2(120, 42));
             ApplyDangerButtonStyle(confirmResetButton);
-            var cancelResetButton = GetOrCreateTopLeftButton(confirmTransform, "Cancel Reset Button", "취소", new Vector2(480, -284), new Vector2(120, 42));
+            var cancelResetButton = GetOrCreateTopLeftButton(confirmTransform, "Cancel Reset Button", "취소", new Vector2(540, -464), new Vector2(120, 42));
 
             var confirmResetDialog = confirmRoot.GetComponent<ConfirmResetDialog>();
             if (confirmResetDialog == null)
@@ -4895,10 +5464,22 @@ namespace CheeseTama.Core
                 confirmRoot,
                 resetInput,
                 confirmMessageText,
+                careProgressResetButton,
+                fullLocalResetButton,
                 confirmResetButton,
                 cancelResetButton,
                 controller,
                 visualController);
+            confirmResetDialog.SetBlockingCallback(CreateControlBlockingCallback(canvasTransform));
+#if UNITY_WEBGL && !UNITY_EDITOR
+            var existingCloudOverlay = canvasTransform.Find(CloudSavePanelController.OverlayObjectName);
+            if (existingCloudOverlay != null)
+            {
+                existingCloudOverlay.gameObject.SetActive(false);
+            }
+#else
+            EnsureCloudSavePanel(canvasTransform, openCloudButton);
+#endif
 
             var dataPanel = settingsModal.GetComponent<DataManagementPanelController>();
             if (dataPanel == null)
@@ -4914,6 +5495,11 @@ namespace CheeseTama.Core
                 confirmResetDialog,
                 controller,
                 visualController);
+            dataPanel.ConfigureSaveTransfer(
+                exportSaveButton,
+                chooseImportFileButton,
+                importConfirmationInput,
+                confirmImportButton);
 
             var gameSettingsPanel = settingsModal.GetComponent<GameSettingsPanelController>();
             if (gameSettingsPanel == null)
@@ -4933,6 +5519,9 @@ namespace CheeseTama.Core
                 frameRate30Button,
                 frameRate60Button,
                 frameRate120Button,
+                qualityLowButton,
+                qualityBalancedButton,
+                qualityHighButton,
                 careTipToggle,
                 resetSettingsButton,
                 masterVolumeValueText,
@@ -4940,7 +5529,27 @@ namespace CheeseTama.Core
                 effectVolumeValueText,
                 uiScaleValueText,
                 frameRateValueText,
+                qualityValueText,
                 settingsStatusText);
+
+            var accessibilityController = accessibilityPanel.GetComponent<AccessibilitySettingsPanelController>();
+            if (accessibilityController == null)
+            {
+                accessibilityController = accessibilityPanel.AddComponent<AccessibilitySettingsPanelController>();
+            }
+
+            accessibilityController.Configure(
+                accessibilityOpenButton,
+                accessibilityCloseButton,
+                accessibilityPanel,
+                accessibilityText100Button,
+                accessibilityText125Button,
+                accessibilityText140Button,
+                highContrastToggle,
+                reduceMotionToggle,
+                accessibilityTextScaleValue,
+                accessibilityStatusText,
+                canvasTransform);
 
             var settingsController = settingsModal.GetComponent<SettingsMenuController>();
             if (settingsController == null)
@@ -4998,6 +5607,102 @@ namespace CheeseTama.Core
             RemoveChildIfExists(canvasTransform, "Dev Panel");
             RemoveChildIfExists(canvasTransform, "Dev Mode Toggle Button");
 #endif
+        }
+
+        private static void EnsureCloudSavePanel(Transform canvasTransform, Button openButton)
+        {
+            if (canvasTransform == null || openButton == null)
+            {
+                return;
+            }
+
+            var overlay = GetOrCreateFullScreenOverlay(
+                canvasTransform,
+                CloudSavePanelController.OverlayObjectName,
+                new Color(0.055f, 0.045f, 0.035f, 0.84f));
+            var card = GetOrCreatePanel(
+                overlay.transform,
+                "Cloud Save Card",
+                Vector2.zero,
+                new Vector2(780f, 500f));
+            ConfigureCenteredRect(card.GetComponent<RectTransform>(), new Vector2(780f, 500f));
+            if (card.TryGetComponent(out Image cardImage))
+            {
+                cardImage.color = new Color(0.96f, 0.98f, 1f, 1f);
+                cardImage.raycastTarget = true;
+            }
+
+            var title = GetOrCreateText(
+                card.transform,
+                "Cloud Save Title Text",
+                "Steam Cloud",
+                30,
+                TextAnchor.MiddleLeft,
+                new Vector2(44f, -28f),
+                new Vector2(520f, 48f));
+            title.fontStyle = FontStyle.Bold;
+            var provider = GetOrCreateText(
+                card.transform,
+                "Cloud Save Provider Text",
+                "연결 방식 · LocalOnly",
+                16,
+                TextAnchor.MiddleLeft,
+                new Vector2(44f, -88f),
+                new Vector2(692f, 34f));
+            var status = GetOrCreateText(
+                card.transform,
+                "Cloud Save Status Text",
+                "Steam Cloud 연결 상태를 확인하고 있어요.",
+                18,
+                TextAnchor.UpperLeft,
+                new Vector2(44f, -142f),
+                new Vector2(692f, 130f));
+            status.horizontalOverflow = HorizontalWrapMode.Wrap;
+            status.verticalOverflow = VerticalWrapMode.Overflow;
+            var confirmation = GetOrCreateInputField(
+                card.transform,
+                "Cloud Save Confirmation Input",
+                CloudSavePanelController.RemoteConfirmationPhrase,
+                new Vector2(44f, -298f),
+                new Vector2(360f, 52f));
+            var synchronize = GetOrCreateTopLeftButton(
+                card.transform,
+                "Cloud Save Synchronize Button",
+                "동기화",
+                new Vector2(44f, -398f),
+                new Vector2(160f, 48f));
+            var applyRemote = GetOrCreateTopLeftButton(
+                card.transform,
+                "Cloud Save Apply Remote Button",
+                "클라우드 적용",
+                new Vector2(220f, -398f),
+                new Vector2(190f, 48f));
+            var close = GetOrCreateTopLeftButton(
+                card.transform,
+                "Cloud Save Close Button",
+                "닫기",
+                new Vector2(576f, -398f),
+                new Vector2(160f, 48f));
+            ApplyCareButtonStyle(synchronize);
+            ApplyDangerButtonStyle(applyRemote);
+            ApplyCareButtonStyle(close);
+
+            var controller = canvasTransform.GetComponent<CloudSavePanelController>()
+                ?? canvasTransform.gameObject.AddComponent<CloudSavePanelController>();
+            controller.Configure(
+                overlay,
+                provider,
+                status,
+                confirmation,
+                synchronize,
+                applyRemote,
+                close,
+                GameManager.Instance,
+                null,
+                CreateControlBlockingCallback(canvasTransform));
+            openButton.onClick.RemoveAllListeners();
+            openButton.onClick.AddListener(controller.Open);
+            overlay.transform.SetAsLastSibling();
         }
 
         private static bool EnsureInputBindingsPanel(Transform canvasTransform)
@@ -5348,7 +6053,7 @@ namespace CheeseTama.Core
             var balance = GetOrCreateText(
                 card.transform,
                 "Milk Blending Balance Text",
-                "우유코인 0 · 우유방울 0 · 수집 조각 0",
+                "코인 0 · 우유방울 0 · 수집 조각 0",
                 15,
                 TextAnchor.MiddleRight,
                 new Vector2(512f, -30f),
@@ -6083,6 +6788,20 @@ namespace CheeseTama.Core
             var existing = GameObject.Find("Milkroom Background");
             if (existing != null && Application.isPlaying && existing.transform.childCount > 0)
             {
+                var existingRoot = existing.transform;
+                var existingRoomShell = existingRoot.Find("RoomShell") ?? existingRoot;
+                var existingPlayArea = existingRoot.Find("PlayArea") ?? existingRoot;
+                var existingForeground = existingRoot.Find("Foreground") ?? existingRoot;
+                var existingThemeVfxRoot = existingRoot.Find("ThemeVFXRoot")
+                    ?? CreateGroupRoot(existingRoot, "ThemeVFXRoot");
+                EnsureAmbientThemeVfx(existingThemeVfxRoot);
+                AddMilkroomControllers(
+                    existingRoot,
+                    existingRoomShell,
+                    existingRoot,
+                    existingPlayArea,
+                    existingForeground,
+                    existingThemeVfxRoot);
                 return;
             }
 
@@ -6100,6 +6819,7 @@ namespace CheeseTama.Core
             var cozyChair = CreateGroupRoot(root, "CozyChair");
             var foreground = CreateGroupRoot(root, "Foreground");
             var themeVfxRoot = CreateGroupRoot(root, "ThemeVFXRoot");
+            CreateAmbientThemeVfx(themeVfxRoot);
 
             CreateDioramaRoomShell(roomShell);
             CreateDioramaFridgeSet(fridgeSet);
@@ -6199,6 +6919,191 @@ namespace CheeseTama.Core
         }
 #endif
 
+        private static void EnsureMilkroomPropInteractions(Transform canvasTransform)
+        {
+            var roomRoot = GameObject.Find("Milkroom Background")?.transform;
+            var propController = roomRoot != null
+                ? roomRoot.GetComponent<MilkroomPropController>()
+                : null;
+            if (propController == null || canvasTransform == null)
+            {
+                return;
+            }
+
+            propController.ConfigureInteractionRouting(
+                route => TryOpenMilkroomPropRoute(canvasTransform, route),
+                () => IsMilkroomPropInteractionBlocked(canvasTransform));
+            propController.ConfigureInteraction(
+                roomRoot.Find("Fridge_Model"),
+                MilkroomPropRoute.SnackPanel);
+            propController.ConfigureInteraction(
+                roomRoot.Find("MilkShelf_Model"),
+                MilkroomPropRoute.MilkPanel);
+            propController.ConfigureInteraction(
+                roomRoot.Find("DresserTable_Model"),
+                MilkroomPropRoute.CookingChoice);
+            propController.ConfigureInteraction(
+                roomRoot.Find("CozyChair_Model"),
+                MilkroomPropRoute.SleepSchedule);
+        }
+
+        private static bool TryOpenMilkroomPropRoute(
+            Transform canvasTransform,
+            MilkroomPropRoute route)
+        {
+            switch (route)
+            {
+                case MilkroomPropRoute.SnackPanel:
+                {
+                    var controller = canvasTransform.GetComponent<SnackPanelController>();
+                    if (controller == null)
+                    {
+                        return false;
+                    }
+
+                    controller.Open();
+                    return true;
+                }
+                case MilkroomPropRoute.MilkPanel:
+                {
+                    var controller = canvasTransform.GetComponent<MilkPanelController>();
+                    if (controller == null)
+                    {
+                        return false;
+                    }
+
+                    controller.Open();
+                    return true;
+                }
+                case MilkroomPropRoute.CookingChoice:
+                    return canvasTransform.GetComponent<CookingChoicePanelController>()?.Open() == true;
+                case MilkroomPropRoute.SleepSchedule:
+                    return canvasTransform.GetComponent<SleepSchedulePanelController>()?.Open() == true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool IsMilkroomPropInteractionBlocked(Transform canvasTransform)
+        {
+            if (canvasTransform == null || GameManager.Instance?.IsSleepScheduleActive == true)
+            {
+                return true;
+            }
+
+            foreach (var surfaceName in MilkroomPropBlockingSurfaceNames)
+            {
+                var surface = canvasTransform.Find(surfaceName);
+                if (surface != null && surface.gameObject.activeInHierarchy)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void EnsureAccessibleInputScopes(Transform canvasTransform)
+        {
+            if (canvasTransform == null)
+            {
+                return;
+            }
+
+            var pageScope = canvasTransform.GetComponent<KeyboardFocusScope>()
+                ?? canvasTransform.gameObject.AddComponent<KeyboardFocusScope>();
+            pageScope.Configure(canvasTransform, false, true, EventSystem.current);
+
+            var descendants = canvasTransform.GetComponentsInChildren<Transform>(true);
+            for (var index = 0; index < descendants.Length; index += 1)
+            {
+                var candidate = descendants[index];
+                if (candidate == null
+                    || candidate == canvasTransform
+                    || !IsMilkroomBlockingSurfaceName(candidate.name))
+                {
+                    continue;
+                }
+
+                var modalScope = candidate.GetComponent<KeyboardFocusScope>()
+                    ?? candidate.gameObject.AddComponent<KeyboardFocusScope>();
+                modalScope.Configure(candidate, true, true, EventSystem.current);
+            }
+        }
+
+        private static bool IsMilkroomBlockingSurfaceName(string candidateName)
+        {
+            for (var index = 0; index < MilkroomPropBlockingSurfaceNames.Length; index += 1)
+            {
+                if (string.Equals(
+                        MilkroomPropBlockingSurfaceNames[index],
+                        candidateName,
+                        System.StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static System.Action<bool> CreateControlBlockingCallback(Transform canvasTransform)
+        {
+            var topMenu = canvasTransform != null
+                ? canvasTransform.GetComponent<TopMenuController>()
+                : null;
+            var actionBar = canvasTransform?.Find("Bottom Action Bar")
+                ?.GetComponent<BottomActionBarController>();
+            var devPanel = canvasTransform != null
+                ? canvasTransform.GetComponent<DevPanelController>()
+                : null;
+            var notified = false;
+            var topMenuWasEnabled = false;
+            var actionBarWasEnabled = false;
+            var devPanelWasEnabled = false;
+
+            return blocked =>
+            {
+                if (notified == blocked)
+                {
+                    return;
+                }
+
+                notified = blocked;
+                if (blocked)
+                {
+                    topMenuWasEnabled = topMenu != null && topMenu.enabled;
+                    actionBarWasEnabled = actionBar != null && actionBar.enabled;
+                    devPanelWasEnabled = devPanel != null && devPanel.enabled;
+                    if (topMenu != null) topMenu.enabled = false;
+                    if (actionBar != null) actionBar.enabled = false;
+                    if (devPanel != null) devPanel.enabled = false;
+                    return;
+                }
+
+                if (topMenu != null) topMenu.enabled = topMenuWasEnabled;
+                if (actionBar != null) actionBar.enabled = actionBarWasEnabled;
+                if (devPanel != null) devPanel.enabled = devPanelWasEnabled;
+            };
+        }
+
+        private static void MoveDirectChildIfExists(
+            Transform currentParent,
+            Transform nextParent,
+            string childName)
+        {
+            if (currentParent == null || nextParent == null || string.IsNullOrWhiteSpace(childName))
+            {
+                return;
+            }
+
+            var child = currentParent.Find(childName);
+            if (child != null && child.parent == currentParent)
+            {
+                child.SetParent(nextParent, false);
+            }
+        }
+
         private static Transform CreateGroupRoot(Transform parent, string name)
         {
             var group = new GameObject(name).transform;
@@ -6249,6 +7154,17 @@ namespace CheeseTama.Core
             }
 
             lightingController.ApplyTheme(MilkroomThemeController.MorningThemeId);
+
+            var detailController = root.GetComponent<MilkroomPropDetailController>();
+            if (detailController == null)
+            {
+                detailController = root.gameObject.AddComponent<MilkroomPropDetailController>();
+            }
+
+            detailController.Configure(root);
+            var savedQuality = GameManager.Instance?.CurrentSave?.settings?.graphicsQualityPreset
+                ?? (int)GraphicsQualityPreset.High;
+            detailController.ApplyPreset(GraphicsQualityCatalog.Normalize(savedQuality));
         }
 
         private static void CreateDioramaRoomShell(Transform root)
@@ -6635,6 +7551,35 @@ namespace CheeseTama.Core
 
             CreateDecorPart(root, "Evening Window Beam L", PrimitiveType.Cube, new Vector3(-0.7f, 0.08f, 0.54f), new Vector3(0.12f, 2.4f, 0.02f), new Color(1f, 0.62f, 0.25f));
             CreateDecorPart(root, "Evening Window Beam R", PrimitiveType.Cube, new Vector3(0.7f, 0.08f, 0.54f), new Vector3(0.12f, 2.4f, 0.02f), new Color(1f, 0.62f, 0.25f));
+
+            for (var i = 0; i < 18; i += 1)
+            {
+                var x = -3.4f + (i % 9) * 0.82f;
+                var y = -0.8f + (i / 9) * 1.55f + (i % 3) * 0.18f;
+                CreateDecorPart(root, $"Starlight Sparkle {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 0.5f), new Vector3(0.05f, 0.05f, 0.02f), new Color(0.86f, 0.76f, 1f));
+            }
+
+            for (var i = 0; i < 16; i += 1)
+            {
+                var x = -3.7f + (i % 8) * 1.02f;
+                var y = 2.3f - (i / 8) * 1.25f - (i % 4) * 0.16f;
+                CreateDecorPart(root, $"Winter Snowflake {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 0.52f), new Vector3(0.055f, 0.055f, 0.018f), new Color(0.92f, 0.98f, 1f));
+            }
+
+            for (var i = 0; i < 12; i += 1)
+            {
+                var x = -3.1f + (i % 6) * 1.18f;
+                var y = -1.1f + (i / 6) * 1.9f + (i % 2) * 0.22f;
+                CreateDecorPart(root, $"Vintage Dust Mote {i + 1}", PrimitiveType.Sphere, new Vector3(x, y, 0.54f), new Vector3(0.035f, 0.035f, 0.016f), new Color(0.92f, 0.72f, 0.38f));
+            }
+        }
+
+        private static void EnsureAmbientThemeVfx(Transform root)
+        {
+            if (root != null && root.childCount == 0)
+            {
+                CreateAmbientThemeVfx(root);
+            }
         }
 
         private static void CreateMilkBottle(Transform root, string name, Vector3 position, float size)
@@ -8674,13 +9619,7 @@ namespace CheeseTama.Core
 
         private static Font GetDefaultFont()
         {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null)
-            {
-                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            }
-
-            return font;
+            return KoreanUiFontRuntime.GetDefaultFont();
         }
     }
 }

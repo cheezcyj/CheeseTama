@@ -2,7 +2,8 @@
   "name": "CheeseTama.Tests.EditMode",
   "rootNamespace": "CheeseTama.Tests",
   "references": [
-    "CheeseTama"
+    "CheeseTama",
+    "CheeseTama.Editor"
   ],
   "includePlatforms": [
     "Editor"

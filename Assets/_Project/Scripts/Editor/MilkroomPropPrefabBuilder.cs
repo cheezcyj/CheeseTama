@@ -58,6 +58,7 @@ namespace CheeseTama.Editor
             SavePrefab(BuildDresserTable(), $"{PropsRoot}/DresserTable.prefab");
             SavePrefab(BuildChalkboard(), $"{PropsRoot}/Chalkboard.prefab");
             ApplyNaturalMilkroomMaterialsInternal();
+            MilkroomBuildAssetOptimizer.ApplyOptimization(false);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Milkroom prop prefabs generated: Window, Rug, MilkShelf, DresserTable, Chalkboard");
