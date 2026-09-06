@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "seasonId": "dream_story_season_1",
+  "episodes": [
+    {
+      "id": "dream_01_milk_tide",
+      "kind": "dream",
+      "title": "우유빛 물결의 꿈",
+      "body": "잠든 밀크룸 바닥이 잔잔한 우유빛 물결로 변합니다. 멀리 잠긴 서랍의 마지막 열쇠가 파도 위에서 천천히 흔들립니다.",
+      "prerequisiteEpisodeId": "",
+      "trigger": {
+        "kind": "external_story_completed",
+        "minimumCount": 0,
+        "requiredId": "drawer_starlight_letter"
+      },
+      "choices": [
+        {
+          "id": "step_into_tide",
+          "label": "물결 속으로 한 걸음 내딛기",
+          "resultMessage": "차가울 줄 알았던 물결은 따뜻했고, 발끝에서 작은 별무늬가 피어났어요.",
+          "memory": {
+            "title": "첫 번째 꿈의 물결",
+            "detail": "우유빛 물결을 두려워하지 않고 건너자 서랍 쪽으로 이어지는 별무늬가 나타났다."
+          },
+          "codex": {
+            "title": "바닥에 남은 별무늬",
+            "detail": "꿈에서 깨어난 뒤에도 잠시 보였던 무늬. 잠긴 서랍의 나무결과 같은 방향으로 이어져 있었다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        },
+        {
+          "id": "listen_from_shore",
+          "label": "가장자리에서 파도 소리 듣기",
+          "resultMessage": "물결이 서랍 쪽으로 밀려갈 때마다 오래된 자장가의 한 소절이 들렸어요.",
+          "memory": {
+            "title": "첫 번째 꿈의 노래",
+            "detail": "물결을 바라보며 기다리자 잠긴 서랍에서 시작된 듯한 자장가를 들었다."
+          },
+          "codex": {
+            "title": "서랍에서 들린 자장가",
+            "detail": "가사 없이 같은 음만 반복되는 노래. 우유빛 물결이 움직일 때만 들리는 것으로 기록되었다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        }
+      ]
+    },
+    {
+      "id": "dream_02_reversed_label",
+      "kind": "dream",
+      "title": "거꾸로 붙은 라벨",
+      "body": "두 번째 꿈에서는 모든 우유병 라벨이 안쪽을 향합니다. 글자는 보이지 않지만 병을 돌릴 때마다 이름이 아닌 날짜가 속삭여집니다.",
+      "prerequisiteEpisodeId": "dream_01_milk_tide",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 2,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "peel_one_label",
+          "label": "라벨 하나를 조심히 떼기",
+          "resultMessage": "라벨 아래에서 지워진 방문 날짜와 작은 의자 그림이 드러났어요.",
+          "memory": {
+            "title": "안쪽을 향한 이름",
+            "detail": "라벨을 떼자 이름 대신 누군가 찾아온 날짜와 빈 의자 표시가 남아 있었다."
+          },
+          "codex": {
+            "title": "방문 날짜 라벨",
+            "detail": "상품 이름을 적는 자리에 방문 날짜가 반복되어 있다. 마지막 숫자만 얼룩으로 가려져 읽히지 않는다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        },
+        {
+          "id": "read_in_reflection",
+          "label": "유리 반사로 글자 읽기",
+          "resultMessage": "반사된 글자는 '돌아올 자리'라고 읽혔고, 빈 의자 하나가 선명해졌어요.",
+          "memory": {
+            "title": "거울 속의 라벨",
+            "detail": "직접 볼 수 없던 라벨을 유리 반사로 읽어 빈 자리가 누군가를 기다린다는 문장을 발견했다."
+          },
+          "codex": {
+            "title": "돌아올 자리",
+            "detail": "거울을 통해서만 읽히는 문구. 밀크룸의 오래된 방문 기록과 같은 필체를 사용한다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        }
+      ]
+    },
+    {
+      "id": "dream_03_empty_chair",
+      "kind": "dream",
+      "title": "빈 의자가 기다리는 밤",
+      "body": "라벨 오류를 본 날의 꿈속에서 작은 의자가 문 앞을 향해 놓여 있습니다. 의자 위의 얼룩은 앉은 사람의 그림자처럼 천천히 움직입니다.",
+      "prerequisiteEpisodeId": "dream_02_reversed_label",
+      "trigger": {
+        "kind": "signal",
+        "minimumCount": 0,
+        "requiredId": "label_error_observed"
+      },
+      "choices": [
+        {
+          "id": "offer_warm_milk",
+          "label": "빈 의자에 따뜻한 우유 놓기",
+          "resultMessage": "컵의 김이 사람 모양으로 모였다가 문 아래로 조용히 흘러나갔어요.",
+          "memory": {
+            "title": "빈 자리에 놓은 한 잔",
+            "detail": "기다리는 의자에 따뜻한 우유를 놓자 보이지 않던 손님이 문밖에 있음을 알게 되었다."
+          },
+          "codex": {
+            "title": "김으로 남은 손님",
+            "detail": "컵 위에 잠깐 나타난 윤곽. 머리와 손은 보이지 않았고 오래된 얼룩만 몸처럼 이어졌다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        },
+        {
+          "id": "leave_guiding_light",
+          "label": "문가에 작은 불빛 남기기",
+          "resultMessage": "불빛이 문틈을 비추자 밖에서 세 번의 가벼운 노크가 돌아왔어요.",
+          "memory": {
+            "title": "세 번의 노크",
+            "detail": "빈 의자 대신 문가에 불빛을 두었고, 잠시 뒤 일정한 간격의 노크를 들었다."
+          },
+          "codex": {
+            "title": "문밖의 응답",
+            "detail": "밀크룸 방문 규칙에는 없는 세 번의 노크. 라벨에 가려진 날짜마다 같은 기록이 반복된다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        }
+      ]
+    },
+    {
+      "id": "dream_04_guest_shadow",
+      "kind": "dream",
+      "title": "손님보다 먼저 온 그림자",
+      "body": "여러 손님이 다녀간 밤, 꿈속 문틈으로 길고 둥근 그림자가 먼저 들어옵니다. 그림자는 우유 얼룩을 피해 다니지 않고 하나씩 주워 담습니다.",
+      "prerequisiteEpisodeId": "dream_03_empty_chair",
+      "trigger": {
+        "kind": "npc_visits_at_least",
+        "minimumCount": 3,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "call_to_shadow",
+          "label": "그림자에게 인사하기",
+          "resultMessage": "그림자는 멈춰 서서 '기억해 줘서 고마워'라는 글자를 바닥에 남겼어요.",
+          "memory": {
+            "title": "그림자에게 건넨 인사",
+            "detail": "이름을 모르는 존재에게 먼저 인사하자 얼룩이 짧은 문장이 되어 돌아왔다."
+          },
+          "codex": {
+            "title": "얼룩으로 쓴 감사",
+            "detail": "마르면 사라지고 우유방울이 닿으면 다시 보이는 문장. 손님은 자신의 이름보다 기억을 먼저 물었다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        },
+        {
+          "id": "follow_collected_stains",
+          "label": "모아 둔 얼룩을 따라가기",
+          "resultMessage": "얼룩 조각들은 잠긴 서랍 앞에서 하나의 오래된 문장 부호가 되었어요.",
+          "memory": {
+            "title": "모여든 얼룩의 방향",
+            "detail": "그림자가 주운 흔적을 따라가자 모든 얼룩이 잠긴 서랍을 가리키고 있음을 알아냈다."
+          },
+          "codex": {
+            "title": "서랍 앞의 문장 부호",
+            "detail": "지워진 기록이 끝나지 않았음을 뜻하는 표시. 오래된 라벨의 가장자리에도 같은 모양이 남아 있다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        }
+      ]
+    },
+    {
+      "id": "dream_05_dawn_key",
+      "kind": "dream",
+      "title": "새벽에 돌아온 열쇠",
+      "body": "다섯 번째 꿈에서 사라졌던 작은 열쇠가 창가에 놓입니다. 열쇠에는 '혼자 열지 말 것'이라는 새 문장이 얇게 새겨져 있습니다.",
+      "prerequisiteEpisodeId": "dream_04_guest_shadow",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 5,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "wait_for_knock",
+          "label": "열쇠를 두고 노크 기다리기",
+          "resultMessage": "새벽빛이 번질 무렵 문밖에서 익숙한 세 번의 노크가 들렸어요.",
+          "memory": {
+            "title": "함께 열기 위한 기다림",
+            "detail": "열쇠의 경고를 믿고 기다리자 꿈에서 들었던 손님의 노크가 현실의 새벽과 겹쳤다."
+          },
+          "codex": {
+            "title": "혼자 열지 않는 열쇠",
+            "detail": "소유자를 위한 열쇠가 아니라 두 존재가 같은 순간에 잡아야 움직이는 장치로 보인다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        },
+        {
+          "id": "wrap_key_in_label",
+          "label": "거꾸로 된 라벨로 열쇠 감싸기",
+          "resultMessage": "라벨 글자가 바로 돌아오며 문밖의 손님에게 보낼 짧은 초대장이 되었어요.",
+          "memory": {
+            "title": "라벨로 만든 초대장",
+            "detail": "오류처럼 보였던 라벨을 열쇠에 감싸자 손님을 맞이하는 문장으로 다시 읽혔다."
+          },
+          "codex": {
+            "title": "바로 읽히는 첫 라벨",
+            "detail": "방문 날짜 대신 '새벽에 문을 두드려 주세요'라고 적힌 라벨. 더 이상 반사가 필요하지 않다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "stain_guest_01_threshold",
+      "kind": "stain_guest",
+      "title": "얼룩 손님이 문턱에 선 날",
+      "body": "다섯 번의 꿈이 지나고 여러 손님의 발걸음이 쌓인 날, 문턱의 오래된 얼룩이 천천히 일어나 작은 손님의 모습을 이룹니다.",
+      "prerequisiteEpisodeId": "dream_05_dawn_key",
+      "trigger": {
+        "kind": "npc_visits_at_least",
+        "minimumCount": 5,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "open_door_wide",
+          "label": "문을 활짝 열어 맞이하기",
+          "resultMessage": "손님은 방 안의 빈 의자에 앉아 오래전 자신이 지운 기록을 돌려주겠다고 약속했어요.",
+          "memory": {
+            "title": "문턱을 넘은 얼룩 손님",
+            "detail": "모습보다 기억이 먼저 도착했던 손님을 정식으로 맞이하고 잠긴 서랍을 함께 열기로 했다."
+          },
+          "codex": {
+            "title": "얼룩 손님의 첫 방문",
+            "detail": "지워진 기록이 머무는 동안 생긴 존재. 없애야 할 얼룩이 아니라 돌아갈 자리를 찾는 기억에 가깝다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        },
+        {
+          "id": "speak_across_threshold",
+          "label": "문턱을 사이에 두고 이야기하기",
+          "resultMessage": "손님은 서두르지 않아도 된다며 서랍 네 번째 칸의 위치를 얼룩 지도에 표시했어요.",
+          "memory": {
+            "title": "문턱에서 나눈 첫 대화",
+            "detail": "경계를 지킨 채 이야기를 나누었고 손님은 기다림을 존중하며 다음 서랍 위치를 알려 주었다."
+          },
+          "codex": {
+            "title": "얼룩으로 그린 네 번째 칸",
+            "detail": "마른 자국의 농도로 깊이를 나타낸 지도. 잠긴 서랍 안에 기존과 다른 네 칸이 더 있음을 보여 준다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "drawer_chapter_04_return_label",
+      "kind": "drawer",
+      "title": "잠긴 서랍 4장: 돌아온 이름표",
+      "body": "얼룩 손님과 함께 네 번째 칸을 열자 비어 있던 이름표들이 차례로 글자를 되찾습니다. 마지막 한 장만 여전히 안쪽을 향해 있습니다.",
+      "prerequisiteEpisodeId": "stain_guest_01_threshold",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 6,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "turn_last_label",
+          "label": "마지막 이름표를 바로 돌리기",
+          "resultMessage": "이름표에는 손님의 이름 대신 '함께 돌본 방'이라는 문장이 나타났어요.",
+          "memory": {
+            "title": "이름보다 먼저 돌아온 문장",
+            "detail": "마지막 이름표를 바로 놓자 한 사람의 소유가 아닌 함께 지낸 시간을 가리키는 말이 나타났다."
+          },
+          "codex": {
+            "title": "함께 돌본 방의 이름표",
+            "detail": "소유자의 이름이 없는 기록. 밀크룸을 아낀 모든 존재를 하나의 방문자로 적고 있다."
+          },
+          "reward": { "kind": "coin", "amount": 100 }
+        },
+        {
+          "id": "leave_last_label_reversed",
+          "label": "마지막 이름표를 그대로 두기",
+          "resultMessage": "손님은 보이지 않는 이름도 기록이라며 이름표 뒤에 작은 별 하나를 그렸어요.",
+          "memory": {
+            "title": "보이지 않는 이름을 지킨 날",
+            "detail": "모든 오류를 고치지 않고 남겨 두는 선택도 기억을 존중하는 방법임을 배웠다."
+          },
+          "codex": {
+            "title": "뒤쪽에 그린 작은 별",
+            "detail": "읽히지 않는 이름을 삭제하지 않았다는 표시. 빛을 비스듬히 비추면 별의 가장자리만 보인다."
+          },
+          "reward": { "kind": "coin", "amount": 100 }
+        }
+      ]
+    },
+    {
+      "id": "drawer_chapter_05_glass_map",
+      "kind": "drawer",
+      "title": "잠긴 서랍 5장: 유리병 지도",
+      "body": "다섯 번째 칸에는 비어 있는 유리병들이 눕혀져 있습니다. 라벨 오류의 순서대로 병을 세우면 바닥의 흠집이 하나의 길이 됩니다.",
+      "prerequisiteEpisodeId": "drawer_chapter_04_return_label",
+      "trigger": {
+        "kind": "signal",
+        "minimumCount": 0,
+        "requiredId": "label_error_observed"
+      },
+      "choices": [
+        {
+          "id": "trace_scratched_map",
+          "label": "바닥의 흠집을 종이에 옮기기",
+          "resultMessage": "흠집 지도는 밀크룸 안이 아니라 오래전 이 방을 떠난 길을 가리켰어요.",
+          "memory": {
+            "title": "유리병 아래의 떠난 길",
+            "detail": "병의 순서를 맞추자 얼룩 손님이 밀크룸을 떠났던 길이 지도처럼 이어졌다."
+          },
+          "codex": {
+            "title": "떠나는 방향의 지도",
+            "detail": "입구에서 시작하지 않고 서랍에서 바깥으로 향한다. 돌아오는 길은 아직 그려져 있지 않다."
+          },
+          "reward": { "kind": "milk_drop", "amount": 3 }
+        },
+        {
+          "id": "warm_glass_bottles",
+          "label": "유리병을 따뜻하게 데우기",
+          "resultMessage": "병 안쪽의 김이 모여 떠난 길과 돌아온 길을 나란히 그려 냈어요.",
+          "memory": {
+            "title": "김으로 이어진 왕복길",
+            "detail": "차가운 흠집만 보던 병을 데우자 손님이 되돌아온 방향까지 함께 나타났다."
+          },
+          "codex": {
+            "title": "돌아오는 방향의 지도",
+            "detail": "온기가 있을 때만 나타나는 두 번째 선. 빈 의자와 잠긴 서랍 사이에서 끝난다."
+          },
+          "reward": { "kind": "milk_drop", "amount": 3 }
+        }
+      ]
+    },
+    {
+      "id": "drawer_chapter_06_guest_signature",
+      "kind": "drawer",
+      "title": "잠긴 서랍 6장: 지워진 서명",
+      "body": "여섯 번째 칸의 방문 기록에는 수많은 손님의 서명이 남아 있지만 얼룩 손님의 자리만 깨끗하게 비어 있습니다.",
+      "prerequisiteEpisodeId": "drawer_chapter_05_glass_map",
+      "trigger": {
+        "kind": "npc_visits_at_least",
+        "minimumCount": 7,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "restore_stain_signature",
+          "label": "남은 얼룩으로 서명 복원하기",
+          "resultMessage": "흩어진 자국이 모여 이름 대신 작은 문 모양의 서명을 만들었어요.",
+          "memory": {
+            "title": "문 모양으로 돌아온 서명",
+            "detail": "지워진 이름을 추측하지 않고 남은 흔적을 모아 손님이 선택한 표시를 되찾았다."
+          },
+          "codex": {
+            "title": "얼룩 손님의 문 서명",
+            "detail": "어디에도 속하지 못했던 시간을 문턱 모양으로 남긴 서명. 안과 밖을 동시에 가리킨다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        },
+        {
+          "id": "invite_new_signature",
+          "label": "손님에게 새 서명 부탁하기",
+          "resultMessage": "손님은 지난 이름을 복원하는 대신 오늘 날짜와 작은 의자를 함께 그렸어요.",
+          "memory": {
+            "title": "오늘부터 시작한 서명",
+            "detail": "사라진 과거를 억지로 채우지 않고 지금 함께 있는 날을 첫 기록으로 남겼다."
+          },
+          "codex": {
+            "title": "날짜와 의자의 새 서명",
+            "detail": "이름 대신 돌아온 날짜와 기다리던 자리를 표시한다. 이후 방문 기록의 새 기준이 되었다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "drawer_chapter_07_shared_dawn",
+      "kind": "drawer",
+      "title": "잠긴 서랍 7장: 함께 맞는 새벽",
+      "body": "마지막 칸은 열쇠 구멍이 두 개입니다. 창밖이 밝아지기 전, 치즈타마와 얼룩 손님이 각자의 열쇠를 동시에 잡습니다.",
+      "prerequisiteEpisodeId": "drawer_chapter_06_guest_signature",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 7,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "open_before_sunrise",
+          "label": "해가 뜨기 전에 함께 열기",
+          "resultMessage": "두 열쇠가 동시에 돌아가자 서랍의 벽이 열리고 지금까지의 꿈이 한 권의 기록으로 묶였어요.",
+          "memory": {
+            "title": "둘이서 연 마지막 서랍",
+            "detail": "혼자서는 움직이지 않던 열쇠를 함께 돌려 꿈과 방문 기록을 하나의 이야기로 완성했다."
+          },
+          "codex": {
+            "title": "꿈 로그 시즌 1 기록",
+            "detail": "다섯 번의 꿈, 한 번의 정식 방문, 네 장의 서랍 기록을 묶은 책. 빈 페이지는 다음 새벽을 위해 남겨 두었다."
+          },
+          "reward": { "kind": "coin", "amount": 150 }
+        },
+        {
+          "id": "close_after_reading",
+          "label": "함께 읽고 서랍을 다시 닫기",
+          "resultMessage": "기록을 모두 읽은 뒤 서랍을 닫자 두 열쇠가 작은 책갈피 하나로 합쳐졌어요.",
+          "memory": {
+            "title": "다시 닫을 수 있게 된 비밀",
+            "detail": "비밀을 여는 것만큼 안전하게 닫고 기억할 책임도 함께 나누었다."
+          },
+          "codex": {
+            "title": "두 열쇠로 만든 책갈피",
+            "detail": "한쪽에는 물결, 다른 쪽에는 문턱이 새겨져 있다. 완료된 기록을 다시 읽을 때만 은은하게 빛난다."
+          },
+          "reward": { "kind": "coin", "amount": 150 }
+        }
+      ]
+    }
+  ]
+}

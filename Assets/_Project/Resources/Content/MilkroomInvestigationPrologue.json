@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "episodeId": "season3_prologue_01_room_that_answers",
+  "requiredDreamEpisodeId": "season2_final_01_open_page",
+  "title": "조사 기록: 대답하는 밀크룸",
+  "body": "열어 둔 두 번째 기록의 마지막 장이 밀크룸 쪽으로 푸른 선 세 갈래를 뻗습니다. 창문, 선반, 서랍에 남은 흔적을 모두 확인하면 다음 꿈의 첫 문장이 열릴 것 같아요.",
+  "hotspots": [
+    {
+      "id": "milkroom_window_trace",
+      "kind": "window",
+      "label": "창문 흔적 조사",
+      "clueId": "season3_clue_window_reply",
+      "clueTitle": "창틀 안쪽의 답장 자국",
+      "clueDetail": "시즌 2에서 만든 작은 답장 틈 옆에 안쪽에서 바깥으로 눌러 쓴 세 개의 점이 남아 있다. 누군가 밀크룸 안에서 먼저 신호를 보낸 흔적이다.",
+      "requirement": {
+        "kind": "always",
+        "minimumZoom": 1.0,
+        "startHour": 0,
+        "endHour": 0,
+        "hint": ""
+      }
+    },
+    {
+      "id": "milkroom_shelf_trace",
+      "kind": "shelf",
+      "label": "선반 라벨 조사",
+      "clueId": "season3_clue_shelf_third_label",
+      "clueTitle": "세 번째 이름을 기다리는 라벨",
+      "clueDetail": "두 이름표 사이에 비워 둔 칸이 하나 더 생겼다. 글씨는 없지만 푸른 실이 칸을 건너뛰지 않고 세 번 매듭져 있다.",
+      "requirement": {
+        "kind": "always",
+        "minimumZoom": 1.0,
+        "startHour": 0,
+        "endHour": 0,
+        "hint": ""
+      }
+    },
+    {
+      "id": "milkroom_drawer_trace",
+      "kind": "drawer",
+      "label": "서랍 가장자리 조사",
+      "clueId": "season3_clue_drawer_reverse_dust",
+      "clueTitle": "거꾸로 쌓인 별가루",
+      "clueDetail": "서랍 가장자리의 가루는 바깥에서 안으로 쌓인 흔적이 아니라 안쪽에서 밀려 나온 모양이다. 확대해서 보거나 밤빛이 비칠 때만 방향이 드러난다.",
+      "requirement": {
+        "kind": "zoom_or_time",
+        "minimumZoom": 1.35,
+        "startHour": 20,
+        "endHour": 6,
+        "hint": "조금 더 확대하거나 밤 8시 이후의 빛에서 다시 살펴보세요."
+      }
+    }
+  ],
+  "choices": [
+    {
+      "id": "follow_answering_thread",
+      "label": "세 흔적을 잇는 푸른 실 따라가기",
+      "resultMessage": "세 단서를 잇자 푸른 실이 밀크룸 바닥에 처음 보는 문 모양을 그렸어요. 문 너머에서 세 번째 새벽의 숨소리가 들립니다.",
+      "memory": {
+        "title": "대답하는 방을 따라간 날",
+        "detail": "창문, 선반, 서랍의 흔적을 하나의 질문으로 읽고 밀크룸이 먼저 가리킨 길을 따라가기로 했다."
+      },
+      "codex": {
+        "title": "꿈 이야기 시즌 3 프롤로그: 푸른 문",
+        "detail": "세 조사 단서가 연결되면 나타나는 문 모양. 이전 기록의 바깥이 아니라 밀크룸 안쪽에서 다음 꿈이 시작된다는 신호다."
+      },
+      "reward": {
+        "kind": "collection_fragment",
+        "amount": 1
+      }
+    },
+    {
+      "id": "leave_three_point_reply",
+      "label": "세 흔적 옆에 같은 점 세 개 남기기",
+      "resultMessage": "답장 점을 남기자 서랍 안쪽에서 같은 박자의 노크가 돌아왔어요. 빈 페이지에 '여기 있어'라는 짧은 문장이 번집니다.",
+      "memory": {
+        "title": "밀크룸에 먼저 답장한 날",
+        "detail": "정체를 확인하기 전에 상대가 남긴 세 번의 신호와 같은 방식으로 안전한 답장을 보냈다."
+      },
+      "codex": {
+        "title": "꿈 이야기 시즌 3 프롤로그: 세 점 답장",
+        "detail": "이름 대신 존재만 확인하는 세 점 신호. 창틀과 빈 페이지 양쪽에서 같은 간격으로 나타난다."
+      },
+      "reward": {
+        "kind": "collection_fragment",
+        "amount": 1
+      }
+    }
+  ]
+}

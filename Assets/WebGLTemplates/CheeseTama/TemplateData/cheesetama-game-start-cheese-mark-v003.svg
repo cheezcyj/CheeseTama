@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="cheesetama-game-start-cheese-mark-v003" viewBox="0 0 64 64">
+  <title>게임 시작 치즈 본체 - 그림자와 별빛 없는 공용 마크</title>
+  <metadata>게임 시작 hero의 치즈 본체만 옮긴 파비콘·헤더 공용 투명 벡터 v003.</metadata>
+  <defs>
+    <linearGradient id="game-start-cheese-fill" x1="15.44" y1="8.34" x2="48.56" y2="55.66" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2a2"/>
+      <stop offset="0.3" stop-color="#fff2a2"/>
+      <stop offset="0.31" stop-color="#f4c95d"/>
+      <stop offset="0.72" stop-color="#f4c95d"/>
+      <stop offset="0.73" stop-color="#d8952e"/>
+      <stop offset="1" stop-color="#d8952e"/>
+    </linearGradient>
+    <linearGradient id="game-start-cheese-shine" x1="5.94" y1="18.14" x2="58.06" y2="45.86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffdd" stop-opacity="0.58"/>
+      <stop offset="0.34" stop-color="#ffffdd" stop-opacity="0"/>
+      <stop offset="0.72" stop-color="#784217" stop-opacity="0"/>
+      <stop offset="1" stop-color="#784217" stop-opacity="0.25"/>
+    </linearGradient>
+    <radialGradient id="game-start-cheese-hole-one" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="87.5%" stop-color="#bd7624"/>
+      <stop offset="100%" stop-color="#bd7624" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="game-start-cheese-hole-two" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="85.7143%" stop-color="#b66d21"/>
+      <stop offset="100%" stop-color="#b66d21" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="game-start-cheese-hole-three" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="83.3333%" stop-color="#c68128"/>
+      <stop offset="100%" stop-color="#c68128" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g id="game-start-cheese-art" transform="matrix(1.35 0 0 1.35 -13.02 -9.81)">
+    <g id="game-start-cheese-piece" transform="rotate(-8 32 32)">
+      <path id="game-start-cheese-body" d="M10.94 42.57 52.12 47.47 43.7 18.03 17.96 24.83Z" fill="url(#game-start-cheese-fill)"/>
+      <circle cx="24.51" cy="34.64" r="3.01" fill="url(#game-start-cheese-hole-one)"/>
+      <circle cx="38.55" cy="39.17" r="2.78" fill="url(#game-start-cheese-hole-two)"/>
+      <circle cx="35.74" cy="26.72" r="2.18" fill="url(#game-start-cheese-hole-three)"/>
+      <path id="game-start-cheese-gloss" d="M10.94 42.57 52.12 47.47 43.7 18.03 17.96 24.83Z" fill="url(#game-start-cheese-shine)"/>
+    </g>
+  </g>
+</svg>

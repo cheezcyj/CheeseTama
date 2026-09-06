@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "seasonId": "dream_story_season_2",
+  "episodes": [
+    {
+      "id": "season2_dream_01_second_dawn",
+      "kind": "dream",
+      "title": "두 번째 새벽의 빈 페이지",
+      "body": "시즌 1 기록 뒤의 빈 페이지가 새벽빛을 머금습니다. 얼룩 손님이 남긴 책갈피가 다음 문장을 기다립니다.",
+      "prerequisiteEpisodeId": "",
+      "trigger": {
+        "kind": "dream_episode_completed",
+        "minimumCount": 0,
+        "requiredId": "drawer_chapter_07_shared_dawn"
+      },
+      "choices": [
+        {
+          "id": "write_date_first",
+          "label": "오늘 날짜부터 적기",
+          "resultMessage": "새벽 날짜 아래에 처음 보는 푸른 실선이 천천히 이어졌어요.",
+          "memory": {
+            "title": "빈 페이지에 적은 첫 날짜",
+            "detail": "완성된 이야기를 덧쓰지 않고 새로운 날을 첫 문장으로 삼았다."
+          },
+          "codex": {
+            "title": "두 번째 새벽의 푸른 선",
+            "detail": "날짜를 쓰자 나타난 가느다란 선. 책갈피와 창가 사이를 잇고 있다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        },
+        {
+          "id": "listen_to_blank_page",
+          "label": "빈 페이지의 소리 듣기",
+          "resultMessage": "종이 안쪽에서 누군가 실을 감는 듯한 작은 마찰음이 들렸어요.",
+          "memory": {
+            "title": "쓰지 않고 들은 첫 문장",
+            "detail": "서두르지 않고 빈 페이지가 먼저 들려주는 소리를 기다렸다."
+          },
+          "codex": {
+            "title": "종이 안쪽의 실감는 소리",
+            "detail": "페이지를 넘기지 않아도 들리는 소리. 푸른 실의 움직임과 같은 박자를 가진다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        }
+      ]
+    },
+    {
+      "id": "season2_dream_02_blue_thread",
+      "kind": "dream",
+      "title": "창가를 건너는 푸른 실",
+      "body": "꿈속 푸른 실이 창문과 서랍, 빈 의자를 차례로 묶습니다. 매듭마다 아직 돌아오지 않은 이름 하나가 반짝입니다.",
+      "prerequisiteEpisodeId": "season2_dream_01_second_dawn",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 9,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "untie_window_knot",
+          "label": "창가 매듭을 풀기",
+          "resultMessage": "매듭 안에서 바깥 풍경을 그린 작은 유리 조각이 나왔어요.",
+          "memory": {
+            "title": "창가에서 푼 첫 매듭",
+            "detail": "밖을 향한 매듭을 풀어 오래된 풍경 조각을 되찾았다."
+          },
+          "codex": {
+            "title": "푸른 실에 묶인 유리 조각",
+            "detail": "현재 창밖과 다른 풍경이 새겨져 있다. 실은 사라진 장소도 기억하는 듯하다."
+          },
+          "reward": { "kind": "milk_drop", "amount": 2 }
+        },
+        {
+          "id": "follow_thread_to_chair",
+          "label": "실을 따라 빈 의자로 가기",
+          "resultMessage": "의자 아래에서 얼룩 손님이 잊고 간 작은 실타래를 발견했어요.",
+          "memory": {
+            "title": "빈 의자 아래의 실타래",
+            "detail": "매듭을 억지로 풀지 않고 시작점을 따라가 주인을 기다리는 실타래를 찾았다."
+          },
+          "codex": {
+            "title": "얼룩 손님의 푸른 실타래",
+            "detail": "기억이 끊어진 곳을 임시로 이어 두는 도구. 새벽빛에서만 푸르게 보인다."
+          },
+          "reward": { "kind": "milk_drop", "amount": 2 }
+        }
+      ]
+    },
+    {
+      "id": "season2_guest_01_returning_stain",
+      "kind": "stain_guest",
+      "title": "얼룩 손님이 다시 앉은 자리",
+      "body": "여러 방문이 지나간 뒤 얼룩 손님이 다시 빈 의자에 앉습니다. 이번에는 문턱이 아니라 방 안쪽을 바라봅니다.",
+      "prerequisiteEpisodeId": "season2_dream_02_blue_thread",
+      "trigger": {
+        "kind": "npc_visits_at_least",
+        "minimumCount": 9,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "offer_thread_keepsake",
+          "label": "푸른 실타래를 돌려주기",
+          "resultMessage": "손님은 실 한 가닥만 받아 손목에 묶고 나머지는 밀크룸에 남겼어요.",
+          "memory": {
+            "title": "나누어 가진 푸른 실",
+            "detail": "돌려주는 대신 함께 보관하는 방법을 선택해 다시 올 이유를 만들었다."
+          },
+          "codex": {
+            "title": "둘로 나눈 기억 실",
+            "detail": "한쪽이 움직이면 다른 쪽 매듭도 미세하게 흔들린다. 방문의 방향을 알려 준다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        },
+        {
+          "id": "ask_about_missing_names",
+          "label": "돌아오지 않은 이름 묻기",
+          "resultMessage": "손님은 이름보다 자리를 먼저 찾아야 한다며 창가의 빈 칸을 가리켰어요.",
+          "memory": {
+            "title": "이름보다 먼저 찾을 자리",
+            "detail": "정답을 재촉하지 않고 누군가 돌아올 수 있는 장소부터 준비하기로 했다."
+          },
+          "codex": {
+            "title": "창가 기록의 빈 칸",
+            "detail": "날짜도 이름도 없지만 실의 끝이 멈추는 자리. 다음 기록의 입구로 보인다."
+          },
+          "reward": { "kind": "collection_fragment", "amount": 1 }
+        }
+      ]
+    },
+    {
+      "id": "season2_drawer_01_empty_margin",
+      "kind": "drawer",
+      "title": "여백 서랍: 지워지지 않은 빈칸",
+      "body": "새로 열린 얇은 서랍에는 글자 대신 넓은 여백만 남아 있습니다. 푸른 실은 빈칸의 가장자리를 조심히 두릅니다.",
+      "prerequisiteEpisodeId": "season2_guest_01_returning_stain",
+      "trigger": {
+        "kind": "signal",
+        "minimumCount": 0,
+        "requiredId": "label_error_observed"
+      },
+      "choices": [
+        {
+          "id": "preserve_empty_margin",
+          "label": "여백을 그대로 보존하기",
+          "resultMessage": "빈칸은 사라지지 않고 다음 기록을 위한 안전한 자리로 남았어요.",
+          "memory": {
+            "title": "채우지 않기로 한 여백",
+            "detail": "모르는 내용을 추측해 적지 않고 비어 있다는 사실 자체를 기록했다."
+          },
+          "codex": {
+            "title": "보존된 빈 기록칸",
+            "detail": "삭제 흔적이 없는 진짜 여백. 미래의 방문 기록을 위한 자리로 분류되었다."
+          },
+          "reward": { "kind": "coin", "amount": 80 }
+        },
+        {
+          "id": "frame_margin_with_thread",
+          "label": "푸른 실로 여백 두르기",
+          "resultMessage": "빈칸의 경계가 선명해져 오래된 삭제 흔적과 구별할 수 있게 되었어요.",
+          "memory": {
+            "title": "빈칸에 만든 푸른 테두리",
+            "detail": "아직 쓰지 않은 자리와 지워진 자리를 구별하기 위해 경계를 남겼다."
+          },
+          "codex": {
+            "title": "푸른 테두리 기록법",
+            "detail": "내용을 만들지 않고 상태만 보존하는 표기. 얼룩 손님이 직접 고른 방식이다."
+          },
+          "reward": { "kind": "coin", "amount": 80 }
+        }
+      ]
+    },
+    {
+      "id": "season2_dream_03_shared_name",
+      "kind": "dream",
+      "title": "둘이 부르는 하나의 방",
+      "body": "깊은 잠 속에서 밀크룸의 이름표가 둘로 갈라집니다. 한쪽은 치즈타마의 목소리, 다른 쪽은 손님의 침묵으로 읽힙니다.",
+      "prerequisiteEpisodeId": "season2_drawer_01_empty_margin",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 11,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "read_names_together",
+          "label": "두 이름표를 함께 읽기",
+          "resultMessage": "서로 다른 소리가 겹치자 '돌아올 수 있는 방'이라는 새 이름이 되었어요.",
+          "memory": {
+            "title": "함께 읽어 만든 방 이름",
+            "detail": "어느 한쪽의 이름으로 덮지 않고 두 기록이 겹치는 말을 찾았다."
+          },
+          "codex": {
+            "title": "돌아올 수 있는 방",
+            "detail": "소유보다 귀환을 뜻하는 이름. 방문 기록의 첫 줄에 새 기준으로 적혔다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        },
+        {
+          "id": "keep_two_nameplates",
+          "label": "두 이름표를 나란히 두기",
+          "resultMessage": "이름표는 합쳐지지 않았지만 같은 빛을 반사하며 서로의 자리를 지켰어요.",
+          "memory": {
+            "title": "나란히 둔 두 이름표",
+            "detail": "하나로 만들지 않아도 함께 있을 수 있음을 밀크룸의 새 규칙으로 남겼다."
+          },
+          "codex": {
+            "title": "한 빛을 비추는 이름표",
+            "detail": "각자 다른 글씨를 유지하지만 새벽에는 같은 푸른빛을 낸다."
+          },
+          "reward": { "kind": "none", "amount": 0 }
+        }
+      ]
+    },
+    {
+      "id": "season2_drawer_02_window_archive",
+      "kind": "drawer",
+      "title": "창문 서랍: 바깥의 방문 기록",
+      "body": "창틀 아래 숨은 서랍에는 방 안으로 들어오지 못했던 발자국과 노크가 날짜별로 정리되어 있습니다.",
+      "prerequisiteEpisodeId": "season2_dream_03_shared_name",
+      "trigger": {
+        "kind": "npc_visits_at_least",
+        "minimumCount": 11,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "copy_outside_visits",
+          "label": "바깥 방문도 기록책에 옮기기",
+          "resultMessage": "문을 넘지 못한 방문들도 정식 기록 번호를 받았어요.",
+          "memory": {
+            "title": "문밖 방문을 적은 날",
+            "detail": "만남이 이루어지지 않았다는 이유로 발자국을 지우지 않기로 했다."
+          },
+          "codex": {
+            "title": "창밖 방문 기록부",
+            "detail": "노크, 발자국, 머문 시간을 함께 적는다. 응답하지 못한 날도 누락하지 않는다."
+          },
+          "reward": { "kind": "milk_drop", "amount": 3 }
+        },
+        {
+          "id": "open_small_return_slot",
+          "label": "작은 답장 틈 만들기",
+          "resultMessage": "창틀에 작은 틈이 생겨 다음 방문자는 짧은 메모를 남길 수 있게 되었어요.",
+          "memory": {
+            "title": "창틀에 만든 답장 틈",
+            "detail": "방에 들어오지 않아도 서로의 존재를 확인할 수 있는 작은 통로를 만들었다."
+          },
+          "codex": {
+            "title": "밀크룸 답장 슬롯",
+            "detail": "한 줄 메모와 푸른 실 한 가닥만 통과하는 좁은 틈. 새벽마다 비워 둔다."
+          },
+          "reward": { "kind": "milk_drop", "amount": 3 }
+        }
+      ]
+    },
+    {
+      "id": "season2_final_01_open_page",
+      "kind": "drawer",
+      "title": "두 번째 기록: 열어 둔 마지막 장",
+      "body": "두 번째 기록의 마지막 장에는 자물쇠가 없습니다. 치즈타마와 얼룩 손님은 페이지를 닫을지, 다음 방문을 위해 펼쳐 둘지 함께 정합니다.",
+      "prerequisiteEpisodeId": "season2_drawer_02_window_archive",
+      "trigger": {
+        "kind": "sleep_completions_at_least",
+        "minimumCount": 13,
+        "requiredId": ""
+      },
+      "choices": [
+        {
+          "id": "leave_page_open",
+          "label": "다음 방문을 위해 펼쳐 두기",
+          "resultMessage": "새벽바람이 페이지를 넘기지 않도록 푸른 실이 모서리를 살며시 붙잡았어요.",
+          "memory": {
+            "title": "열어 둔 두 번째 마지막 장",
+            "detail": "완료를 잠금으로 표시하지 않고 다음 이야기가 이어질 자리를 남겼다."
+          },
+          "codex": {
+            "title": "꿈 로그 시즌 2 기록",
+            "detail": "푸른 실, 여백, 바깥 방문을 묶은 두 번째 책. 마지막 장은 다음 손님을 위해 열려 있다."
+          },
+          "reward": { "kind": "coin", "amount": 200 }
+        },
+        {
+          "id": "mark_page_with_thread",
+          "label": "푸른 실로 마지막 장 표시하기",
+          "resultMessage": "실매듭이 자물쇠 대신 부드러운 책갈피가 되어 언제든 다시 펼칠 수 있게 했어요.",
+          "memory": {
+            "title": "잠그지 않은 두 번째 완결",
+            "detail": "기록을 안전하게 묶되 새로운 이야기가 오면 쉽게 풀 수 있는 매듭을 선택했다."
+          },
+          "codex": {
+            "title": "푸른 실 책갈피",
+            "detail": "시즌 2의 모든 경로를 잇는 마지막 매듭. 당기면 다음 빈 페이지가 열린다."
+          },
+          "reward": { "kind": "coin", "amount": 200 }
+        }
+      ]
+    }
+  ]
+}

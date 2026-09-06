@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "chapters": [
+    {
+      "id": "drawer_first_key",
+      "title": "서랍 안쪽의 작은 열쇠",
+      "description": "우유빛 서랍 안에서 아주 작은 금속 소리가 들려옵니다. 오래된 얼룩 사이로 감춰진 흔적이 반짝입니다.",
+      "prerequisiteChapterId": "",
+      "trigger": {
+        "kind": "level_at_least",
+        "minimumLevel": 10
+      },
+      "choices": [
+        {
+          "id": "listen_to_rattle",
+          "label": "소리에 귀 기울이기",
+          "resultMessage": "서랍을 천천히 흔들자 숨겨진 홈에서 작은 열쇠가 모습을 드러냈어요.",
+          "memory": {
+            "title": "서랍 속 첫 번째 소리",
+            "detail": "서두르지 않고 작은 울림을 따라가 숨겨진 열쇠를 찾아냈다."
+          },
+          "codex": {
+            "title": "우유빛 서랍의 열쇠",
+            "detail": "손바닥보다 작은 열쇠. 서랍의 깊은 칸과 맞닿으면 희미한 종소리를 낸다."
+          },
+          "reward": {
+            "kind": "coin",
+            "id": "",
+            "amount": 120
+          }
+        },
+        {
+          "id": "trace_milk_stain",
+          "label": "우유 얼룩을 따라가기",
+          "resultMessage": "마른 얼룩의 끝을 닦아내자 나무결 사이에서 작은 열쇠가 미끄러져 나왔어요.",
+          "memory": {
+            "title": "나무결에 남은 지도",
+            "detail": "오래된 우유 얼룩을 지도처럼 따라가 서랍의 비밀 홈을 발견했다."
+          },
+          "codex": {
+            "title": "말라붙은 우유 자국",
+            "detail": "서랍 안쪽의 얼룩은 우연히 생긴 것이 아니라 열쇠가 숨은 홈을 가리키는 표시였다."
+          },
+          "reward": {
+            "kind": "coin",
+            "id": "",
+            "amount": 100
+          }
+        }
+      ]
+    },
+    {
+      "id": "drawer_moon_dial",
+      "title": "달무늬 다이얼",
+      "description": "작은 열쇠가 서랍의 이중 바닥을 열었습니다. 안쪽에는 달의 모양을 새긴 낡은 다이얼이 놓여 있습니다.",
+      "prerequisiteChapterId": "drawer_first_key",
+      "trigger": {
+        "kind": "level_at_least",
+        "minimumLevel": 33
+      },
+      "choices": [
+        {
+          "id": "align_full_moon",
+          "label": "보름달 무늬 맞추기",
+          "resultMessage": "다이얼의 빛이 둥글게 이어지며 서랍 깊은 곳의 보름달 기록이 깨어났어요.",
+          "memory": {
+            "title": "둥근 빛을 맞춘 밤",
+            "detail": "흩어진 달무늬를 하나의 보름달로 이어 서랍의 두 번째 비밀을 열었다."
+          },
+          "codex": {
+            "title": "달무늬 서랍 기록",
+            "detail": "밀크룸의 밤빛을 머금은 기록. 달이 둥근 날에는 표면의 선이 은은하게 이어진다."
+          },
+          "reward": {
+            "kind": "collection_fragment",
+            "id": "",
+            "amount": 2
+          }
+        },
+        {
+          "id": "align_crescent_moon",
+          "label": "초승달 무늬 맞추기",
+          "resultMessage": "가느다란 달빛이 홈을 따라 흐르며 서랍 깊은 곳의 초승달 기록을 비추었어요.",
+          "memory": {
+            "title": "가느다란 빛을 고른 밤",
+            "detail": "가장 희미한 초승달의 선을 따라 서랍의 두 번째 비밀을 열었다."
+          },
+          "codex": {
+            "title": "초승달 서랍 기록",
+            "detail": "밀크룸의 어두운 모서리를 비추는 기록. 가는 빛이 숨은 물건의 윤곽을 드러낸다."
+          },
+          "reward": {
+            "kind": "milk_drop",
+            "id": "",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "drawer_starlight_letter",
+      "title": "별빛으로 쓴 편지",
+      "description": "별빛의 길이 열린 뒤, 다이얼 아래에서 아무 글자도 없는 편지 한 장이 발견됩니다.",
+      "prerequisiteChapterId": "drawer_moon_dial",
+      "trigger": {
+        "kind": "star_route",
+        "minimumLevel": 0
+      },
+      "choices": [
+        {
+          "id": "read_under_starlight",
+          "label": "별빛 아래에서 읽기",
+          "resultMessage": "편지 위로 별빛 문장이 떠올랐어요. 밀크룸을 지켜 온 마음이 마지막 기록으로 남았습니다.",
+          "memory": {
+            "title": "별빛이 문장이 된 순간",
+            "detail": "빈 종이를 별빛에 비추자 오래전 밀크룸을 아꼈던 마음이 조용히 모습을 드러냈다."
+          },
+          "codex": {
+            "title": "밀크룸 수호자의 편지",
+            "detail": "별빛의 길을 선택한 이에게만 읽히는 편지. 방을 지킨 시간은 사라지지 않고 다음 빛이 된다고 적혀 있다."
+          },
+          "reward": {
+            "kind": "star_drop",
+            "id": "",
+            "amount": 3
+          }
+        },
+        {
+          "id": "answer_with_warm_milk",
+          "label": "따뜻한 우유로 답장하기",
+          "resultMessage": "편지 가장자리에 따뜻한 빛이 번졌어요. 답장은 세 방울의 별빛으로 서랍에 남았습니다.",
+          "memory": {
+            "title": "오래된 편지에 보낸 답장",
+            "detail": "따뜻한 우유 한 방울로 지금의 마음을 남기자 편지가 별빛을 품은 작은 병으로 변했다."
+          },
+          "codex": {
+            "title": "답장으로 남은 별빛",
+            "detail": "과거의 편지와 오늘의 마음이 만난 흔적. 세 방울의 빛이 밀크룸의 방향을 가리킨다."
+          },
+          "reward": {
+            "kind": "star_drop",
+            "id": "",
+            "amount": 3
+          }
+        }
+      ]
+    }
+  ]
+}
